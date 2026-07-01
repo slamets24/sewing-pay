@@ -1,0 +1,60 @@
+# Dependencies
+/node_modules/
+/vendor/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+/auth.json
+/storage/*.key
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Laravel generated files
+/public/build/
+/public/fonts-manifest.dev.json
+/public/hot
+/public/storage
+/storage/pail/
+
+# Test and coverage artifacts
+/.phpunit.cache/
+.phpunit.result.cache
+/coverage/
+
+# Local IDE and AI tooling
+/.agents/
+/.codex/
+/.codex-work/
+/.cursor/
+/.idea/
+/.nova/
+/.playwright-mcp/
+/.vscode/
+/.zed/
+
+# Browser/test reports
+/playwright-report/
+/test-results/
+/page-*.yml
+/console-*.log
+
+# Local screenshots and temporary artifacts
+/sweing-pay-*.png
+/exists())
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local helper files
+.phpactor.json
+_ide_helper.php
+Homestead.json
+Homestead.yaml
