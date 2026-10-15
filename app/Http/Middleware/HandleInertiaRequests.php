@@ -43,6 +43,11 @@ class HandleInertiaRequests extends Middleware
                     'home_route' => $user->role->homeRoute(),
                 ] : null,
             ],
+            'flash' => [
+                'status' => fn () => $request->session()->get('status'),
+                'undo' => fn () => $request->session()->get('undo'),
+                'created_article_id' => fn () => $request->session()->get('created_article_id'),
+            ],
         ];
     }
 }

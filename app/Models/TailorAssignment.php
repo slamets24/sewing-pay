@@ -79,4 +79,10 @@ class TailorAssignment extends Model
     {
         return $this->completed_qty * $this->unit_rate_amount;
     }
+
+    /** A pickup can only be cancelled before any qty has been recorded against it. */
+    public function isCancellable(): bool
+    {
+        return $this->completed_qty === 0 && $this->status !== TailorAssignmentStatus::Cancelled;
+    }
 }

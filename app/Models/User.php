@@ -8,6 +8,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -18,6 +19,11 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
+    public function tailor(): HasOne
+    {
+        return $this->hasOne(Tailor::class);
+    }
+
     public function isSuperadmin(): bool
     {
         return $this->role === UserRole::Superadmin;
@@ -26,6 +32,16 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Admin;
+    }
+
+    public function isQc(): bool
+    {
+        return $this->role === UserRole::Qc;
+    }
+
+    public function isTailor(): bool
+    {
+        return $this->role === UserRole::Tailor;
     }
 
     /**

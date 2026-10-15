@@ -9,19 +9,26 @@ use App\Models\PayrollPeriod;
 use App\Models\PayrollSlip;
 use App\Models\ProductionArticle;
 use App\Models\Tailor;
-use App\Models\User;
 use App\Models\TailorAssignment;
 use App\Models\TailorAssignmentCompletion;
+use App\Models\User;
 use App\Models\WorkType;
 use Illuminate\Support\Carbon;
 
 class DashboardDataService
 {
+    public function __construct(
+        private readonly CurrentPayrollPeriodService $currentPeriod,
+        private readonly HancaanSuggestionService $hancaanSuggestions,
+    ) {}
+
     /**
      * @return array<string, mixed>
      */
     public function data(): array
     {
+        $user = auth()->user();
+
         $activeStatuses = [
             TailorAssignmentStatus::InProgress->value,
             TailorAssignmentStatus::Partial->value,
@@ -76,14 +83,20 @@ class DashboardDataService
                 ->get()
                 ->map(fn (ProductionArticle $article) => $this->articlePayload($article)),
             'activeAssignments' => $activeAssignments
-                ->map(fn (TailorAssignment $assignment) => $this->assignmentPayload($assignment)),
+                ->map(fn (TailorAssignment $assignment) => $this->assignmentPayload($assignment, $user)),
+            'currentPeriod' => $this->currentPeriod->summary(),
+            'hancaanSuggestions' => $this->hancaanSuggestions->forForm(),
             'recentCompletions' => TailorAssignmentCompletion::query()
                 ->with(['tailor', 'productionArticle', 'workType'])
+                ->withExists('payrollSlipLine')
                 ->latest('completed_at')
-                ->limit(10)
+                ->latest('id')
+                ->limit(20)
                 ->get()
                 ->map(fn (TailorAssignmentCompletion $completion) => [
                     'id' => $completion->id,
+                    'tailor_assignment_id' => $completion->tailor_assignment_id,
+                    'tailor_id' => $completion->tailor_id,
                     'tailor_name' => $completion->tailor->name,
                     'article_name' => $completion->productionArticle->article_name,
                     'color' => $completion->productionArticle->color,
@@ -93,6 +106,8 @@ class DashboardDataService
                     'unit_rate_amount' => $completion->unit_rate_amount,
                     'subtotal_amount' => $completion->subtotal_amount,
                     'completed_at' => $completion->completed_at?->format('Y-m-d H:i'),
+                    'notes' => $completion->notes,
+                    'can_undo' => ! $completion->payroll_slip_line_exists && (bool) $user?->can('delete', $completion),
                 ]),
             'payrollPeriods' => PayrollPeriod::query()
                 ->withCount('slips')
@@ -166,10 +181,12 @@ class DashboardDataService
     /**
      * @return array<string, mixed>
      */
-    private function assignmentPayload(TailorAssignment $assignment): array
+    private function assignmentPayload(TailorAssignment $assignment, ?User $user): array
     {
         return [
             'id' => $assignment->id,
+            'tailor_id' => $assignment->tailor_id,
+            'production_article_id' => $assignment->production_article_id,
             'tailor_name' => $assignment->tailor->name,
             'article_name' => $assignment->productionArticle->article_name,
             'color' => $assignment->productionArticle->color,
@@ -185,19 +202,7 @@ class DashboardDataService
             'assigned_at' => $assignment->assigned_at?->format('Y-m-d H:i'),
             'age_days' => $assignment->assigned_at?->diffInDays(now()),
             'notes' => $assignment->notes,
+            'can_cancel' => (bool) $user?->can('cancel', $assignment),
         ];
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

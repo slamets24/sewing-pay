@@ -2,32 +2,38 @@
 
 namespace App\Http\Controllers\TailorPayroll;
 
+use App\Actions\CreateProductionArticlesAction;
 use App\Enums\ProductionArticleStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\TailorPayroll\StoreProductionArticleBatchRequest;
 use App\Http\Requests\TailorPayroll\StoreProductionArticleRequest;
 use App\Http\Requests\TailorPayroll\UpdateProductionArticleRequest;
 use App\Models\ProductionArticle;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Validation\ValidationException;
 
 class ProductionArticleController extends Controller
 {
-    public function store(StoreProductionArticleRequest $request): RedirectResponse
+    public function store(StoreProductionArticleRequest $request, CreateProductionArticlesAction $createArticles): RedirectResponse
     {
         $data = $request->validated();
 
-        ProductionArticle::create([
-            ...$data,
-            'created_by' => $request->user()?->id,
-            'available_qty' => $data['planned_qty'],
-            'assigned_qty' => 0,
-            'completed_qty' => 0,
-            'status' => ProductionArticleStatus::Ready,
-            'ready_at' => $data['ready_at'] ?? today(),
-        ]);
+        $createArticles->execute([
+            ...Arr::only($data, ['work_type_id', 'article_name', 'ready_at', 'notes']),
+            'variants' => [Arr::only($data, ['color', 'size', 'planned_qty'])],
+        ], $request->user()?->id);
 
         return Redirect::back(fallback: route('dashboard'))->with('status', 'Hancaan siap diambil.');
+    }
+
+    public function storeBatch(StoreProductionArticleBatchRequest $request, CreateProductionArticlesAction $createArticles): RedirectResponse
+    {
+        $articles = $createArticles->execute($request->validated(), $request->user()?->id);
+
+        return Redirect::back(fallback: route($request->user()->role->homeRoute()))
+            ->with('status', "{$articles->count()} hancaan ({$articles->sum('planned_qty')} pcs) siap diambil.");
     }
 
     public function update(UpdateProductionArticleRequest $request, ProductionArticle $article): RedirectResponse

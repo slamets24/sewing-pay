@@ -48,7 +48,6 @@ pnpm-debug.log*
 
 # Local screenshots and temporary artifacts
 /sweing-pay-*.png
-/exists())
 
 # OS files
 .DS_Store
@@ -60,3 +59,7 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 .vercel
+.claude
+
+# Local planning notes, not part of the app
+/docs/

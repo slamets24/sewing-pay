@@ -1,18 +1,28 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="id">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#4318FF">
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
-        <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
 
-        <!-- Scripts -->
+        {{-- Apply the saved "huruf besar / kontras tinggi" choice before the first paint. --}}
+        <script>
+            try {
+                var prefs = JSON.parse(localStorage.getItem('sweing-pay:display') || '{}');
+                if (prefs.textScale === 'large') document.documentElement.classList.add('text-large');
+                if (prefs.textScale === 'xlarge') document.documentElement.classList.add('text-xlarge');
+                if (prefs.highContrast) document.documentElement.classList.add('contrast-high');
+            } catch (e) {}
+        </script>
+
         @routes
-        @vite(['resources/js/app.ts', "resources/js/Pages/{$page['component']}.vue"])
+        @viteReactRefresh
+        @vite(['resources/js/app.tsx', "resources/js/Pages/{$page['component']}.tsx"])
         @inertiaHead
     </head>
     <body class="font-sans antialiased">

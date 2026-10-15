@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PayrollPeriodStatus;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -48,5 +49,14 @@ class PayrollPeriod extends Model
     public function isLocked(): bool
     {
         return in_array($this->status, [PayrollPeriodStatus::Locked, PayrollPeriodStatus::Paid], true);
+    }
+
+    public static function lockedOn(CarbonInterface $date): bool
+    {
+        return static::query()
+            ->whereIn('status', [PayrollPeriodStatus::Locked->value, PayrollPeriodStatus::Paid->value])
+            ->whereDate('starts_at', '<=', $date)
+            ->whereDate('ends_at', '>=', $date)
+            ->exists();
     }
 }

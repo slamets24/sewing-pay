@@ -30,18 +30,36 @@ class AuthenticationTest extends TestCase
         $response->assertRedirect(route('dashboard', absolute: false));
     }
 
-    public function test_admin_users_are_redirected_to_mobile_after_login(): void
+    public function test_each_role_is_redirected_to_its_home_after_login(): void
     {
-        $user = User::factory()->admin()->create();
+        foreach ([
+            'dashboard' => User::factory()->admin()->create(),
+            'revisions.index' => User::factory()->qc()->create(),
+        ] as $home => $user) {
+            $response = $this->post('/login', [
+                'email' => $user->email,
+                'password' => 'password',
+            ]);
 
-        $response = $this->post('/login', [
+            $this->assertAuthenticatedAs($user);
+            $response->assertRedirect(route($home, absolute: false));
+
+            $this->post('/logout');
+        }
+    }
+
+    public function test_tailor_accounts_cannot_sign_in_with_email(): void
+    {
+        $user = User::factory()->tailor()->create();
+
+        $this->post('/login', [
             'email' => $user->email,
             'password' => 'password',
-        ]);
+        ])->assertSessionHasErrors('email');
 
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('admin.mobile', absolute: false));
+        $this->assertGuest();
     }
+
     public function test_users_can_not_authenticate_with_invalid_password(): void
     {
         $user = User::factory()->create();

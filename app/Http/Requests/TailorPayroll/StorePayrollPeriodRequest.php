@@ -3,6 +3,7 @@
 namespace App\Http\Requests\TailorPayroll;
 
 use App\Models\PayrollPeriod;
+use App\ValueObjects\PayrollSlot;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
@@ -39,14 +40,13 @@ class StorePayrollPeriodRequest extends FormRequest
 
                 if (! $startsAt->isSameMonth($endsAt)) {
                     $validator->errors()->add('ends_at', 'Periode gaji harus berada dalam bulan yang sama.');
+
                     return;
                 }
 
-                $isFirstHalf = $startsAt->day === 1 && $endsAt->day === 14;
-                $isSecondHalf = $startsAt->day === 15 && $endsAt->isSameDay($startsAt->endOfMonth());
-
-                if (! $isFirstHalf && ! $isSecondHalf) {
+                if (! PayrollSlot::isOfficial($startsAt, $endsAt)) {
                     $validator->errors()->add('ends_at', 'Periode gaji harus slot 1-14 atau 15-akhir bulan.');
+
                     return;
                 }
 

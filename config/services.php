@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'packingv2' => [
+        'url' => env('PACKINGV2_API_URL'),
+        'key' => env('PACKINGV2_API_KEY'),
+    ],
+
 ];

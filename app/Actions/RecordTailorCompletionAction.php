@@ -2,14 +2,13 @@
 
 namespace App\Actions;
 
-use App\Enums\PayrollPeriodStatus;
 use App\Enums\ProductionArticleStatus;
 use App\Enums\TailorAssignmentStatus;
 use App\Models\PayrollPeriod;
 use App\Models\TailorAssignment;
 use App\Models\TailorAssignmentCompletion;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class RecordTailorCompletionAction
@@ -35,13 +34,7 @@ class RecordTailorCompletionAction
                 ? Carbon::parse($data['completed_at'])
                 : now();
 
-            $lockedPeriodExists = PayrollPeriod::query()
-                ->whereIn('status', [PayrollPeriodStatus::Locked->value, PayrollPeriodStatus::Paid->value])
-                ->whereDate('starts_at', '<=', $completedAt)
-                ->whereDate('ends_at', '>=', $completedAt)
-                ->exists();
-
-            if ($lockedPeriodExists) {
+            if (PayrollPeriod::lockedOn($completedAt)) {
                 throw ValidationException::withMessages([
                     'completed_at' => 'Tanggal selesai masuk periode gaji yang sudah dikunci.',
                 ]);

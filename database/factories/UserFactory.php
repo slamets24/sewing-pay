@@ -49,6 +49,20 @@ class UserFactory extends Factory
         ]);
     }
 
+    public function qc(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::Qc,
+        ]);
+    }
+
+    public function tailor(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::Tailor,
+        ]);
+    }
+
     /**
      * Indicate that the model's email address should be unverified.
      */
