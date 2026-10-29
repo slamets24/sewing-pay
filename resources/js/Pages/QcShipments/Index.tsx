@@ -39,7 +39,7 @@ export default function QcShipmentsIndex({ unshippedDeliveries, shipments }: QcS
 
     return (
         <AppLayout title="Kirim ke QC">
-            <PageIntro>Centang setoran yang sudah selesai dijahit, lalu kirim ke QC. Label barcode langsung siap dicetak, 1 label untuk 1 pcs.</PageIntro>
+            <PageIntro>Admin memilih setoran jahit yang siap dikirimkan ke divisi QC. Label barcode (1 label / pcs) langsung dicetak oleh admin untuk ditempel pada bundle pengiriman.</PageIntro>
 
             <div className="flex flex-col gap-5">
                 <Section

@@ -13,6 +13,7 @@ class PayoutSlipLine extends Model
         'type',
         'sewing_delivery_id',
         'revision_id',
+        'tailor_attendance_id',
         'description',
         'color',
         'size',
@@ -36,5 +37,10 @@ class PayoutSlipLine extends Model
     public function slip(): BelongsTo
     {
         return $this->belongsTo(PayoutSlip::class, 'payout_slip_id');
+    }
+
+    public function tailorAttendance(): BelongsTo
+    {
+        return $this->belongsTo(TailorAttendance::class);
     }
 }

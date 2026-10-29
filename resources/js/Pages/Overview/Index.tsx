@@ -3,6 +3,7 @@ import { DeliveryList } from '@/components/sewing/production/delivery-list';
 import { HoldingCard, holdingGridClass } from '@/components/sewing/production/holding-card';
 import { Section } from '@/components/sewing/section';
 import { StatTile } from '@/components/sewing/stat-tile';
+import { WorkflowStepper } from '@/components/sewing/workflow-stepper';
 import { WorkOrderCard } from '@/components/sewing/work-order/work-order-card';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
@@ -49,22 +50,31 @@ export default function Overview({ stats, board, dueSoon, recentDeliveries }: Ov
     return (
         <AppLayout title="Beranda">
             <div className="flex flex-col gap-6">
-                <div className="flex flex-col gap-1">
-                    <p className="text-3xl font-bold tracking-tight">Halo, {firstName}</p>
-                    <p className="text-base text-muted-foreground">Ringkasan lantai jahit hari ini.</p>
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+                    <div>
+                        <p className="text-3xl font-bold tracking-tight">Halo, {firstName}</p>
+                        <p className="text-base text-muted-foreground">Panel operasional internal divisi jahit hari ini.</p>
+                    </div>
+                    <span className="text-sm font-semibold text-muted-foreground">
+                        {board.length} penjahit aktif memegang kain
+                    </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {/* Visual Workflow Stepper */}
+                <WorkflowStepper stats={stats} />
+
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
                     <QuickAction href={route('work-orders.create')} icon={Plus} label="WO baru" />
                     <QuickAction href={route('pickups.create')} icon={HandPlatter} label="Ambil barang" />
                     <QuickAction href={route('deliveries.index')} icon={PackageCheck} label="Setor jahitan" />
                     <QuickAction href={route('qc-shipments.index')} icon={Truck} label="Kirim ke QC" />
+                    <QuickAction href={route('revisions.index')} icon={Wrench} label="Catat revisi" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                     <StatTile label="Di divisi lain" value={`${stats.pending_qty} pcs`} icon={Factory} tone="other" hint="Masih di print / cutting" href={route('work-orders.index')} />
-                    <StatTile label="Siap diambil" value={`${stats.available_qty} pcs`} icon={Warehouse} tone="ready" hint="Ada di gudang" href={route('pickups.create')} />
-                    <StatTile label="Sedang dijahit" value={`${stats.sewing_qty} pcs`} icon={Scissors} tone="sewing" hint={`${board.length} penjahit`} href={route('deliveries.index')} />
+                    <StatTile label="Siap diambil" value={`${stats.available_qty} pcs`} icon={Warehouse} tone="ready" hint="Ada di gudang jahit" href={route('pickups.create')} />
+                    <StatTile label="Sedang dijahit" value={`${stats.sewing_qty} pcs`} icon={Scissors} tone="sewing" hint={`${board.length} penjahit memegang`} href={route('deliveries.index')} />
                     <StatTile label="Setor hari ini" value={`${stats.delivered_today_qty} pcs`} icon={PackageCheck} tone="done" href={route('deliveries.index')} />
                     <StatTile label="WO berjalan" value={stats.work_orders_open} icon={ClipboardList} tone="primary" href={route('work-orders.index')} />
                     <StatTile
@@ -75,7 +85,7 @@ export default function Overview({ stats, board, dueSoon, recentDeliveries }: Ov
                         hint="WO belum selesai"
                         href={route('work-orders.index')}
                     />
-                    <StatTile label="Belum dikirim QC" value={`${stats.unshipped_qty} pcs`} icon={Truck} tone="qc" href={route('qc-shipments.index')} />
+                    <StatTile label="Belum dikirim QC" value={`${stats.unshipped_qty} pcs`} icon={Truck} tone="qc" hint="Siap kirim ke QC" href={route('qc-shipments.index')} />
                     <StatTile label="Revisi terbuka" value={stats.revisions_open} icon={Wrench} tone="revision" hint={stats.hold_qty > 0 ? `${stats.hold_qty} pcs ditahan di gudang` : undefined} href={route('revisions.index')} />
                 </div>
 

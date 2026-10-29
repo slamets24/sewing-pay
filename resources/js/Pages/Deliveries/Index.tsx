@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
 import type { BoardRow, DeliveryRecord } from '@/types/sewing';
 import { Link } from '@inertiajs/react';
-import { HandPlatter, History, Search, Truck, Users } from 'lucide-react';
+import { HandPlatter, History, Search, Truck, Users, Zap } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 type IndexProps = {
@@ -30,13 +30,19 @@ export default function DeliveryIndex({ board, recentDeliveries }: IndexProps) {
             <PageIntro
                 actions={
                     <>
+                        <Button asChild className="gap-1.5 font-bold shadow-sm">
+                            <Link href={route('desk.index')}>
+                                <Zap className="size-4" />
+                                Loket Cepat
+                            </Link>
+                        </Button>
                         <Button asChild variant="outline">
                             <Link href={route('qc-shipments.index')}>
                                 <Truck />
                                 Kirim QC
                             </Link>
                         </Button>
-                        <Button asChild>
+                        <Button asChild variant="outline">
                             <Link href={route('pickups.create')}>
                                 <HandPlatter />
                                 Ambil barang
@@ -45,7 +51,7 @@ export default function DeliveryIndex({ board, recentDeliveries }: IndexProps) {
                     </>
                 }
             >
-                Saat penjahit menyerahkan hasil jahitan, tekan "Setor semua" atau "Sebagian". Upah langsung tercatat.
+                Admin mencatat setoran jahitan saat penjahit menyerahkan hasil jahit. Pilih "Setor semua" atau cicil "Sebagian" — upah penjahit langsung otomatis tercatat.
             </PageIntro>
 
             <div className="flex flex-col gap-5">

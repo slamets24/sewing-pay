@@ -13,8 +13,8 @@ enum UserRole: string
     {
         return match ($this) {
             self::Superadmin => 'Owner',
-            self::Admin => 'Admin Gudang',
-            self::Qc => 'QC',
+            self::Admin => 'Admin Divisi Jahit',
+            self::Qc => 'QC (Tanpa Akses)',
             self::Tailor => 'Penjahit',
         };
     }
@@ -23,15 +23,13 @@ enum UserRole: string
     {
         return match ($this) {
             self::Superadmin, self::Admin => 'dashboard',
-            self::Qc => 'revisions.index',
-            // Tailors do not sign in. Their portal is a private link.
-            self::Tailor => 'login',
+            self::Qc, self::Tailor => 'login',
         };
     }
 
-    /** Staff roles run the workshop. Tailors use a PIN link, not this account list. */
+    /** Staff roles for internal sewing division accounts. QC is an external division with no app access. */
     public function isStaff(): bool
     {
-        return $this !== self::Tailor;
+        return in_array($this, [self::Superadmin, self::Admin], true);
     }
 }

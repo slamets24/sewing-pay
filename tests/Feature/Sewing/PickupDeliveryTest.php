@@ -116,4 +116,64 @@ class PickupDeliveryTest extends TestCase
         $this->assertSame(PickupItemStatus::Cancelled, $pickupItem->refresh()->status);
         $this->assertSame(5, $item->refresh()->availableQty());
     }
+
+    public function test_quick_desk_page_renders_successfully(): void
+    {
+        $admin = $this->warehouseAdmin();
+        $this->tailor();
+        $this->readyItem(qty: 4);
+
+        $this->actingAs($admin)
+            ->get(route('desk.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Desk/Index')
+                ->has('tailors')
+                ->has('board')
+                ->has('availableItems')
+            );
+    }
+
+    public function test_tailor_batch_delivery_delivers_all_open_items_at_once(): void
+    {
+        $admin = $this->warehouseAdmin();
+        $tailor = $this->tailor();
+        $first = $this->readyItem(qty: 5, article: $this->article('Kemeja', 8000));
+        $second = $this->readyItem(qty: 4, article: $this->article('Celana', 6000));
+
+        $this->actingAs($admin)->post(route('pickups.store'), [
+            'tailor_id' => $tailor->id,
+            'items' => [
+                ['work_order_item_id' => $first->id, 'qty' => 5],
+                ['work_order_item_id' => $second->id, 'qty' => 4],
+            ],
+        ])->assertSessionHasNoErrors();
+
+        $this->assertSame(2, PickupItem::query()->where('tailor_id', $tailor->id)->count());
+
+        $this->actingAs($admin)
+            ->post(route('deliveries.batch-tailor', $tailor))
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('status');
+
+        $this->assertSame(9, SewingDelivery::query()->where('tailor_id', $tailor->id)->sum('qty'));
+        $this->assertSame(0, PickupItem::query()->where('tailor_id', $tailor->id)->where('status', PickupItemStatus::Open)->count());
+    }
+
+    public function test_pickup_from_desk_redirects_back_to_quick_desk(): void
+    {
+        $admin = $this->warehouseAdmin();
+        $tailor = $this->tailor();
+        $item = $this->readyItem(qty: 10);
+
+        $this->actingAs($admin)->post(route('pickups.store'), [
+            'tailor_id' => $tailor->id,
+            'from_desk' => true,
+            'items' => [['work_order_item_id' => $item->id, 'qty' => 7]],
+        ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('desk.index', ['tailor' => $tailor->id]));
+
+        $this->assertSame(7, PickupItem::query()->sole()->qty);
+    }
 }

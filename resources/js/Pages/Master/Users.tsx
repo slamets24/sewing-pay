@@ -41,7 +41,7 @@ export default function Users({ users, roles }: UsersProps) {
                     </Button>
                 }
             >
-                Akun email untuk owner, admin gudang, dan QC. Penjahit tidak masuk dari sini; tautan portalnya ada di menu Penjahit.
+                Akun login khusus internal divisi jahit (Owner dan Admin Divisi). Divisi luar (seperti QC) dan penjahit tidak memiliki akses akun ke sistem ini.
             </PageIntro>
 
             <Section title="Daftar akun" icon={ShieldCheck} description={`${users.length} akun`}>

@@ -34,7 +34,6 @@ class AuthenticationTest extends TestCase
     {
         foreach ([
             'dashboard' => User::factory()->admin()->create(),
-            'revisions.index' => User::factory()->qc()->create(),
         ] as $home => $user) {
             $response = $this->post('/login', [
                 'email' => $user->email,
@@ -48,15 +47,21 @@ class AuthenticationTest extends TestCase
         }
     }
 
-    public function test_tailor_accounts_cannot_sign_in_with_email(): void
+    public function test_qc_and_tailor_accounts_cannot_sign_in_with_email(): void
     {
-        $user = User::factory()->tailor()->create();
+        $tailor = User::factory()->tailor()->create();
+        $qc = User::factory()->qc()->create();
 
         $this->post('/login', [
-            'email' => $user->email,
+            'email' => $tailor->email,
             'password' => 'password',
         ])->assertSessionHasErrors('email');
+        $this->assertGuest();
 
+        $this->post('/login', [
+            'email' => $qc->email,
+            'password' => 'password',
+        ])->assertSessionHasErrors('email');
         $this->assertGuest();
     }
 

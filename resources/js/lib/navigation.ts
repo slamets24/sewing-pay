@@ -1,5 +1,6 @@
 import type { UserRole } from '@/types';
 import {
+    CalendarCheck,
     ClipboardList,
     HandPlatter,
     LayoutDashboard,
@@ -11,6 +12,7 @@ import {
     Users,
     Wallet,
     Wrench,
+    Zap,
     type LucideIcon,
 } from 'lucide-react';
 
@@ -31,15 +33,16 @@ const item = (label: string, routeName: string, icon: LucideIcon, activePattern?
     activePattern: activePattern ?? routeName,
 });
 
-const FLOOR: NavItem[] = [
+const WORKFLOW: NavItem[] = [
     item('Beranda', 'dashboard', LayoutDashboard),
-    item('WO', 'work-orders.index', ClipboardList, 'work-orders.*'),
+    item('Loket Cepat', 'desk.index', Zap, 'desk.*'),
     item('Ambil', 'pickups.create', HandPlatter, 'pickups.*'),
     item('Setor', 'deliveries.index', PackageCheck, 'deliveries.*'),
+    item('WO', 'work-orders.index', ClipboardList, 'work-orders.*'),
+    item('Absensi', 'attendances.index', CalendarCheck, 'attendances.*'),
     item('Kirim QC', 'qc-shipments.index', Truck, 'qc-shipments.*'),
+    item('Catat Revisi', 'revisions.index', Wrench, 'revisions.*'),
 ];
-
-const QUALITY: NavItem[] = [item('Revisi dari QC', 'revisions.index', Wrench, 'revisions.*')];
 
 /** Which menu each role sees, and which few items sit in the phone's bottom bar. */
 export class Navigation {
@@ -53,10 +56,9 @@ export class Navigation {
             case 'superadmin':
                 return new Navigation(
                     [
-                        { label: 'Produksi', items: FLOOR },
-                        { label: 'Revisi', items: QUALITY },
+                        { label: 'Alur Kerja Divisi', items: WORKFLOW },
                         {
-                            label: 'Owner',
+                            label: 'Master & Gaji',
                             items: [
                                 item('Gaji', 'payouts.index', Wallet, 'payouts.*'),
                                 item('Artikel & tarif', 'articles.index', Shirt),
@@ -66,19 +68,17 @@ export class Navigation {
                             ],
                         },
                     ],
-                    FLOOR.slice(0, 4),
+                    WORKFLOW.slice(0, 5),
                 );
             case 'admin':
                 return new Navigation(
                     [
-                        { label: 'Produksi', items: FLOOR },
-                        { label: 'Revisi', items: QUALITY },
+                        { label: 'Alur Kerja Divisi', items: WORKFLOW },
                         { label: 'Data', items: [item('Artikel', 'articles.index', Shirt)] },
                     ],
-                    FLOOR.slice(0, 4),
+                    WORKFLOW.slice(0, 5),
                 );
             case 'qc':
-                return new Navigation([{ label: 'Revisi', items: QUALITY }], []);
             case 'penjahit':
                 return new Navigation([], []);
         }

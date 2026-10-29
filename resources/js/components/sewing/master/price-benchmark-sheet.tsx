@@ -8,8 +8,8 @@ import { formatDateTime, formatIdr } from '@/lib/format';
 import { floorActions } from '@/services/floor-actions';
 import type { ArticleRecord, PriceBenchmarkRow, TailorRecord } from '@/types/sewing';
 import { useForm } from '@inertiajs/react';
-import { Clock, LoaderCircle, Trash2 } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { Check, Clock, LoaderCircle, Play, Square, Trash2 } from 'lucide-react';
+import { useEffect, useState, type FormEvent } from 'react';
 
 type TailorChoice = Pick<TailorRecord, 'id' | 'name' | 'code' | 'type'>;
 
@@ -27,11 +27,52 @@ const ROLE_LABEL: Record<NonNullable<PriceBenchmarkRow['role']>, string> = {
     terlambat: 'Terlambat',
 };
 
+const SHIFT_RATES: Record<number, number> = {
+    9: 241_400,
+    10: 265_000,
+    11: 295_000,
+    12: 321_800,
+};
+
+const SHIFT_OPTIONS = [9, 10, 11, 12];
+
 /** Sample times and the benchmark they produce. Adopting the number is a separate step from recording a sample. */
-export function PriceBenchmarkSheet({ article, tailors, hourlyRate, isOwner, onOpenChange }: PriceBenchmarkSheetProps) {
+export function PriceBenchmarkSheet({ article, tailors, isOwner, onOpenChange }: PriceBenchmarkSheetProps) {
     const benchmark = article?.benchmark ?? null;
     const [adopting, setAdopting] = useState(false);
-    const form = useForm({ tailor_id: '' as number | '', color: '', started_at: '', finished_at: '' });
+
+    // Form data
+    const form = useForm({
+        tailor_id: '' as number | '',
+        color: '',
+        working_hours: 9,
+        duration_minutes: '' as number | '',
+    });
+
+    // Stopwatch state
+    const [isTiming, setIsTiming] = useState(false);
+    const [secondsElapsed, setSecondsElapsed] = useState(0);
+
+    useEffect(() => {
+        let interval: NodeJS.Timeout | null = null;
+        if (isTiming) {
+            interval = setInterval(() => {
+                setSecondsElapsed((prev) => prev + 1);
+            }, 1000);
+        } else {
+            if (interval) clearInterval(interval);
+        }
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [isTiming]);
+
+    const handleStopTimer = () => {
+        setIsTiming(false);
+        const mins = Math.max(1, Math.round(secondsElapsed / 60));
+        form.setData('duration_minutes', mins);
+        setSecondsElapsed(0);
+    };
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
@@ -40,7 +81,11 @@ export function PriceBenchmarkSheet({ article, tailors, hourlyRate, isOwner, onO
         form.post(route('articles.samples.store', article.id), {
             preserveScroll: true,
             preserveState: true,
-            onSuccess: () => form.reset('color', 'started_at', 'finished_at'),
+            onSuccess: () => {
+                form.reset('color', 'duration_minutes');
+                setIsTiming(false);
+                setSecondsElapsed(0);
+            },
         });
     };
 
@@ -55,6 +100,13 @@ export function PriceBenchmarkSheet({ article, tailors, hourlyRate, isOwner, onO
         );
     };
 
+    // Live calculation of preview
+    const selectedAllowance = SHIFT_RATES[form.data.working_hours] ?? 241400;
+    const ratePerMinute = selectedAllowance / (form.data.working_hours * 60);
+    const estimatedPieceCost = form.data.duration_minutes
+        ? Math.round(Number(form.data.duration_minutes) * ratePerMinute)
+        : null;
+
     return (
         <Sheet open={article !== null} onOpenChange={onOpenChange}>
             <SheetContent side="right" className="w-full gap-0 sm:max-w-lg">
@@ -65,37 +117,48 @@ export function PriceBenchmarkSheet({ article, tailors, hourlyRate, isOwner, onO
 
                 {article && (
                     <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-4">
-                        <p className="text-base">
-                            Catat waktu satu pcs per warna. Warna yang dikerjakan beberapa penjahit dirata-ratakan dulu, lalu diambil yang tercepat, sedang, dan terlambat. Tiap pcs dihitung {formatIdr(benchmark?.hourly_rate ?? hourlyRate)} per jam. Angka ini patokan; tarif resmi berubah hanya kalau Anda memakai patokan atau menyimpan tarif sendiri.
+                        <p className="text-sm text-muted-foreground">
+                            Biaya pengerjaan sample dihitung dari standar nilai harian jam kerja (9j = Rp 241.400, 10j = Rp 265.000, 11j = Rp 295.000, 12j = Rp 321.800) dibagi ke menit pengerjaan. Minimal 3 warna untuk mendapatkan patokan tarif resmi.
                         </p>
 
                         <BenchmarkMath article={article} adopting={adopting} isOwner={isOwner} onAdopt={adopt} />
 
                         {benchmark && benchmark.samples.length > 0 && (
-                            <ul className="flex flex-col gap-2">
-                                {benchmark.samples.map((sample) => (
-                                    <li key={sample.id} className="flex items-start justify-between gap-3 rounded-md border p-3">
-                                        <div className="min-w-0">
-                                            <p className="font-semibold">{sample.color}</p>
-                                            <p className="text-sm text-muted-foreground">
-                                                {sample.tailor_name} · {sample.minutes_label} · {formatIdr(sample.price)}
-                                            </p>
-                                            <p className="text-sm text-muted-foreground">
-                                                {formatDateTime(sample.started_at)} – {formatDateTime(sample.finished_at)}
-                                            </p>
-                                        </div>
-                                        {isOwner && <DeleteSample articleId={article.id} sampleId={sample.id} />}
-                                    </li>
-                                ))}
-                            </ul>
+                            <div className="flex flex-col gap-2">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Sample Tercatat ({benchmark.samples.length})</p>
+                                <ul className="flex flex-col gap-2">
+                                    {benchmark.samples.map((sample) => (
+                                        <li key={sample.id} className="flex items-start justify-between gap-3 rounded-lg border bg-card p-3 shadow-2xs">
+                                            <div className="min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-semibold text-base">{sample.color}</p>
+                                                    <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                                                        {formatIdr(sample.price)}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {sample.tailor_name} {sample.working_hours ? `(${sample.working_hours}j)` : ''} · Durasi: {sample.minutes_label}
+                                                </p>
+                                            </div>
+                                            {isOwner && <DeleteSample articleId={article.id} sampleId={sample.id} />}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
                         )}
 
                         {isOwner && (
                             <form onSubmit={submit} className="flex flex-col gap-4 border-t pt-4" noValidate>
-                                <p className="flex items-center gap-2 font-semibold">
-                                    <Clock className="size-4" aria-hidden />
-                                    Catat satu pcs
-                                </p>
+                                <div className="flex items-center justify-between">
+                                    <p className="flex items-center gap-2 font-semibold">
+                                        <Clock className="size-4" aria-hidden />
+                                        Catat Satu Sample
+                                    </p>
+                                    <span className="text-xs text-muted-foreground">
+                                        Rate: <strong>Rp {Math.round(ratePerMinute)}/menit</strong>
+                                    </span>
+                                </div>
+
                                 <FormField label="Penjahit" htmlFor="sample-tailor" error={form.errors.tailor_id}>
                                     <TailorSelect
                                         id="sample-tailor"
@@ -106,10 +169,41 @@ export function PriceBenchmarkSheet({ article, tailors, hourlyRate, isOwner, onO
                                     />
                                 </FormField>
                                 {tailors.length === 0 && <p className="text-sm text-muted-foreground">Tambah penjahit aktif dulu.</p>}
-                                <FormField label="Warna" htmlFor="sample-color" error={form.errors.color}>
+
+                                {/* Standar Acuan Jam Masuk */}
+                                <div className="flex flex-col gap-1.5">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs font-medium text-muted-foreground">
+                                            Standar Acuan Jam Masuk (Perhitungan Sample)
+                                        </label>
+                                        <span className="text-[10px] text-muted-foreground">Bukan uang makan riil</span>
+                                    </div>
+                                    <div className="grid grid-cols-4 gap-1.5">
+                                        {SHIFT_OPTIONS.map((opt) => (
+                                            <button
+                                                key={opt}
+                                                type="button"
+                                                onClick={() => form.setData('working_hours', opt)}
+                                                className={`rounded-lg py-2 px-1 text-center text-xs font-semibold border transition-all ${
+                                                    form.data.working_hours === opt
+                                                        ? 'bg-primary text-primary-foreground border-primary shadow-xs'
+                                                        : 'bg-muted/40 hover:bg-muted text-muted-foreground'
+                                                }`}
+                                            >
+                                                <div>{opt} Jam</div>
+                                                <div className="text-[10px] font-normal opacity-85">
+                                                    {formatIdr(SHIFT_RATES[opt])}
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <FormField label="Warna Sample" htmlFor="sample-color" error={form.errors.color}>
                                     <Input
                                         id="sample-color"
                                         list="sample-colors"
+                                        placeholder="Contoh: Hitam, Navy, Merah..."
                                         value={form.data.color}
                                         onChange={(event) => form.setData('color', event.target.value)}
                                         autoComplete="off"
@@ -121,29 +215,72 @@ export function PriceBenchmarkSheet({ article, tailors, hourlyRate, isOwner, onO
                                         ))}
                                     </datalist>
                                 </FormField>
-                                <div className="grid gap-4 sm:grid-cols-2">
-                                    <FormField label="Mulai" htmlFor="sample-start" error={form.errors.started_at}>
+
+                                {/* Waktu Pengerjaan */}
+                                <div className="flex flex-col gap-1.5">
+                                    <div className="flex items-center justify-between">
+                                        <label htmlFor="sample-duration" className="text-xs font-medium text-muted-foreground">
+                                            Waktu Pengerjaan (Menit)
+                                        </label>
+                                        {/* Stopwatch helper */}
+                                        {!isTiming ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setSecondsElapsed(0);
+                                                    setIsTiming(true);
+                                                }}
+                                                className="flex items-center gap-1 text-xs text-primary hover:underline font-medium"
+                                            >
+                                                <Play className="size-3 fill-current" />
+                                                Pakai Stopwatch
+                                            </button>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={handleStopTimer}
+                                                className="flex items-center gap-1 text-xs text-rose-600 hover:underline font-semibold animate-pulse"
+                                            >
+                                                <Square className="size-3 fill-current" />
+                                                Berhenti ({Math.floor(secondsElapsed / 60)}m {secondsElapsed % 60}s)
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
                                         <Input
-                                            id="sample-start"
-                                            type="datetime-local"
-                                            value={form.data.started_at}
-                                            onChange={(event) => form.setData('started_at', event.target.value)}
-                                            aria-invalid={!!form.errors.started_at || undefined}
+                                            id="sample-duration"
+                                            type="number"
+                                            min="1"
+                                            max="1440"
+                                            placeholder="Contoh: 40"
+                                            value={form.data.duration_minutes}
+                                            onChange={(event) =>
+                                                form.setData(
+                                                    'duration_minutes',
+                                                    event.target.value === '' ? '' : Number(event.target.value),
+                                                )
+                                            }
+                                            className="text-base font-semibold"
                                         />
-                                    </FormField>
-                                    <FormField label="Selesai" htmlFor="sample-finish" error={form.errors.finished_at}>
-                                        <Input
-                                            id="sample-finish"
-                                            type="datetime-local"
-                                            value={form.data.finished_at}
-                                            onChange={(event) => form.setData('finished_at', event.target.value)}
-                                            aria-invalid={!!form.errors.finished_at || undefined}
-                                        />
-                                    </FormField>
+                                        <span className="text-sm font-medium text-muted-foreground">Menit</span>
+                                    </div>
+                                    {form.errors.duration_minutes && (
+                                        <p className="text-xs text-destructive">{form.errors.duration_minutes}</p>
+                                    )}
+
+                                    {/* Estimated price preview */}
+                                    {estimatedPieceCost !== null && (
+                                        <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/40 p-2 text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
+                                            <span>Estimasi biaya 1 pcs ini:</span>
+                                            <strong className="text-sm font-bold">{formatIdr(estimatedPieceCost)}</strong>
+                                        </div>
+                                    )}
                                 </div>
-                                <Button type="submit" disabled={form.processing || tailors.length === 0}>
+
+                                <Button type="submit" disabled={form.processing || tailors.length === 0} className="mt-2">
                                     {form.processing ? <LoaderCircle className="animate-spin" /> : <Clock />}
-                                    Simpan sample
+                                    Simpan Sample
                                 </Button>
                             </form>
                         )}
@@ -170,29 +307,29 @@ function BenchmarkMath({ article, adopting, isOwner, onAdopt }: { article: Artic
     return (
         <div className="flex flex-col gap-3 rounded-md border bg-muted/40 p-3">
             <div>
-                <p className="text-sm font-semibold text-muted-foreground">Patokan per pcs</p>
-                <p className="font-display text-3xl leading-tight font-bold tabular">{formatIdr(benchmark.suggested_rate)}</p>
-                <p className="text-sm text-muted-foreground">
-                    Rata-rata mentah {formatIdr(benchmark.raw_average)}, dibulatkan ke ribuan. Dihitung {formatIdr(benchmark.hourly_rate)} per jam
-                    {benchmark.calculated_at ? ` · ${formatDateTime(benchmark.calculated_at)}` : ''}.
+                <p className="text-sm font-semibold text-muted-foreground">Patokan Tarif Resmi</p>
+                <p className="font-display text-3xl leading-tight font-bold tabular text-primary">{formatIdr(benchmark.suggested_rate)}</p>
+                <p className="text-xs text-muted-foreground">
+                    Rata-rata mentah {formatIdr(benchmark.raw_average)}, dibulatkan ke ribuan
+                    {benchmark.calculated_at ? ` · Dihitung ${formatDateTime(benchmark.calculated_at)}` : ''}.
                 </p>
             </div>
 
             <ul className="flex flex-col gap-2">
                 {benchmark.points.map((point) => (
-                    <li key={point.role} className="text-base">
+                    <li key={point.role} className="text-sm">
                         <span className="font-semibold">{point.role ? ROLE_LABEL[point.role] : 'Warna'}: </span>
-                        {point.color} · {point.minutes_label} · {formatIdr(point.price)} · {point.tailor_label}
+                        {point.color} · {point.minutes_label} · <strong className="text-foreground">{formatIdr(point.price)}</strong> · {point.tailor_label}
                     </li>
                 ))}
             </ul>
 
             {benchmark.others.length > 0 && (
                 <div>
-                    <p className="text-sm font-semibold text-muted-foreground">Tidak masuk rata-rata</p>
+                    <p className="text-xs font-semibold text-muted-foreground">Tidak masuk rata-rata (warna lainnya)</p>
                     <ul className="mt-1 flex flex-col gap-1">
                         {benchmark.others.map((row) => (
-                            <li key={row.color} className="text-sm text-muted-foreground">
+                            <li key={row.color} className="text-xs text-muted-foreground">
                                 {row.color} · {row.minutes_label} · {formatIdr(row.price)} · {row.tailor_label}
                             </li>
                         ))}
@@ -201,15 +338,20 @@ function BenchmarkMath({ article, adopting, isOwner, onAdopt }: { article: Artic
             )}
 
             {matches ? (
-                <p className="text-sm font-semibold">Tarif resmi memakai patokan ini.</p>
+                <p className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
+                    <Check className="size-4" />
+                    Tarif resmi sudah memakai patokan ini.
+                </p>
             ) : (
-                <p className="text-sm">Tarif resmi tetap {article.sewing_rate > 0 ? formatIdr(article.sewing_rate) : 'kosong'} sampai Anda mengubahnya.</p>
+                <p className="text-xs text-muted-foreground">
+                    Tarif resmi saat ini: {article.sewing_rate > 0 ? formatIdr(article.sewing_rate) : 'Belum diatur'}.
+                </p>
             )}
 
             {isOwner && !matches && (
-                <Button type="button" onClick={onAdopt} disabled={adopting}>
+                <Button type="button" onClick={onAdopt} disabled={adopting} className="mt-1 font-bold">
                     {adopting ? <LoaderCircle className="animate-spin" /> : null}
-                    Pakai patokan {formatIdr(benchmark.suggested_rate)}
+                    Pakai Patokan {formatIdr(benchmark.suggested_rate)}
                 </Button>
             )}
         </div>
@@ -227,7 +369,7 @@ function DeleteSample({ articleId, sampleId }: { articleId: number; sampleId: nu
             className="shrink-0"
             idleClassName="text-destructive hover:text-destructive"
         >
-            <Trash2 />
+            <Trash2 className="size-4" />
             Hapus
         </ConfirmButton>
     );

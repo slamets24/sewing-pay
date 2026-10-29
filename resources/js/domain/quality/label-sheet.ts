@@ -1,4 +1,3 @@
-import { variantLabel } from '@/lib/format';
 import type { DeliveryRecord, QcShipmentRecord } from '@/types/sewing';
 
 export type LabelSize = 'a4' | 'thermal';
@@ -7,10 +6,12 @@ export type LabelSize = 'a4' | 'thermal';
 export type PieceLabel = {
     key: string;
     barcode: string | null;
+    brandName: string | null;
     articleName: string;
     variant: string;
+    tailorCode: string | null;
+    tailorName: string;
     workOrderNumber: string;
-    tailor: string;
     shipmentNumber: string;
     piece: number;
     of: number;
@@ -68,13 +69,18 @@ export class LabelSheet {
     }
 
     private static expand(delivery: DeliveryRecord, shipmentNumber: string): PieceLabel[] {
+        const variantParts = [delivery.color, delivery.size].filter(Boolean);
+        const variant = variantParts.join(' | ');
+
         return Array.from({ length: Math.max(0, delivery.qty) }, (_, index) => ({
             key: `${delivery.id}-${index + 1}`,
             barcode: delivery.barcode_value,
+            brandName: delivery.brand_name || 'AZZAHRA',
             articleName: delivery.article_name,
-            variant: variantLabel(delivery.color, delivery.size),
+            variant,
+            tailorCode: delivery.tailor_code,
+            tailorName: delivery.tailor_name,
             workOrderNumber: delivery.work_order_number,
-            tailor: LabelSheet.tailorLabel(delivery),
             shipmentNumber,
             piece: index + 1,
             of: delivery.qty,

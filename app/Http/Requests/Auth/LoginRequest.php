@@ -60,6 +60,14 @@ class LoginRequest extends FormRequest
                 'email' => 'Penjahit masuk lewat tautan portal, bukan email.',
             ]);
         }
+
+        if ($this->user()?->role === UserRole::Qc) {
+            Auth::logout();
+
+            throw ValidationException::withMessages([
+                'email' => 'Aplikasi ini hanya untuk internal divisi jahit. Divisi QC tidak memiliki akses login.',
+            ]);
+        }
     }
 
     /**

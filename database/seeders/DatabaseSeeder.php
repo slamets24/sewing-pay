@@ -30,7 +30,7 @@ class DatabaseSeeder extends Seeder
         $this->call(RevisionPartSeeder::class);
 
         if (app()->environment('local')) {
-            $this->call(SewingDemoSeeder::class);
+            $this->call(FullDemoSeeder::class);
         }
     }
 }

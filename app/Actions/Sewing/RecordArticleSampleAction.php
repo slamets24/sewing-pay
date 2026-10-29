@@ -5,6 +5,7 @@ namespace App\Actions\Sewing;
 use App\Models\Article;
 use App\Models\ArticleSewingSample;
 use App\Models\Tailor;
+use App\Models\TailorAttendance;
 use App\Models\User;
 use App\Services\Sewing\ArticlePriceBenchmark;
 use Illuminate\Support\Carbon;
@@ -16,7 +17,7 @@ class RecordArticleSampleAction
     public function __construct(private ArticlePriceBenchmark $benchmark) {}
 
     /**
-     * @param  array{tailor_id: int, color: string, started_at: string, finished_at: string}  $data
+     * @param  array{tailor_id: int, color: string, started_at?: string|null, finished_at?: string|null, duration_minutes?: float|int|null, working_hours?: int|null}  $data
      */
     public function execute(Article $article, array $data, ?User $actor = null): ArticleSewingSample
     {
@@ -26,20 +27,41 @@ class RecordArticleSampleAction
             throw ValidationException::withMessages(['tailor_id' => 'Pilih penjahit yang masih aktif.']);
         }
 
-        $started = Carbon::parse($data['started_at']);
-        $finished = Carbon::parse($data['finished_at']);
-        $seconds = $finished->getTimestamp() - $started->getTimestamp();
+        if (! empty($data['duration_minutes'])) {
+            $seconds = (int) round(((float) $data['duration_minutes']) * 60);
+            $finished = ! empty($data['finished_at']) ? Carbon::parse($data['finished_at']) : now();
+            $started = ! empty($data['started_at']) ? Carbon::parse($data['started_at']) : (clone $finished)->subSeconds($seconds);
+        } else {
+            $started = Carbon::parse($data['started_at']);
+            $finished = Carbon::parse($data['finished_at']);
+            $seconds = $finished->getTimestamp() - $started->getTimestamp();
+        }
+
+        $errorKey = ! empty($data['duration_minutes']) ? 'duration_minutes' : 'finished_at';
 
         if ($seconds < 60) {
-            throw ValidationException::withMessages(['finished_at' => 'Waktu selesai minimal 1 menit setelah mulai.']);
+            throw ValidationException::withMessages([$errorKey => 'Waktu pengerjaan minimal 1 menit setelah mulai.']);
         }
 
         if ($seconds > 24 * 3600) {
-            throw ValidationException::withMessages(['finished_at' => 'Satu pcs dicatat paling lama 24 jam.']);
+            throw ValidationException::withMessages([$errorKey => 'Satu pcs dicatat paling lama 24 jam.']);
         }
+
+        // Determine working hours & meal allowance
+        $workingHours = ! empty($data['working_hours']) ? (int) $data['working_hours'] : null;
+
+        if ($workingHours === null) {
+            // Check today's attendance for this tailor
+            $todayAttendance = $tailor->attendances()->whereDate('date', today())->first();
+            $workingHours = $todayAttendance?->working_hours ?? (int) config('sewing.default_working_hours', 9);
+        }
+
+        $benchmarkStandard = TailorAttendance::standardBenchmarkRate($workingHours);
 
         $sample = $article->sewingSamples()->create([
             'tailor_id' => $tailor->id,
+            'working_hours' => $workingHours,
+            'meal_allowance' => $benchmarkStandard,
             'color' => preg_replace('/\s+/u', ' ', trim($data['color'])) ?? '',
             'started_at' => $started,
             'finished_at' => $finished,

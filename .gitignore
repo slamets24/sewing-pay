@@ -63,3 +63,5 @@ Homestead.yaml
 
 # Local planning notes, not part of the app
 /docs/
+
+.mcp.json

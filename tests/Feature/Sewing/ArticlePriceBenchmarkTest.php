@@ -31,20 +31,20 @@ class ArticlePriceBenchmarkTest extends TestCase
 
         $suggestion = ArticlePriceSuggestion::query()->where('article_id', $article->id)->first();
         $this->assertSame(26_000, $suggestion->hourly_rate);
-        $this->assertSame(31_000, $suggestion->suggested_rate);
+        $this->assertSame(32_000, $suggestion->suggested_rate);
         $this->assertSame(0, $article->refresh()->sewing_rate);
 
         $this->actingAs($owner)
             ->patch(route('articles.update', $article), ['sewing_rate' => $suggestion->suggested_rate])
             ->assertSessionHasNoErrors();
-        $this->assertSame(31_000, $article->refresh()->sewing_rate);
+        $this->assertSame(32_000, $article->refresh()->sewing_rate);
 
         $this->actingAs($owner)
             ->delete(route('articles.samples.destroy', [$article, ArticleSewingSample::query()->where('color', 'Navy')->first()]))
             ->assertRedirect();
 
         $this->assertNull(ArticlePriceSuggestion::query()->where('article_id', $article->id)->value('suggested_rate'));
-        $this->assertSame(31_000, $article->refresh()->sewing_rate);
+        $this->assertSame(32_000, $article->refresh()->sewing_rate);
 
         $this->actingAs($this->warehouseAdmin())
             ->post(route('articles.samples.store', $article), [
@@ -70,7 +70,7 @@ class ArticlePriceBenchmarkTest extends TestCase
             ->get(route('articles.index'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->where('articles.0.benchmark.suggested_rate', 31_000)
+                ->where('articles.0.benchmark.suggested_rate', 32_000)
                 ->where('articles.0.benchmark.points.1.color', 'Merah')
                 ->where('articles.0.sewing_rate', 0)
                 ->where('benchmarkHourlyRate', 26_000));
@@ -90,6 +90,28 @@ class ArticlePriceBenchmarkTest extends TestCase
             ->assertSessionHasErrors('finished_at');
 
         $this->assertSame(0, ArticleSewingSample::query()->count());
+    }
+
+    public function test_sample_can_be_recorded_with_quick_duration_minutes_and_shift(): void
+    {
+        $owner = $this->owner();
+        $article = $this->article('Seruni', 0);
+        $tailor = $this->tailor(name: 'Pak Darto');
+
+        $this->actingAs($owner)
+            ->post(route('articles.samples.store', $article), [
+                'tailor_id' => $tailor->id,
+                'color' => 'Navy',
+                'working_hours' => 10,
+                'duration_minutes' => 60,
+            ])
+            ->assertSessionHasNoErrors();
+
+        $sample = ArticleSewingSample::query()->where('article_id', $article->id)->first();
+        $this->assertNotNull($sample);
+        $this->assertSame(10, $sample->working_hours);
+        $this->assertSame(265_000, $sample->meal_allowance);
+        $this->assertSame(3600, $sample->duration_seconds);
     }
 
     private function record(User $owner, Article $article, int $tailorId, string $color, int $minutes): void

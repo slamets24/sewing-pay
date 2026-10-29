@@ -1,24 +1,30 @@
-import { Code128 } from '@/domain/quality/code128';
-import { useEffect, useRef, useState } from 'react';
+import { QrCode } from '@/domain/quality/qr-code';
+import { useMemo } from 'react';
 
-/** Code128 barcode for one label; a dashed placeholder box when the variant has no barcode yet. */
+/** QR Code for one label with barcode text underneath; dashed box when barcode is missing or invalid. */
 export function BarcodeSvg({ value }: { value: string | null }) {
-    const svgRef = useRef<SVGSVGElement>(null);
-    const [invalid, setInvalid] = useState(false);
-
-    useEffect(() => {
-        if (!value || !svgRef.current) return;
-
-        setInvalid(!Code128.label.draw(svgRef.current, value));
+    const svgHtml = useMemo(() => {
+        if (!value) return null;
+        return QrCode.generateSvg(value, 0);
     }, [value]);
 
-    const missing = !value || invalid;
+    const missing = !value || !svgHtml;
 
     return (
         <div className="qc-label__code">
-            {/* The <svg> stays mounted so a corrected value can be drawn into it again. */}
-            <svg ref={svgRef} className="qc-label__svg" style={missing ? { display: 'none' } : undefined} role="img" aria-label={value ? `Barcode ${value}` : undefined} />
-            {missing && <div className="qc-label__missing">{value ? `BARCODE TIDAK VALID: ${value}` : 'BARCODE BELUM ADA'}</div>}
+            {!missing ? (
+                <div
+                    className="qc-label__qr"
+                    role="img"
+                    aria-label={`QR Code ${value}`}
+                    dangerouslySetInnerHTML={{ __html: svgHtml }}
+                />
+            ) : (
+                <div className="qc-label__missing">
+                    {value ? 'BARCODE TIDAK VALID' : 'BARCODE BELUM ADA'}
+                </div>
+            )}
+            <div className="qc-label__barcode-text">{value || '-'}</div>
         </div>
     );
 }

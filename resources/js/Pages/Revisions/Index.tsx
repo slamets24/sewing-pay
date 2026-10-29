@@ -31,8 +31,8 @@ export default function RevisionsIndex({ filters, revisions, sewingItems, shippe
     const applyFilter = (next: RevisionFilter) => router.get(route('revisions.index'), next.toQuery(), { preserveState: true, preserveScroll: true });
 
     return (
-        <AppLayout title="Revisi">
-            <PageIntro>Catat revisi yang dilaporkan QC, atau cacat yang ketemu saat masih dijahit. Revisi jahit gratis; revisi bahan menunggu bahan pengganti lalu dibayar per bagian.</PageIntro>
+        <AppLayout title="Catat Revisi">
+            <PageIntro>Admin mencatat laporan temuan revisi dari divisi QC atau cacat bahan selama proses jahit. Revisi jahit dikerjakan ulang penjahit; revisi bahan menunggu bahan pengganti.</PageIntro>
 
             <div className="mb-5 flex flex-col gap-3 lg:flex-row-reverse lg:items-start">
                 <RevisionReportSheet shippedDeliveries={shippedDeliveries} sewingItems={sewingItems} revisionParts={revisionParts} tailors={tailors} preset={preset} />

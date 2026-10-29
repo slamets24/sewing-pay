@@ -18,6 +18,7 @@ class StorePickupRequest extends FormRequest
     {
         return [
             'tailor_id' => ['required', 'integer', 'exists:tailors,id'],
+            'from_desk' => ['nullable', 'boolean'],
             'picked_at' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'items' => ['required', 'array', 'min:1', 'max:100'],

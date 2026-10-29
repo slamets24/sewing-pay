@@ -7,11 +7,12 @@ import { cn } from '@/lib/utils';
 import { floorActions } from '@/services/floor-actions';
 import type { BoardRow, PickupItemRecord } from '@/types/sewing';
 import { Link } from '@inertiajs/react';
-import { HandPlatter, PackageCheck, TriangleAlert, Undo2 } from 'lucide-react';
+import { HandPlatter, PackageCheck, TriangleAlert, Undo2, Zap } from 'lucide-react';
 import { useState } from 'react';
 
 /** One tailor and the pieces they hold. With `actions`, each line gets one-tap "setor" buttons. */
 export function HoldingCard({ row, actions = false }: { row: BoardRow; actions?: boolean }) {
+    const [batchBusy, setBatchBusy] = useState(false);
     const initials = row.tailor.name
         .split(/\s+/)
         .filter(Boolean)
@@ -32,6 +33,30 @@ export function HoldingCard({ row, actions = false }: { row: BoardRow; actions?:
                 {row.tailor.type === 'makloon' && <ToneBadge tone="qc">Makloon</ToneBadge>}
             </header>
 
+            {actions && row.remaining_qty > 0 && (
+                <div className="flex items-center justify-between gap-2 border-b bg-emerald-500/10 px-4 py-2">
+                    <span className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+                        {row.items.length > 1 ? `Semua ${row.items.length} barang` : '1 barang'}
+                    </span>
+                    <Button
+                        size="sm"
+                        disabled={batchBusy}
+                        onClick={() =>
+                            floorActions.send(
+                                'post',
+                                route('deliveries.batch-tailor', row.tailor.id),
+                                {},
+                                { onStart: () => setBatchBusy(true), onFinish: () => setBatchBusy(false) },
+                            )
+                        }
+                        className="h-8 gap-1.5 bg-emerald-600 text-xs font-bold text-white hover:bg-emerald-700"
+                    >
+                        <Zap className="size-3.5" />
+                        Setor Semua ({row.remaining_qty} pcs)
+                    </Button>
+                </div>
+            )}
+
             <ul className="flex flex-col divide-y">
                 {row.items.map((item) => (
                     <HoldingLine key={item.id} item={item} actions={actions} />
@@ -39,11 +64,17 @@ export function HoldingCard({ row, actions = false }: { row: BoardRow; actions?:
             </ul>
 
             {actions && (
-                <footer className="mt-auto border-t px-4 py-3">
-                    <Button asChild variant="outline" className="w-full">
+                <footer className="mt-auto flex gap-2 border-t px-4 py-3">
+                    <Button asChild variant="outline" className="flex-1">
+                        <Link href={route('desk.index', { tailor: row.tailor.id })}>
+                            <Zap />
+                            Buka di Loket
+                        </Link>
+                    </Button>
+                    <Button asChild variant="ghost" className="flex-1">
                         <Link href={route('pickups.create', { tailor: row.tailor.id })}>
                             <HandPlatter />
-                            Ambil barang lagi
+                            Ambil lagi
                         </Link>
                     </Button>
                 </footer>

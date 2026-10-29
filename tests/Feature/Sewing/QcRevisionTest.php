@@ -77,12 +77,12 @@ class QcRevisionTest extends TestCase
         $this->assertSame(RevisionStatus::WaitingMaterial, $material->status);
     }
 
-    public function test_qc_staff_can_only_record_revisions(): void
+    public function test_qc_staff_cannot_access_the_application(): void
     {
         $qc = User::factory()->qc()->create();
 
-        $this->actingAs($qc)->get('/')->assertRedirect(route('revisions.index'));
-        $this->actingAs($qc)->get(route('revisions.index'))->assertOk()->assertInertia(fn ($page) => $page->has('shippedDeliveries'));
+        $this->actingAs($qc)->get('/')->assertRedirect(route('login'));
+        $this->actingAs($qc)->get(route('revisions.index'))->assertForbidden();
         $this->actingAs($qc)->get(route('qc-shipments.index'))->assertForbidden();
     }
 

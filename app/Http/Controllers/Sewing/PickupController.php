@@ -33,6 +33,11 @@ class PickupController extends Controller
         $pickup = $createPickup->execute($request->validated(), $request->user()->id);
         $qty = $pickup->items->sum('qty');
 
+        if ($request->boolean('from_desk')) {
+            return Redirect::route('desk.index', ['tailor' => $pickup->tailor_id])
+                ->with('status', "{$pickup->tailor->name} ambil {$qty} pcs ({$pickup->items->count()} barang).");
+        }
+
         return Redirect::route('deliveries.index')
             ->with('status', "{$pickup->tailor->name} ambil {$qty} pcs ({$pickup->items->count()} barang).");
     }

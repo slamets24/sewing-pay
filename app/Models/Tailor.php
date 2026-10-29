@@ -124,6 +124,11 @@ class Tailor extends Model
         return $this->hasMany(PayoutSlip::class);
     }
 
+    public function attendances(): HasMany
+    {
+        return $this->hasMany(TailorAttendance::class);
+    }
+
     public function isPaidHere(): bool
     {
         return $this->type->isPaidHere();

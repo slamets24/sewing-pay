@@ -11,6 +11,8 @@ class ArticleSewingSample extends Model
     protected $fillable = [
         'article_id',
         'tailor_id',
+        'working_hours',
+        'meal_allowance',
         'color',
         'started_at',
         'finished_at',
@@ -24,6 +26,8 @@ class ArticleSewingSample extends Model
             'started_at' => 'datetime',
             'finished_at' => 'datetime',
             'duration_seconds' => 'integer',
+            'working_hours' => 'integer',
+            'meal_allowance' => 'integer',
         ];
     }
 

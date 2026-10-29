@@ -43,10 +43,12 @@ class ArticlePriceBenchmark
                 'color' => $sample['color'],
                 'tailor_id' => $sample['tailor_id'],
                 'tailor_name' => $sample['tailor_name'],
+                'working_hours' => $sample['working_hours'] ?? 9,
+                'meal_allowance' => $sample['meal_allowance'] ?? 241400,
                 'started_at' => $sample['started_at'],
                 'finished_at' => $sample['finished_at'],
                 'minutes_label' => $this->minutesLabel($sample['duration_seconds']),
-                'price' => $this->price($sample['duration_seconds'], $hourlyRate),
+                'price' => $this->samplePrice($sample, $hourlyRate),
             ], $samples),
         ];
     }
@@ -66,9 +68,11 @@ class ArticlePriceBenchmark
             'color' => $sample->color,
             'tailor_id' => $sample->tailor_id,
             'tailor_name' => $sample->tailor->name,
+            'working_hours' => $sample->working_hours ?? 9,
+            'meal_allowance' => $sample->meal_allowance ?? 241400,
             'duration_seconds' => $sample->duration_seconds,
-            'started_at' => $sample->started_at->format('Y-m-d H:i'),
-            'finished_at' => $sample->finished_at->format('Y-m-d H:i'),
+            'started_at' => $sample->started_at?->format('Y-m-d H:i') ?? '',
+            'finished_at' => $sample->finished_at?->format('Y-m-d H:i') ?? '',
         ])->all(), (int) config('sewing.benchmark_hourly_rate'));
 
         $payload['calculated_at'] = now()->format('Y-m-d H:i');
@@ -102,10 +106,13 @@ class ArticlePriceBenchmark
 
         foreach ($groups as $group) {
             $seconds = array_sum(array_column($group['pieces'], 'duration_seconds')) / count($group['pieces']);
+            $piecePrices = array_map(fn (array $piece) => $this->samplePrice($piece, $hourlyRate), $group['pieces']);
+            $avgPrice = (int) round(array_sum($piecePrices) / count($piecePrices));
+
             $colors[] = [
                 'color' => $group['color'],
                 'seconds' => $seconds,
-                'price' => $this->price($seconds, $hourlyRate),
+                'price' => $avgPrice,
                 'minutes_label' => $this->minutesLabel($seconds),
                 'tailor_label' => $this->tailorLabel($group['pieces']),
             ];
@@ -176,18 +183,34 @@ class ArticlePriceBenchmark
     }
 
     /**
-     * @param  list<array{tailor_name: string, duration_seconds: int}>  $pieces
+     * @param  list<array{tailor_name: string, duration_seconds: int, working_hours?: int|null}>  $pieces
      */
     private function tailorLabel(array $pieces): string
     {
         if (count($pieces) === 1) {
-            return $pieces[0]['tailor_name'];
+            $p = $pieces[0];
+            $hours = !empty($p['working_hours']) ? ' ('.$p['working_hours'].'j)' : '';
+
+            return $p['tailor_name'].$hours;
         }
 
         return implode(', ', array_map(
-            fn (array $piece) => $piece['tailor_name'].' ('.$this->minutesLabel($piece['duration_seconds']).')',
+            fn (array $piece) => $piece['tailor_name'].' ('.$this->minutesLabel($piece['duration_seconds']).(!empty($piece['working_hours']) ? ', '.$piece['working_hours'].'j' : '').')',
             $pieces,
         ));
+    }
+
+    public function samplePrice(array $sample, int $fallbackHourlyRate = 26_000): int
+    {
+        $seconds = $sample['duration_seconds'] ?? 0;
+        $workingHours = $sample['working_hours'] ?? null;
+        $mealAllowance = $sample['meal_allowance'] ?? null;
+
+        if ($workingHours && $mealAllowance && $workingHours > 0) {
+            return (int) round($seconds / ($workingHours * 3600) * $mealAllowance);
+        }
+
+        return (int) round($seconds / 3600 * $fallbackHourlyRate);
     }
 
     private function price(int|float $seconds, int $hourlyRate): int

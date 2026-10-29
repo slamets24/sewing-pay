@@ -12,6 +12,7 @@ use App\Models\PayoutSlip;
 use App\Models\Revision;
 use App\Models\SewingDelivery;
 use App\Models\Tailor;
+use App\Models\TailorAttendance;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -200,5 +201,52 @@ class PayoutTest extends TestCase
             ->assertInertia(fn ($page) => $page->component('Portal/Index')->where('tailor.name', 'Bu Siti'));
 
         $this->get('/portal/tidak-ada')->assertNotFound();
+    }
+
+    public function test_payout_includes_attendance_meal_allowance_in_slip_lines_and_accumulates(): void
+    {
+        $owner = $this->owner();
+        $siti = $this->tailor(name: 'Bu Siti');
+
+        // Siti delivers 2 pcs @ 7.000 = 14.000
+        $this->delivered($siti, 2, '2026-10-05 10:00');
+
+        // Siti attends 2 days:
+        // Day 1: 9 hours -> 30.000
+        TailorAttendance::create([
+            'tailor_id' => $siti->id,
+            'date' => '2026-10-05',
+            'clock_in' => '08:00',
+            'clock_out' => '17:00',
+            'working_hours' => 9,
+            'meal_allowance' => 30000,
+            'status' => 'present',
+        ]);
+
+        // Day 2: 11 hours -> 35.000
+        TailorAttendance::create([
+            'tailor_id' => $siti->id,
+            'date' => '2026-10-06',
+            'clock_in' => '08:00',
+            'clock_out' => '19:00',
+            'working_hours' => 11,
+            'meal_allowance' => 35000,
+            'status' => 'present',
+        ]);
+
+        // Cutoff on 2026-10-10
+        $this->actingAs($owner)->post(route('payouts.store'), ['cutoff_date' => '2026-10-10'])->assertSessionHasNoErrors();
+
+        $payout = Payout::query()->sole();
+        $slip = $payout->slips()->sole();
+
+        // 14.000 (sewing) + 30.000 + 35.000 = 79.000
+        $this->assertSame(79000, $slip->gross_amount);
+        $this->assertSame(79000, $slip->net_amount);
+        $this->assertCount(3, $slip->lines);
+
+        $mealLines = $slip->lines()->where('type', 'meal_allowance')->get();
+        $this->assertCount(2, $mealLines);
+        $this->assertSame(65000, (int) $mealLines->sum('subtotal'));
     }
 }

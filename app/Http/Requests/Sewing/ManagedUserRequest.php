@@ -27,7 +27,7 @@ class ManagedUserRequest extends FormRequest
             'name' => [$isCreate ? 'required' : 'prohibited', 'string', 'max:255'],
             'email' => [$isCreate ? 'required' : 'prohibited', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'password' => [$isCreate ? 'required' : 'prohibited', 'confirmed', Password::defaults()],
-            'role' => ['required', Rule::enum(UserRole::class), Rule::notIn([UserRole::Tailor->value])],
+            'role' => ['required', Rule::enum(UserRole::class), Rule::notIn([UserRole::Tailor->value, UserRole::Qc->value])],
         ];
     }
 
@@ -37,7 +37,7 @@ class ManagedUserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'role.not_in' => 'Penjahit tidak punya akun email. Buat tautan portal dari menu Penjahit.',
+            'role.not_in' => 'Hanya akun Owner dan Admin internal divisi jahit yang dapat dibuat. Divisi lain dan penjahit tidak memiliki akses akun.',
         ];
     }
 }

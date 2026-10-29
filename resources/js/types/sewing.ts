@@ -15,6 +15,8 @@ export type TailorRecord = {
     address: string | null;
     is_active: boolean;
     notes: string | null;
+    holding_qty?: number;
+    items_count?: number;
     has_portal?: boolean;
     portal_url?: string | null;
     portal_pin_is_default?: boolean;
@@ -132,6 +134,7 @@ export type DeliveryRecord = {
     tailor_code: string | null;
     work_order_item_id: number;
     work_order_number: string;
+    brand_name: string | null;
     article_name: string;
     color: string | null;
     size: string | null;
@@ -166,6 +169,7 @@ export type RevisionRecord = {
     found_at: 'sewing' | 'qc';
     found_at_label: string;
     work_order_number: string;
+    brand_name: string | null;
     article_name: string;
     color: string | null;
     size: string | null;
@@ -213,7 +217,7 @@ export type PayoutSummary = {
 
 export type PayoutSlipLineRecord = {
     id: number;
-    type: 'sewing' | 'revision';
+    type: 'sewing' | 'revision' | 'meal_allowance';
     type_label: string;
     description: string;
     color: string | null;
@@ -258,6 +262,8 @@ export type PriceBenchmarkSample = {
     color: string;
     tailor_id: number;
     tailor_name: string;
+    working_hours?: number;
+    meal_allowance?: number;
     started_at: string;
     finished_at: string;
     minutes_label: string;

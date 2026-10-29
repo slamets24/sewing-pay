@@ -11,6 +11,8 @@ export class PayoutTone {
     }
 
     static forLineType(type: PayoutLineType): Tone {
-        return type === 'revision' ? 'revision' : 'done';
+        if (type === 'revision') return 'revision';
+        if (type === 'meal_allowance') return 'primary';
+        return 'done';
     }
 }

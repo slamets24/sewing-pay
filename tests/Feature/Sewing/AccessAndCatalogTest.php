@@ -21,13 +21,13 @@ class AccessAndCatalogTest extends TestCase
 
         $this->actingAs($this->owner())->get('/')->assertRedirect(route('dashboard'));
         $this->actingAs($admin)->get('/')->assertRedirect(route('dashboard'));
-        $this->actingAs($qc)->get('/')->assertRedirect(route('revisions.index'));
+        $this->actingAs($qc)->get('/')->assertRedirect(route('login'));
 
         $this->actingAs($admin)->get(route('work-orders.index'))->assertOk();
         $this->actingAs($admin)->get(route('payouts.index'))->assertForbidden();
         $this->actingAs($admin)->get(route('tailors.index'))->assertForbidden();
 
-        $this->actingAs($qc)->get(route('revisions.index'))->assertOk();
+        $this->actingAs($qc)->get(route('revisions.index'))->assertForbidden();
         $this->actingAs($qc)->get(route('work-orders.index'))->assertForbidden();
     }
 

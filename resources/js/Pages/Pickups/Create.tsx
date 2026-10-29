@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { FloorActions } from '@/services/floor-actions';
 import type { TailorRecord, WorkOrderItemRecord } from '@/types/sewing';
 import { Link, router } from '@inertiajs/react';
-import { Check, ClipboardList, HandPlatter, Search, ShoppingBasket, UserRound, X } from 'lucide-react';
+import { Check, ClipboardList, HandPlatter, Search, ShoppingBasket, UserRound, X, Zap } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -26,9 +26,16 @@ type CreateProps = {
 export default function PickupCreate({ tailors, availableItems, presetTailorId }: CreateProps) {
     const [cart, setCart] = useState(() => PickupCart.start(tailors.find((tailor) => tailor.id === presetTailorId) ?? null));
     const [query, setQuery] = useState('');
+    const [tailorQuery, setTailorQuery] = useState('');
     const [processing, setProcessing] = useState(false);
 
     useEffect(() => setCart((current) => current.syncWith(availableItems)), [availableItems]);
+
+    const filteredTailors = useMemo(() => {
+        const needle = tailorQuery.toLowerCase().trim();
+
+        return needle ? tailors.filter((t) => `${t.name} ${t.code ?? ''}`.toLowerCase().includes(needle)) : tailors;
+    }, [tailors, tailorQuery]);
 
     const groups = useMemo(() => {
         const needle = query.toLowerCase().trim();
@@ -54,40 +61,69 @@ export default function PickupCreate({ tailors, availableItems, presetTailorId }
 
     return (
         <AppLayout title="Ambil barang">
-            <PageIntro>Pilih penjahit, lalu barang yang dibawa. Satu kali ambil boleh beberapa artikel dari WO berbeda.</PageIntro>
+            <PageIntro
+                actions={
+                    <Button asChild className="gap-1.5 font-bold shadow-sm">
+                        <Link href={route('desk.index', cart.tailor ? { tailor: cart.tailor.id } : undefined)}>
+                            <Zap className="size-4" />
+                            Loket Cepat (Setor & Ambil)
+                        </Link>
+                    </Button>
+                }
+            >
+                Pilih penjahit, lalu barang yang dibawa. Satu kali ambil boleh beberapa artikel dari WO berbeda.
+            </PageIntro>
 
             <div className="flex flex-col gap-5 pb-40 lg:pb-28">
                 <Section title="1. Siapa yang ambil?" icon={UserRound}>
                     {tailors.length === 0 ? (
                         <EmptyState>Belum ada penjahit aktif. Owner bisa menambahkannya di menu Penjahit.</EmptyState>
                     ) : (
-                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-                            {tailors.map((tailor) => {
-                                const selected = cart.tailor?.id === tailor.id;
+                        <>
+                            {tailors.length > 6 && (
+                                <div className="relative mb-3">
+                                    <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                                    <Input
+                                        value={tailorQuery}
+                                        onChange={(event) => setTailorQuery(event.target.value)}
+                                        placeholder="Cari nama atau kode penjahit (50 penjahit)..."
+                                        className="pl-9"
+                                    />
+                                </div>
+                            )}
 
-                                return (
-                                    <button
-                                        key={tailor.id}
-                                        type="button"
-                                        onClick={() => setCart(cart.withTailor(selected ? null : tailor))}
-                                        aria-pressed={selected}
-                                        className={cn(
-                                            'flex min-h-16 flex-col items-start justify-center gap-1 rounded-lg border-2 bg-card px-3 py-2 text-left transition-colors focus-visible:ring-4 focus-visible:ring-ring/50 focus-visible:outline-none',
-                                            selected ? 'border-primary bg-primary/20' : 'hover:border-foreground/40',
-                                        )}
-                                    >
-                                        <span className="flex w-full items-center justify-between gap-2 text-base font-bold">
-                                            {tailor.name}
-                                            {selected && <Check className="size-5 shrink-0" />}
-                                        </span>
-                                        <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                                            {tailor.code}
-                                            {tailor.type === 'makloon' && <ToneBadge tone="qc">Makloon</ToneBadge>}
-                                        </span>
-                                    </button>
-                                );
-                            })}
-                        </div>
+                            {filteredTailors.length === 0 ? (
+                                <EmptyState>Tidak ada penjahit yang cocok dengan "{tailorQuery}".</EmptyState>
+                            ) : (
+                                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                                    {filteredTailors.map((tailor) => {
+                                        const selected = cart.tailor?.id === tailor.id;
+
+                                        return (
+                                            <button
+                                                key={tailor.id}
+                                                type="button"
+                                                onClick={() => setCart(cart.withTailor(selected ? null : tailor))}
+                                                aria-pressed={selected}
+                                                className={cn(
+                                                    'flex min-h-16 flex-col items-start justify-center gap-1 rounded-lg border-2 bg-card px-3 py-2 text-left transition-colors focus-visible:ring-4 focus-visible:ring-ring/50 focus-visible:outline-none',
+                                                    selected ? 'border-primary bg-primary/20' : 'hover:border-foreground/40',
+                                                )}
+                                            >
+                                                <span className="flex w-full items-center justify-between gap-2 text-base font-bold">
+                                                    {tailor.name}
+                                                    {selected && <Check className="size-5 shrink-0" />}
+                                                </span>
+                                                <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                                                    {tailor.code}
+                                                    {tailor.type === 'makloon' && <ToneBadge tone="qc">Makloon</ToneBadge>}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </>
                     )}
                 </Section>
 

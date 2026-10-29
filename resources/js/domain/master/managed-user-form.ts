@@ -22,10 +22,10 @@ export type PasswordFormData = {
 export type RoleOption = { value: UserRole; label: string; description: string };
 
 const ROLE_INFO: Record<UserRole, { description: string; tone: Tone }> = {
-    superadmin: { description: 'Semua akses, termasuk tarif dan gaji.', tone: 'primary' },
-    admin: { description: 'WO, ambil, setor, kirim QC.', tone: 'ready' },
-    qc: { description: 'Cek kiriman dan catat revisi.', tone: 'qc' },
-    penjahit: { description: 'Portal lewat tautan, bukan akun email.', tone: 'sewing' },
+    superadmin: { description: 'Owner: Akses penuh termasuk tarif, gaji, dan pengaturan sistem.', tone: 'primary' },
+    admin: { description: 'Admin Divisi Jahit: Input WO, ambil, setor, kirim ke QC, dan catat revisi.', tone: 'ready' },
+    qc: { description: 'Non-aktif (Divisi QC luar tidak memiliki akses ke aplikasi ini).', tone: 'neutral' },
+    penjahit: { description: 'Portal penjahit via tautan privat & PIN, bukan akun email.', tone: 'sewing' },
 };
 
 /** The four roles with plain-language descriptions; labels come from the server so they stay in sync. */

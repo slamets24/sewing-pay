@@ -10,14 +10,15 @@ use App\Models\Payout;
 use App\Models\PayoutSlip;
 use App\Models\Revision;
 use App\Models\SewingDelivery;
+use App\Models\TailorAttendance;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
- * (Re)builds a draft pay run: every payable setor and finished material revision up to the cut-off date
- * that is not on any slip yet. Bonus, deductions and notes typed earlier are kept per tailor.
+ * (Re)builds a draft pay run: every payable setor, finished material revision, and attendance meal allowance
+ * up to the cut-off date that is not on any slip yet. Bonus, deductions and notes typed earlier are kept per tailor.
  */
 class GeneratePayoutAction
 {
@@ -40,11 +41,24 @@ class GeneratePayoutAction
             $cutoff = $payout->cutoff_date->copy()->endOfDay();
             $deliveries = $this->unpaidDeliveries($cutoff)->groupBy('tailor_id');
             $revisions = $this->unpaidRevisions($cutoff)->groupBy('tailor_id');
+            $attendances = $this->unpaidAttendances($cutoff)->groupBy('tailor_id');
 
             $totals = ['tailors' => 0, 'qty' => 0, 'amount' => 0];
 
-            foreach ($deliveries->keys()->merge($revisions->keys())->unique() as $tailorId) {
-                $slip = $this->buildSlip($payout, (int) $tailorId, $deliveries->get($tailorId, collect()), $revisions->get($tailorId, collect()), $adjustments->get($tailorId));
+            $allTailorIds = $deliveries->keys()
+                ->merge($revisions->keys())
+                ->merge($attendances->keys())
+                ->unique();
+
+            foreach ($allTailorIds as $tailorId) {
+                $slip = $this->buildSlip(
+                    $payout,
+                    (int) $tailorId,
+                    $deliveries->get($tailorId, collect()),
+                    $revisions->get($tailorId, collect()),
+                    $attendances->get($tailorId, collect()),
+                    $adjustments->get($tailorId)
+                );
 
                 $totals['tailors']++;
                 $totals['qty'] += $slip->qty;
@@ -93,12 +107,33 @@ class GeneratePayoutAction
     }
 
     /**
+     * @return Collection<int, TailorAttendance>
+     */
+    private function unpaidAttendances($cutoff): Collection
+    {
+        return TailorAttendance::query()
+            ->where('status', 'present')
+            ->where('meal_allowance', '>', 0)
+            ->where('date', '<=', $cutoff->toDateString())
+            ->whereDoesntHave('slipLine')
+            ->orderBy('date')
+            ->get();
+    }
+
+    /**
      * @param  Collection<int, SewingDelivery>  $deliveries
      * @param  Collection<int, Revision>  $revisions
+     * @param  Collection<int, TailorAttendance>  $attendances
      */
-    private function buildSlip(Payout $payout, int $tailorId, Collection $deliveries, Collection $revisions, ?PayoutSlip $previous): PayoutSlip
-    {
-        $gross = (int) $deliveries->sum('subtotal') + (int) $revisions->sum('subtotal');
+    private function buildSlip(
+        Payout $payout,
+        int $tailorId,
+        Collection $deliveries,
+        Collection $revisions,
+        Collection $attendances,
+        ?PayoutSlip $previous
+    ): PayoutSlip {
+        $gross = (int) $deliveries->sum('subtotal') + (int) $revisions->sum('subtotal') + (int) $attendances->sum('meal_allowance');
         $bonus = $previous?->bonus_amount ?? 0;
         $deduction = min($previous?->deduction_amount ?? 0, $gross + $bonus);
 
@@ -140,6 +175,23 @@ class GeneratePayoutAction
                 'rate' => $revision->rate,
                 'subtotal' => $revision->subtotal,
                 'occurred_at' => $revision->completed_at,
+            ]);
+        }
+
+        foreach ($attendances as $attendance) {
+            $dateLabel = $attendance->date->translatedFormat('d M Y');
+            $hoursLabel = $attendance->working_hours ? " ({$attendance->working_hours}j)" : '';
+
+            $slip->lines()->create([
+                'type' => PayoutLineType::MealAllowance,
+                'tailor_attendance_id' => $attendance->id,
+                'description' => "Uang makan kehadiran {$dateLabel}{$hoursLabel}",
+                'color' => null,
+                'size' => null,
+                'qty' => 1,
+                'rate' => $attendance->meal_allowance,
+                'subtotal' => $attendance->meal_allowance,
+                'occurred_at' => $attendance->date->copy()->setTime(17, 0),
             ]);
         }
 

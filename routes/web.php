@@ -11,8 +11,10 @@ use App\Http\Controllers\Sewing\PickupController;
 use App\Http\Controllers\Sewing\PortalController;
 use App\Http\Controllers\Sewing\PublicPayoutSlipController;
 use App\Http\Controllers\Sewing\QcShipmentController;
+use App\Http\Controllers\Sewing\QuickDeskController;
 use App\Http\Controllers\Sewing\RevisionController;
 use App\Http\Controllers\Sewing\RevisionPartController;
+use App\Http\Controllers\Sewing\TailorAttendanceController;
 use App\Http\Controllers\Sewing\TailorController;
 use App\Http\Controllers\Sewing\WorkOrderController;
 use App\Http\Controllers\Sewing\WorkOrderItemController;
@@ -20,18 +22,19 @@ use Illuminate\Support\Facades\Route;
 
 $owner = 'role:'.UserRole::Superadmin->value;
 $warehouse = 'role:'.UserRole::Superadmin->value.','.UserRole::Admin->value;
-$quality = 'role:'.UserRole::Superadmin->value.','.UserRole::Admin->value.','.UserRole::Qc->value;
 
 Route::get('/', function () {
     $user = auth()->user();
 
-    if ($user?->role === UserRole::Tailor) {
+    if ($user?->role === UserRole::Tailor || $user?->role === UserRole::Qc) {
         auth()->logout();
         request()->session()->invalidate();
         request()->session()->regenerateToken();
 
         return redirect()->route('login')->withErrors([
-            'email' => 'Penjahit masuk lewat tautan portal, bukan email.',
+            'email' => $user->role === UserRole::Tailor
+                ? 'Penjahit masuk lewat tautan portal, bukan email.'
+                : 'Aplikasi ini hanya untuk internal divisi jahit. Divisi QC tidak memiliki akses login.',
         ]);
     }
 
@@ -43,10 +46,11 @@ Route::get('/slip-gaji/{invoiceNumber}/{token}', PublicPayoutSlipController::cla
 Route::post('/portal/{tailor:portal_token}/pin', [PortalController::class, 'storePin'])->middleware('throttle:10,1')->name('portal.pin.store');
 Route::middleware('portal.pin')->group(function () {
     Route::get('/portal/{tailor:portal_token}', [PortalController::class, 'show'])->name('portal.show');
+    Route::post('/portal/{tailor:portal_token}/absen', [PortalController::class, 'clock'])->name('portal.clock.store');
     Route::post('/portal/{tailor:portal_token}/kunci', [PortalController::class, 'lock'])->name('portal.lock');
 });
 
-Route::middleware('auth')->group(function () use ($owner, $warehouse, $quality) {
+Route::middleware('auth')->group(function () use ($owner, $warehouse) {
     Route::middleware($warehouse)->group(function () {
         Route::get('/beranda', OverviewController::class)->name('dashboard');
 
@@ -64,28 +68,33 @@ Route::middleware('auth')->group(function () use ($owner, $warehouse, $quality) 
         Route::post('/wo/{workOrder}/hancaan-semua', [HancaanReceiptController::class, 'receiveAll'])->name('hancaan-receipts.receive-all');
         Route::delete('/hancaan/{receipt}', [HancaanReceiptController::class, 'destroy'])->name('hancaan-receipts.destroy');
 
+        Route::get('/loket', [QuickDeskController::class, 'index'])->name('desk.index');
+
         Route::get('/ambil', [PickupController::class, 'create'])->name('pickups.create');
         Route::post('/ambil', [PickupController::class, 'store'])->name('pickups.store');
         Route::post('/ambil/{pickupItem}/batal', [PickupController::class, 'cancelItem'])->name('pickup-items.cancel');
 
         Route::get('/setor', [DeliveryController::class, 'index'])->name('deliveries.index');
         Route::post('/ambil/{pickupItem}/setor', [DeliveryController::class, 'store'])->name('deliveries.store');
+        Route::post('/penjahit/{tailor}/setor-semua', [DeliveryController::class, 'storeBatchForTailor'])->name('deliveries.batch-tailor');
         Route::delete('/setor/{delivery}', [DeliveryController::class, 'destroy'])->name('deliveries.destroy');
 
         Route::get('/kirim-qc', [QcShipmentController::class, 'index'])->name('qc-shipments.index');
         Route::post('/kirim-qc', [QcShipmentController::class, 'store'])->name('qc-shipments.store');
         Route::get('/kirim-qc/{shipment}/label', [QcShipmentController::class, 'labels'])->name('qc-shipments.labels');
 
-        Route::get('/artikel', [ArticleController::class, 'index'])->name('articles.index');
-        Route::post('/artikel', [ArticleController::class, 'store'])->name('articles.store');
-    });
-
-    Route::middleware($quality)->group(function () {
-
         Route::get('/revisi', [RevisionController::class, 'index'])->name('revisions.index');
         Route::post('/revisi', [RevisionController::class, 'store'])->name('revisions.store');
         Route::post('/revisi/{revision}/lanjut', [RevisionController::class, 'advance'])->name('revisions.advance');
         Route::delete('/revisi/{revision}', [RevisionController::class, 'destroy'])->name('revisions.destroy');
+
+        Route::get('/absensi', [TailorAttendanceController::class, 'index'])->name('attendances.index');
+        Route::post('/absensi', [TailorAttendanceController::class, 'storeOrUpdate'])->name('attendances.store');
+        Route::post('/absensi/hadir-semua', [TailorAttendanceController::class, 'batchPresent'])->name('attendances.batch');
+        Route::delete('/absensi/{attendance}', [TailorAttendanceController::class, 'destroy'])->name('attendances.destroy');
+
+        Route::get('/artikel', [ArticleController::class, 'index'])->name('articles.index');
+        Route::post('/artikel', [ArticleController::class, 'store'])->name('articles.store');
     });
 
     Route::middleware($owner)->group(function () {
