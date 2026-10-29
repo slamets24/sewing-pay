@@ -36,7 +36,7 @@ class CreateWorkOrderAction
                 'created_by' => $createdBy,
             ]);
 
-            $articles = Article::query()->findMany(collect($data['items'])->pluck('article_id'))->keyBy('id');
+            $articles = Article::query()->with('variants')->findMany(collect($data['items'])->pluck('article_id'))->keyBy('id');
 
             foreach ($this->mergeDuplicates($data['items']) as $line) {
                 $article = $articles[$line['article_id']];
@@ -59,12 +59,30 @@ class CreateWorkOrderAction
                         'created_by' => $createdBy,
                     ]);
                 }
-
-                $this->rememberAlias($line['alias'] ?? null, $article);
             }
+
+            $this->rememberAliases($data['items']);
 
             return $workOrder->load('items');
         });
+    }
+
+    /**
+     * @param list<array<string, mixed>> $items
+     */
+    private function rememberAliases(array $items): void
+    {
+        $uniqueAliases = [];
+        foreach ($items as $line) {
+            $alias = $line['alias'] ?? null;
+            if (filled($alias) && isset($line['article_id'])) {
+                $uniqueAliases[ArticleAlias::normalize($alias)] = (int) $line['article_id'];
+            }
+        }
+
+        foreach ($uniqueAliases as $alias => $articleId) {
+            ArticleAlias::query()->updateOrCreate(['alias' => $alias], ['article_id' => $articleId]);
+        }
     }
 
     /**
@@ -80,14 +98,5 @@ class CreateWorkOrderAction
             ->map(fn ($group) => [...$group->first(), 'planned_qty' => (int) $group->sum('planned_qty')])
             ->values()
             ->all();
-    }
-
-    private function rememberAlias(?string $alias, Article $article): void
-    {
-        if (blank($alias)) {
-            return;
-        }
-
-        ArticleAlias::query()->updateOrCreate(['alias' => ArticleAlias::normalize($alias)], ['article_id' => $article->id]);
     }
 }

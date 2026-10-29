@@ -108,4 +108,31 @@ class WorkOrderFlowTest extends TestCase
 
         $this->assertModelExists($item->workOrder);
     }
+
+    public function test_work_order_with_many_articles_and_items_is_stored_efficiently(): void
+    {
+        $articles = [];
+        for ($i = 1; $i <= 20; $i++) {
+            $articles[] = $this->article("Artikel Model $i");
+        }
+
+        $items = [];
+        foreach ($articles as $index => $article) {
+            $items[] = ['article_id' => $article->id, 'color' => 'Navy', 'size' => 'M', 'planned_qty' => 5, 'alias' => "ALIAS {$index}"];
+            $items[] = ['article_id' => $article->id, 'color' => 'Black', 'size' => 'L', 'planned_qty' => 10, 'alias' => "ALIAS {$index}"];
+            $items[] = ['article_id' => $article->id, 'color' => 'Navy', 'size' => 'M', 'planned_qty' => 5, 'alias' => "ALIAS {$index}"];
+        }
+
+        $this->actingAs($this->warehouseAdmin())
+            ->post(route('work-orders.store'), [
+                'number' => 'WO-BULK-20-ARTIKEL',
+                'items' => $items,
+            ])
+            ->assertSessionHasNoErrors();
+
+        $workOrder = WorkOrder::query()->where('number', 'WO-BULK-20-ARTIKEL')->firstOrFail();
+        // 20 articles * 2 unique color/size combinations = 40 merged items
+        $this->assertCount(40, $workOrder->items);
+        $this->assertSame(400, (int) $workOrder->items->sum('planned_qty'));
+    }
 }

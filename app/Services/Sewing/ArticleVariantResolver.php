@@ -14,16 +14,29 @@ class ArticleVariantResolver
         $color = VariantName::color($color);
         $size = VariantName::size($size);
 
-        $existing = $article->variants()
-            ->get()
+        $variants = $article->relationLoaded('variants')
+            ? $article->variants
+            : $article->variants()->get();
+
+        $existing = $variants
             ->sortBy(fn (ArticleVariant $variant) => $variant->barcode_value === null ? 1 : 0)
             ->first(fn (ArticleVariant $variant) => VariantName::color($variant->color) === $color && VariantName::size($variant->size) === $size);
 
-        return $existing ?? $article->variants()->create([
+        if ($existing) {
+            return $existing;
+        }
+
+        $created = $article->variants()->create([
             'color' => $color,
             'size' => $size,
             'size_sort' => VariantName::sizeRank($size),
             'is_active' => true,
         ]);
+
+        if ($article->relationLoaded('variants')) {
+            $article->variants->push($created);
+        }
+
+        return $created;
     }
 }
