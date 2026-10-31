@@ -2,7 +2,7 @@ import { EmptyState } from '@/components/empty-state';
 import { RevisionCard } from '@/components/sewing/quality/revision-card';
 import { RevisionReportSheet } from '@/components/sewing/quality/revision-report-sheet';
 import { SegmentedChoice } from '@/components/sewing/quality/segmented-choice';
-import { PageIntro, Section } from '@/components/sewing/section';
+import { Section } from '@/components/sewing/section';
 import { ToneBadge } from '@/components/sewing/tone-badge';
 import { RevisionFilter, RevisionView, type RevisionStatusFilter } from '@/domain/quality/revision-view';
 import AppLayout from '@/layouts/app-layout';
@@ -32,7 +32,7 @@ export default function RevisionsIndex({ filters, revisions, sewingItems, shippe
 
     return (
         <AppLayout title="Catat Revisi">
-            <PageIntro>Admin mencatat laporan temuan revisi dari divisi QC atau cacat bahan selama proses jahit. Revisi jahit dikerjakan ulang penjahit; revisi bahan menunggu bahan pengganti.</PageIntro>
+
 
             <div className="mb-5 flex flex-col gap-3 lg:flex-row-reverse lg:items-start">
                 <RevisionReportSheet shippedDeliveries={shippedDeliveries} sewingItems={sewingItems} revisionParts={revisionParts} tailors={tailors} preset={preset} />

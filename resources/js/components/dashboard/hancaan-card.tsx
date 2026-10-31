@@ -3,7 +3,7 @@ import { OptionSelect } from '@/components/option-select';
 import { HancaanForm, workTypeOptions } from '@/components/tailor-payroll/hancaan-form';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { joinMeta } from '@/lib/format';
@@ -25,7 +25,6 @@ export function HancaanCard({ articles, workTypes }: HancaanCardProps) {
                     <PackagePlus className="size-4" />
                     Hancaan Baru
                 </CardTitle>
-                <CardDescription>Artikel, warna, size, dan qty siap jahit.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
                 <HancaanForm workTypes={workTypes} idPrefix="hancaan" />

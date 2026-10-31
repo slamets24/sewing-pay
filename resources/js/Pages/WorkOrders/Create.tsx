@@ -71,12 +71,10 @@ export default function WorkOrderCreate({ articles, aliases }: CreateProps) {
                         </Link>
                     </Button>
                 }
-            >
-                Tempel teks WO dari WhatsApp supaya terisi otomatis, atau isi manual di bawah.
-            </PageIntro>
+            />
 
             <div className="flex flex-col gap-5 pb-28">
-                <Section title="1. Tempel teks WA" icon={MessageSquareText} description="Salin seluruh pesan WO dari WhatsApp lalu tempel di sini.">
+                <Section title="1. Tempel teks WA" icon={MessageSquareText}>
                     <div className="flex flex-col gap-3">
                         <Textarea
                             value={text}
@@ -125,7 +123,6 @@ export default function WorkOrderCreate({ articles, aliases }: CreateProps) {
                             />
                             <span className="flex flex-col gap-0.5">
                                 <span className="font-bold">Stok awal: barang sudah ada di gudang</span>
-                                <span className="text-sm text-muted-foreground">Centang untuk barang yang sudah siap dibagikan saat aplikasi mulai dipakai. Semua qty langsung tercatat masuk gudang.</span>
                             </span>
                         </label>
                     </div>
@@ -134,7 +131,6 @@ export default function WorkOrderCreate({ articles, aliases }: CreateProps) {
                 <Section
                     title="3. Artikel"
                     icon={Shirt}
-                    description="Satu kotak per artikel. Isi warna, ukuran, dan jumlahnya."
                     actions={
                         <Button type="button" variant="secondary" onClick={() => update(draft.addGroup())}>
                             <Plus />
@@ -213,7 +209,27 @@ function GroupCard({ index, group, draft, articles, onChange }: GroupCardProps) 
                         className="sm:max-w-md"
                     />
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-1 rounded-md border bg-muted/40 p-0.5">
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant={group.itemType === 'print' ? 'default' : 'ghost'}
+                            className="h-7 px-2.5 text-xs"
+                            onClick={() => onChange(draft.withGroup(group.key, { itemType: 'print' }))}
+                        >
+                            Print
+                        </Button>
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant={group.itemType === 'polosan' ? 'default' : 'ghost'}
+                            className="h-7 px-2.5 text-xs"
+                            onClick={() => onChange(draft.withGroup(group.key, { itemType: 'polosan' }))}
+                        >
+                            Polosan
+                        </Button>
+                    </div>
                     {totalMatches ? (
                         <ToneBadge tone="done">{counted} pcs</ToneBadge>
                     ) : (

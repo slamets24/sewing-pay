@@ -2,7 +2,7 @@ import { EmptyState } from '@/components/empty-state';
 import { FormField } from '@/components/form-field';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -26,7 +26,6 @@ export function PayrollSlipsCard({ slips }: { slips: PayrollSlipSummary[] }) {
         <Card className="lg:col-span-2">
             <CardHeader>
                 <CardTitle className="text-base">Slip Terakhir</CardTitle>
-                <CardDescription>Link publik ini yang dikirim ke WhatsApp penjahit.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
                 {!slips.length ? (

@@ -117,10 +117,6 @@ export function PriceBenchmarkSheet({ article, tailors, isOwner, onOpenChange }:
 
                 {article && (
                     <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-4">
-                        <p className="text-sm text-muted-foreground">
-                            Biaya pengerjaan sample dihitung dari standar nilai harian jam kerja (9j = Rp 241.400, 10j = Rp 265.000, 11j = Rp 295.000, 12j = Rp 321.800) dibagi ke menit pengerjaan. Minimal 3 warna untuk mendapatkan patokan tarif resmi.
-                        </p>
-
                         <BenchmarkMath article={article} adopting={adopting} isOwner={isOwner} onAdopt={adopt} />
 
                         {benchmark && benchmark.samples.length > 0 && (

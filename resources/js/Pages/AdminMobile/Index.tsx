@@ -108,7 +108,7 @@ export default function AdminMobile(props: AdminMobileProps) {
                             ]}
                         />
 
-                        <Section title="Sedang dikerjakan" description="Ketuk +1, +5, atau Sisa saat penjahit setor jahitan.">
+                        <Section title="Sedang dikerjakan">
                             <TailorBoardView board={board} onPickup={startPickup} />
                         </Section>
 
@@ -140,7 +140,6 @@ export default function AdminMobile(props: AdminMobileProps) {
                         <Card className="gap-4">
                             <CardHeader>
                                 <CardTitle className="text-base">Input hancaan</CardTitle>
-                                <CardDescription>Satu artikel bisa banyak warna dan size sekaligus.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <HancaanMatrixForm workTypes={workTypes} suggestions={props.hancaanSuggestions} idPrefix="mobile-hancaan" />
@@ -149,7 +148,7 @@ export default function AdminMobile(props: AdminMobileProps) {
                     </TabsContent>
 
                     <TabsContent value="ambil" forceMount className="data-[state=inactive]:hidden">
-                        <Section title="Ambil hancaan" description={`${availableQty} pcs dari ${availableArticles.length} hancaan siap diambil.`}>
+                        <Section title="Ambil hancaan" description={`${availableQty} pcs siap diambil`}>
                             <PickupWizard
                                 tailors={activeTailors}
                                 articles={availableArticles}
@@ -167,7 +166,7 @@ export default function AdminMobile(props: AdminMobileProps) {
                     </TabsContent>
 
                     <TabsContent value="riwayat" forceMount className="data-[state=inactive]:hidden">
-                        <Section title="Riwayat input selesai" description="Salah input? Batalkan dari sini selama belum masuk slip gaji.">
+                        <Section title="Riwayat input selesai">
                             <CompletionList completions={recentCompletions} undoable />
                         </Section>
                     </TabsContent>
@@ -177,12 +176,12 @@ export default function AdminMobile(props: AdminMobileProps) {
     );
 }
 
-function Section({ title, description, children }: { title: string; description: string; children: ReactNode }) {
+function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
     return (
         <section className="flex flex-col gap-3">
             <div className="flex flex-col gap-0.5">
                 <h2 className="font-semibold">{title}</h2>
-                <p className="text-sm text-muted-foreground">{description}</p>
+                {description && <p className="text-sm text-muted-foreground">{description}</p>}
             </div>
             {children}
         </section>

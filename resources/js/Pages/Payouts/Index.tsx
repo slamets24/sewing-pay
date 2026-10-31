@@ -1,7 +1,7 @@
 import { EmptyState } from '@/components/empty-state';
 import { CreatePayoutForm } from '@/components/sewing/payout/create-payout-form';
 import { PayoutCard } from '@/components/sewing/payout/payout-card';
-import { PageIntro, Section } from '@/components/sewing/section';
+import { Section } from '@/components/sewing/section';
 import { StatTile } from '@/components/sewing/stat-tile';
 import { PayoutRecord } from '@/domain/payout/payout-record';
 import { UnpaidWork, type UnpaidWorkProps } from '@/domain/payout/unpaid-work';
@@ -22,7 +22,7 @@ export default function PayoutIndex({ payouts, hasDraft, unpaid }: PayoutIndexPr
 
     return (
         <AppLayout title="Gaji penjahit">
-            <PageIntro>Pilih tanggal batas, lalu semua setoran jahit dan revisi bahan yang belum dibayar sampai tanggal itu masuk ke slip tiap penjahit.</PageIntro>
+            
 
             <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 <StatTile label="Belum dibayar (jahit)" value={formatIdr(work.deliveryAmount)} hint={`${work.deliveryQty} pcs sudah disetor`} icon={Shirt} tone="sewing" />
@@ -33,7 +33,7 @@ export default function PayoutIndex({ payouts, hasDraft, unpaid }: PayoutIndexPr
             </div>
 
             <div className="flex flex-col gap-5">
-                <Section title="Buat pencairan" icon={CalendarPlus} description="Hanya boleh ada satu draft pencairan dalam satu waktu.">
+                <Section title="Buat pencairan" icon={CalendarPlus}>
                     <CreatePayoutForm hasDraft={hasDraft} draft={draft} />
                 </Section>
 

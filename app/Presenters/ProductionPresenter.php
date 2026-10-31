@@ -39,6 +39,9 @@ class ProductionPresenter
     public function pickupItem(PickupItem $item): array
     {
         $workOrderItem = $item->workOrderItem;
+        $blockedRevisionQty = $item->blockedRevisionQty();
+        $inProgressRevisionQty = $item->inProgressRevisionQty();
+        $deliverableQty = $item->deliverableQty();
 
         return [
             'id' => $item->id,
@@ -55,6 +58,10 @@ class ProductionPresenter
             'qty' => $item->qty,
             'delivered_qty' => $item->delivered_qty,
             'remaining_qty' => $item->remainingQty(),
+            'deliverable_qty' => $deliverableQty,
+            'open_revision_qty' => $blockedRevisionQty + $inProgressRevisionQty,
+            'blocked_revision_qty' => $blockedRevisionQty,
+            'in_progress_revision_qty' => $inProgressRevisionQty,
             'sewing_rate' => $item->sewing_rate,
             'status' => $item->status->value,
             'status_label' => $item->status->label(),
@@ -77,6 +84,7 @@ class ProductionPresenter
             ->map(fn (Collection $group) => [
                 'tailor' => $this->tailor($group->first()->tailor),
                 'remaining_qty' => (int) $group->sum(fn (PickupItem $item) => $item->remainingQty()),
+                'deliverable_qty' => (int) $group->sum(fn (PickupItem $item) => $item->deliverableQty()),
                 'items' => $group->map(fn (PickupItem $item) => $this->pickupItem($item))->values(),
             ])
             ->sortBy(fn (array $row) => $row['tailor']['name'])
@@ -157,6 +165,7 @@ class ProductionPresenter
             'material_type' => $revision->material_type,
             'tailor_id' => $revision->tailor_id,
             'tailor_name' => $revision->tailor->name,
+            'pickup_item_id' => $revision->pickup_item_id,
             'qty' => $revision->qty,
             'rate' => $revision->rate,
             'subtotal' => $revision->subtotal,

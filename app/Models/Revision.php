@@ -58,6 +58,11 @@ class Revision extends Model
         return $this->belongsTo(WorkOrderItem::class);
     }
 
+    public function pickupItem(): BelongsTo
+    {
+        return $this->belongsTo(PickupItem::class);
+    }
+
     public function delivery(): BelongsTo
     {
         return $this->belongsTo(SewingDelivery::class, 'sewing_delivery_id');

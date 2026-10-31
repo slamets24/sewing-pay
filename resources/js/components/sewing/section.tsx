@@ -34,6 +34,7 @@ export function Section({ title, description, icon: Icon, actions, children, cla
 
 /** Short explanation under the page title, with the page's main buttons on the right. */
 export function PageIntro({ children, actions }: { children?: ReactNode; actions?: ReactNode }) {
+    if (!children && !actions) return null;
     return (
         <div className="mb-5 flex flex-wrap items-center gap-3">
             {children && <p className="min-w-64 flex-1 text-base text-muted-foreground">{children}</p>}

@@ -50,12 +50,10 @@ export default function DeliveryIndex({ board, recentDeliveries }: IndexProps) {
                         </Button>
                     </>
                 }
-            >
-                Admin mencatat setoran jahitan saat penjahit menyerahkan hasil jahit. Pilih "Setor semua" atau cicil "Sebagian" — upah penjahit langsung otomatis tercatat.
-            </PageIntro>
+            />
 
             <div className="flex flex-col gap-5">
-                <Section title="Sedang dijahit" icon={Users} description={`${board.length} penjahit memegang barang.`}>
+                <Section title="Sedang dijahit" icon={Users} description={`${board.length} penjahit`}>
                     {board.length > 3 && (
                         <div className="relative mb-4">
                             <Search className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-muted-foreground" />
@@ -81,7 +79,7 @@ export default function DeliveryIndex({ board, recentDeliveries }: IndexProps) {
                     )}
                 </Section>
 
-                <Section title="Setoran terakhir" icon={History} description="Salah input? Batalkan selama belum dikirim ke QC dan belum masuk slip gaji.">
+                <Section title="Setoran terakhir" icon={History}>
                     <DeliveryList deliveries={recentDeliveries} undoable />
                 </Section>
             </div>

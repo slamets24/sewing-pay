@@ -127,9 +127,9 @@ export function WorkflowStepper({ stats }: { stats: WorkflowStats }) {
                             <Link
                                 href={item.href}
                                 className={cn(
-                                    'group relative flex w-full flex-col justify-between gap-3 rounded-xl border p-3 transition-all',
-                                    'hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-                                    item.attention ? 'border-primary/40 bg-card shadow-xs' : 'bg-muted/30 hover:bg-card'
+                                    'group relative flex w-full flex-col justify-between gap-3 rounded-xl border p-3 transition-colors',
+                                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+                                    item.attention ? 'border-primary/50 bg-card shadow-2xs' : 'border-border/70 bg-muted/30 hover:bg-card hover:border-foreground/30'
                                 )}
                             >
                                 <div className="flex items-center justify-between gap-2">

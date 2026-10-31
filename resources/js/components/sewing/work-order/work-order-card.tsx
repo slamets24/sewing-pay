@@ -14,8 +14,8 @@ export function WorkOrderCard({ workOrder, compact = false }: { workOrder: WorkO
         <Link
             href={route('work-orders.show', workOrder.id)}
             className={cn(
-                'surface-card group flex flex-col gap-3 p-4 transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft-lg)] focus-visible:ring-4 focus-visible:ring-ring/40 focus-visible:outline-none',
-                workOrder.is_overdue && 'border-stage-revision/50',
+                'group flex flex-col gap-3.5 rounded-xl border border-border bg-card p-4.5 shadow-xs transition-colors hover:border-foreground/30 hover:bg-muted/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                workOrder.is_overdue && 'border-stage-revision/60 ring-1 ring-stage-revision/20 bg-stage-revision/[0.02]',
             )}
         >
             <div className="flex flex-wrap items-start gap-2">
@@ -45,8 +45,9 @@ export function WorkOrderCard({ workOrder, compact = false }: { workOrder: WorkO
             <QtyBar breakdown={workOrder} />
             <p className="text-sm text-muted-foreground tabular">
                 <span className="font-bold text-foreground">{workOrder.delivered_qty}</span> / {workOrder.planned_qty} pcs selesai
-                {workOrder.available_qty > 0 && ` · ${workOrder.available_qty} siap diambil`}
-                {workOrder.sewing_qty > 0 && ` · ${workOrder.sewing_qty} dijahit`}
+                {workOrder.available_qty > 0 && ` · ${workOrder.available_qty} di gudang`}
+                {workOrder.sewing_internal_qty > 0 && ` · ${workOrder.sewing_internal_qty} di penjahit`}
+                {workOrder.sewing_makloon_qty > 0 && ` · ${workOrder.sewing_makloon_qty} di makloon`}
             </p>
         </Link>
     );

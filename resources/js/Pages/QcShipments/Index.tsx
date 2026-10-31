@@ -4,7 +4,7 @@ import { SegmentedChoice } from '@/components/sewing/quality/segmented-choice';
 import { ShipmentHistory } from '@/components/sewing/quality/shipment-history';
 import { ShipmentSubmitBar } from '@/components/sewing/quality/shipment-submit-bar';
 import { useDraftPost } from '@/components/sewing/quality/use-draft-post';
-import { PageIntro, Section } from '@/components/sewing/section';
+import { Section } from '@/components/sewing/section';
 import { ToneBadge } from '@/components/sewing/tone-badge';
 import { DeliveryGroups, type DeliveryGrouping } from '@/domain/quality/delivery-groups';
 import { DeliverySelection } from '@/domain/quality/delivery-selection';
@@ -39,7 +39,7 @@ export default function QcShipmentsIndex({ unshippedDeliveries, shipments }: QcS
 
     return (
         <AppLayout title="Kirim ke QC">
-            <PageIntro>Admin memilih setoran jahit yang siap dikirimkan ke divisi QC. Label barcode (1 label / pcs) langsung dicetak oleh admin untuk ditempel pada bundle pengiriman.</PageIntro>
+            
 
             <div className="flex flex-col gap-5">
                 <Section

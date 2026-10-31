@@ -2,6 +2,7 @@
 
 namespace App\Presenters;
 
+use App\Models\CuttingReceipt;
 use App\Models\HancaanReceipt;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderItem;
@@ -30,9 +31,13 @@ class WorkOrderPresenter
             'items_count' => $items->count(),
             'article_names' => $items->map(fn (WorkOrderItem $item) => $item->article?->name)->filter()->unique()->values(),
             'planned_qty' => (int) $items->sum('planned_qty'),
+            'printing_qty' => (int) $items->sum(fn (WorkOrderItem $item) => $item->printingQty()),
+            'cutting_qty' => (int) $items->sum(fn (WorkOrderItem $item) => $item->cuttingPendingQty()),
             'pending_qty' => (int) $items->sum(fn (WorkOrderItem $item) => $item->pendingQty()),
             'available_qty' => (int) $items->sum(fn (WorkOrderItem $item) => $item->availableQty()),
             'sewing_qty' => (int) $items->sum(fn (WorkOrderItem $item) => $item->sewingQty()),
+            'sewing_internal_qty' => (int) $items->sum(fn (WorkOrderItem $item) => $item->internalSewingQty()),
+            'sewing_makloon_qty' => (int) $items->sum(fn (WorkOrderItem $item) => $item->makloonSewingQty()),
             'hold_qty' => (int) $items->sum(fn (WorkOrderItem $item) => $item->holdQty()),
             'delivered_qty' => (int) $items->sum('delivered_qty'),
             'can_delete' => ! $workOrder->hasReceivedAnything(),
@@ -70,19 +75,44 @@ class WorkOrderPresenter
             'article_name' => $item->article->name,
             'color' => $item->color,
             'size' => $item->size,
+            'item_type' => $item->item_type ?? 'print',
+            'is_polosan' => $item->isPolosan(),
             'barcode_value' => $item->variant?->barcode_value,
             'sewing_rate' => $item->article->sewing_rate,
             'planned_qty' => $item->planned_qty,
+            'cutting_transferred_qty' => $item->cutting_qty,
+            'printing_qty' => $item->printingQty(),
+            'cutting_qty' => $item->cuttingPendingQty(),
             'received_qty' => $item->received_qty,
             'assigned_qty' => $item->assigned_qty,
             'delivered_qty' => $item->delivered_qty,
             'pending_qty' => $item->pendingQty(),
             'available_qty' => $item->availableQty(),
             'sewing_qty' => $item->sewingQty(),
+            'sewing_internal_qty' => $item->internalSewingQty(),
+            'sewing_makloon_qty' => $item->makloonSewingQty(),
             'hold_qty' => $item->holdQty(),
             'stage' => $stage->value,
             'stage_label' => $stage->label(),
-            'can_delete' => $item->received_qty === 0,
+            'can_delete' => $item->received_qty === 0 && ($item->isPolosan() || $item->cutting_qty === 0),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function cuttingReceipt(CuttingReceipt $receipt): array
+    {
+        return [
+            'id' => $receipt->id,
+            'work_order_item_id' => $receipt->work_order_item_id,
+            'article_name' => $receipt->item->article->name,
+            'color' => $receipt->item->color,
+            'size' => $receipt->item->size,
+            'qty' => $receipt->qty,
+            'transferred_at' => $receipt->transferred_at->format('Y-m-d H:i'),
+            'notes' => $receipt->notes,
+            'created_by_name' => $receipt->creator?->name,
         ];
     }
 

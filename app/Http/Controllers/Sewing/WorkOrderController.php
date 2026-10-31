@@ -7,6 +7,7 @@ use App\Actions\Sewing\DeleteWorkOrderAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Sewing\StoreWorkOrderRequest;
 use App\Http\Requests\Sewing\UpdateWorkOrderRequest;
+use App\Models\CuttingReceipt;
 use App\Models\HancaanReceipt;
 use App\Models\WorkOrder;
 use App\Presenters\WorkOrderPresenter;
@@ -27,7 +28,7 @@ class WorkOrderController extends Controller
         $search = trim((string) $request->query('search'));
 
         $workOrders = WorkOrder::query()
-            ->with(['items.article'])
+            ->with(['items.article', 'items.pickupItems.tailor'])
             ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
                 ->where('number', 'like', "%{$search}%")
                 ->orWhereHas('items.article', fn ($query) => $query->where('name', 'like', "%{$search}%"))))
@@ -63,7 +64,7 @@ class WorkOrderController extends Controller
 
     public function show(WorkOrder $workOrder, ArticleCatalog $catalog): Response
     {
-        $workOrder->load(['items.article', 'items.variant']);
+        $workOrder->load(['items.article', 'items.variant', 'items.pickupItems.tailor']);
 
         $receipts = HancaanReceipt::query()
             ->with(['item.article', 'creator'])
@@ -73,9 +74,18 @@ class WorkOrderController extends Controller
             ->limit(50)
             ->get();
 
+        $cuttingReceipts = CuttingReceipt::query()
+            ->with(['item.article', 'creator'])
+            ->whereIn('work_order_item_id', $workOrder->items->modelKeys())
+            ->latest('transferred_at')
+            ->latest('id')
+            ->limit(50)
+            ->get();
+
         return Inertia::render('WorkOrders/Show', [
             'workOrder' => $this->presenter->detail($workOrder),
             'receipts' => $receipts->map(fn (HancaanReceipt $receipt) => $this->presenter->receipt($receipt)),
+            'cuttingReceipts' => $cuttingReceipts->map(fn (CuttingReceipt $receipt) => $this->presenter->cuttingReceipt($receipt)),
             ...$catalog->forPicker(),
         ]);
     }

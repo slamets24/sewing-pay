@@ -3,7 +3,9 @@
 namespace App\Actions\Sewing;
 
 use App\Enums\PickupItemStatus;
+use App\Enums\RevisionStatus;
 use App\Models\PickupItem;
+use App\Models\Revision;
 use App\Models\SewingDelivery;
 use App\Models\WorkOrderItem;
 use Illuminate\Support\Carbon;
@@ -22,8 +24,12 @@ class RecordDeliveryAction
                 throw ValidationException::withMessages(['qty' => 'Pengambilan ini sudah selesai atau dibatalkan.']);
             }
 
-            if ($qty > $pickupItem->remainingQty()) {
-                throw ValidationException::withMessages(['qty' => "Sisa yang dipegang penjahit hanya {$pickupItem->remainingQty()} pcs."]);
+            if ($qty > $pickupItem->deliverableQty()) {
+                $revQty = $pickupItem->blockedRevisionQty();
+                $msg = $revQty > 0
+                    ? "Hanya {$pickupItem->deliverableQty()} pcs yang siap disetor ({$revQty} pcs masih menunggu bahan revisi)."
+                    : "Sisa yang dipegang penjahit hanya {$pickupItem->remainingQty()} pcs.";
+                throw ValidationException::withMessages(['qty' => $msg]);
             }
 
             $isPayable = $pickupItem->tailor->isPaidHere();
@@ -46,6 +52,34 @@ class RecordDeliveryAction
             $pickupItem->save();
 
             WorkOrderItem::query()->lockForUpdate()->findOrFail($pickupItem->work_order_item_id)->increment('delivered_qty', $qty);
+
+            $inProgressRevisions = Revision::query()
+                ->where('status', RevisionStatus::InProgress->value)
+                ->where(function ($q) use ($pickupItem) {
+                    $q->where('pickup_item_id', $pickupItem->id)
+                        ->orWhere(function ($sub) use ($pickupItem) {
+                            $sub->where('tailor_id', $pickupItem->tailor_id)
+                                ->where('work_order_item_id', $pickupItem->work_order_item_id)
+                                ->whereNull('pickup_item_id');
+                        });
+                })
+                ->oldest('started_at')
+                ->lockForUpdate()
+                ->get();
+
+            $remainingDeliverQty = $qty;
+            foreach ($inProgressRevisions as $rev) {
+                if ($remainingDeliverQty <= 0) {
+                    break;
+                }
+                $rev->status = RevisionStatus::Done;
+                $rev->completed_at = $deliveredAt ? Carbon::parse($deliveredAt) : now();
+                if (! $rev->pickup_item_id) {
+                    $rev->pickup_item_id = $pickupItem->id;
+                }
+                $rev->save();
+                $remainingDeliverQty -= $rev->qty;
+            }
 
             return $delivery;
         });

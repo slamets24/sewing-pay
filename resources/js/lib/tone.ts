@@ -50,7 +50,17 @@ export class ToneStyle {
     }
 
     static forStage(stage: Stage): Tone {
-        return ({ other_division: 'other', ready: 'ready', sewing: 'sewing', waiting_revision: 'revision', done: 'done' } as const)[stage];
+        return ({
+            other_division: 'other',
+            printing: 'other',
+            cutting: 'primary',
+            ready: 'ready',
+            internal_sewing: 'sewing',
+            makloon_sewing: 'qc',
+            sewing: 'sewing',
+            waiting_revision: 'revision',
+            done: 'done',
+        } as const)[stage];
     }
 
     static forRevisionStatus(status: RevisionStatus): Tone {

@@ -19,7 +19,7 @@ class FloorQuery
     public function openPickupItems(?int $tailorId = null): Collection
     {
         return PickupItem::query()
-            ->with(['tailor', 'pickup', 'workOrderItem.article', 'workOrderItem.workOrder'])
+            ->with(['tailor', 'pickup', 'workOrderItem.article', 'workOrderItem.workOrder', 'revisions'])
             ->where('status', PickupItemStatus::Open->value)
             ->when($tailorId, fn ($query) => $query->where('tailor_id', $tailorId))
             ->oldest('id')

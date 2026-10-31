@@ -2,7 +2,7 @@ import { FormField, InputError } from '@/components/form-field';
 import { OptionSelect } from '@/components/option-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { formatIdr } from '@/lib/format';
@@ -31,7 +31,6 @@ export function WorkTypesCard({ workTypes, categories }: WorkTypesCardProps) {
                     <WalletCards className="size-4" />
                     Tarif Kerja
                 </CardTitle>
-                <CardDescription>Harga per pekerjaan, termasuk revisi.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
                 <form className="flex flex-col gap-3" onSubmit={submit}>

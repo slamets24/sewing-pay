@@ -42,9 +42,7 @@ export default function Tailors({ tailors, nextCode }: TailorsProps) {
                         Tambah penjahit
                     </Button>
                 }
-            >
-                Penjahit internal dibayar per setoran dan masuk slip gaji. Penjahit makloon hanya dicatat sedang memegang barang apa. Portal penjahit berupa tautan dan PIN, bukan akun email.
-            </PageIntro>
+            />
 
             <Section title="Daftar penjahit" icon={Users} description={<TailorCounts directory={directory} />}>
                 <SearchBox value={query} onChange={setQuery} placeholder="Cari nama atau kode…" label="Cari penjahit" className="mb-4 md:max-w-md" />
@@ -221,7 +219,7 @@ function TailorSheet({ state, nextCode, onOpenChange }: TailorSheetProps) {
             open={state.open}
             onOpenChange={onOpenChange}
             title={tailor ? 'Ubah penjahit' : 'Tambah penjahit'}
-            description={tailor ? `Perbarui data ${tailor.name}.` : 'Isi nama dan jenis penjahit. Yang lain boleh menyusul.'}
+            description={tailor?.name}
             processing={form.processing}
             onSubmit={submit}
         >
@@ -275,8 +273,6 @@ function TailorSheet({ state, nextCode, onOpenChange }: TailorSheetProps) {
                     <ActiveChoice
                         value={form.data.is_active}
                         onChange={(active) => form.setData('is_active', active)}
-                        activeHint="Muncul saat ambil barang."
-                        inactiveHint="Disembunyikan dari pilihan. Riwayat tetap ada."
                     />
                 </FormField>
             )}

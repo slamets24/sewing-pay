@@ -40,9 +40,7 @@ export default function Users({ users, roles }: UsersProps) {
                         Tambah akun
                     </Button>
                 }
-            >
-                Akun login khusus internal divisi jahit (Owner dan Admin Divisi). Divisi luar (seperti QC) dan penjahit tidak memiliki akses akun ke sistem ini.
-            </PageIntro>
+            />
 
             <Section title="Daftar akun" icon={ShieldCheck} description={`${users.length} akun`}>
                 {users.length === 0 ? (
@@ -127,7 +125,6 @@ function CreateUserSheet({ open, onOpenChange, roleOptions }: SheetProps & { rol
             open={open}
             onOpenChange={onOpenChange}
             title="Tambah akun"
-            description="Buat akun untuk staf. Berikan email dan password ini ke pemilik akun."
             submitLabel="Buat akun"
             processing={form.processing}
             onSubmit={submit}
@@ -203,7 +200,7 @@ function PasswordSheet({ open, onOpenChange, user }: SheetProps & { user: Manage
             open={open}
             onOpenChange={onOpenChange}
             title="Reset password"
-            description={`Password baru untuk ${user.name}. Password lama tidak bisa dipakai lagi.`}
+            description={user.name}
             submitLabel="Simpan password"
             processing={form.processing}
             onSubmit={submit}

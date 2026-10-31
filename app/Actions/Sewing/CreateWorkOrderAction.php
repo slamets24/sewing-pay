@@ -24,12 +24,15 @@ class CreateWorkOrderAction
         return DB::transaction(function () use ($data, $createdBy) {
             $isOpeningStock = (bool) ($data['is_opening_stock'] ?? false);
 
+            $orderedAt = isset($data['ordered_at']) && filled($data['ordered_at']) ? Carbon::parse($data['ordered_at']) : today();
+            $dueAt = isset($data['due_at']) && filled($data['due_at']) ? Carbon::parse($data['due_at']) : $orderedAt->copy()->addDays(7);
+
             $workOrder = WorkOrder::create([
                 'number' => trim($data['number']),
                 'channel' => $data['channel'] ?? null,
                 'category' => $data['category'] ?? null,
-                'ordered_at' => $data['ordered_at'] ?? today(),
-                'due_at' => $data['due_at'] ?? null,
+                'ordered_at' => $orderedAt,
+                'due_at' => $dueAt,
                 'is_opening_stock' => $isOpeningStock,
                 'source_text' => $data['source_text'] ?? null,
                 'notes' => $data['notes'] ?? null,
@@ -41,14 +44,20 @@ class CreateWorkOrderAction
             foreach ($this->mergeDuplicates($data['items']) as $line) {
                 $article = $articles[$line['article_id']];
                 $variant = $this->variants->resolve($article, $line['color'] ?? null, $line['size'] ?? null);
+                $itemType = in_array($line['item_type'] ?? null, ['print', 'polosan'], true) ? $line['item_type'] : 'print';
+
+                $cuttingQty = $isOpeningStock || $itemType === 'polosan' ? $line['planned_qty'] : 0;
+                $receivedQty = $isOpeningStock ? $line['planned_qty'] : 0;
 
                 $item = $workOrder->items()->create([
                     'article_id' => $article->id,
                     'article_variant_id' => $variant->id,
                     'color' => $variant->color,
                     'size' => $variant->size,
+                    'item_type' => $itemType,
                     'planned_qty' => $line['planned_qty'],
-                    'received_qty' => $isOpeningStock ? $line['planned_qty'] : 0,
+                    'cutting_qty' => $cuttingQty,
+                    'received_qty' => $receivedQty,
                 ]);
 
                 if ($isOpeningStock) {

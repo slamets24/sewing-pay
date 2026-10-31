@@ -14,7 +14,7 @@ import { formatIdr } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { RevisionPartRecord } from '@/types/sewing';
 import { useForm } from '@inertiajs/react';
-import { Check, Info, Pencil, Plus, Scissors } from 'lucide-react';
+import { Check, Pencil, Plus, Scissors } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 type RevisionPartsProps = {
@@ -37,10 +37,7 @@ export default function RevisionParts({ parts }: RevisionPartsProps) {
                         Tambah bagian
                     </Button>
                 }
-            >
-                Daftar harga untuk <strong className="font-semibold text-foreground">revisi bahan</strong>: bagian yang bahannya rusak atau salah print diganti, lalu
-                penjahit dibayar sesuai harga bagian di sini. Revisi jahit tidak dibayar.
-            </PageIntro>
+            />
 
             <Section title="Daftar harga" icon={Scissors} description={`${activeCount} bagian aktif dari ${parts.length}`}>
                 {parts.length === 0 ? (
@@ -53,10 +50,7 @@ export default function RevisionParts({ parts }: RevisionPartsProps) {
                     </ul>
                 )}
 
-                <p className="mt-4 flex items-start gap-2 text-sm text-muted-foreground">
-                    <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
-                    Mengubah harga hanya berlaku untuk revisi yang dicatat setelahnya. Bagian nonaktif tidak muncul saat mencatat revisi.
-                </p>
+
             </Section>
 
             <RevisionPartSheet
@@ -121,7 +115,7 @@ function RevisionPartSheet({ state, suggestions, onOpenChange }: RevisionPartShe
             open={state.open}
             onOpenChange={onOpenChange}
             title={part ? 'Ubah bagian' : 'Tambah bagian'}
-            description={part ? `Perbarui harga atau nama ${part.name}.` : 'Contoh: Ganti Kerah, Badan Depan, Ganti Tangan.'}
+            description={part?.name}
             processing={form.processing}
             onSubmit={submit}
         >
@@ -173,8 +167,6 @@ function RevisionPartSheet({ state, suggestions, onOpenChange }: RevisionPartShe
                     <ActiveChoice
                         value={form.data.is_active}
                         onChange={(active) => form.setData('is_active', active)}
-                        activeHint="Bisa dipilih saat mencatat revisi."
-                        inactiveHint="Tidak muncul lagi di pilihan."
                     />
                 </FormField>
             )}

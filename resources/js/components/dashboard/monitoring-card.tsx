@@ -1,6 +1,6 @@
 import { EmptyState } from '@/components/empty-state';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -30,7 +30,6 @@ export function MonitoringCard({ assignments }: { assignments: Assignment[] }) {
                     <PackageCheck className="size-4" />
                     Sedang Dikerjakan
                 </CardTitle>
-                <CardDescription>Monitoring semua pekerjaan aktif.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
                 <Input

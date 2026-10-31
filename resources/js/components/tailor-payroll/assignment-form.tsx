@@ -73,7 +73,7 @@ export function AssignmentForm({ articles, tailors, idPrefix, quickQty = false }
             <Textarea
                 aria-label="Catatan pengambilan"
                 rows={2}
-                placeholder="Catatan opsional"
+                placeholder="Catatan"
                 value={form.data.notes}
                 onChange={(event) => form.setData('notes', event.target.value)}
             />

@@ -33,6 +33,28 @@ class HancaanReceiptController extends Controller
         return Redirect::back()->with('status', "{$total} pcs hancaan WO {$workOrder->number} masuk gudang.");
     }
 
+    public function receiveBatch(Request $request, WorkOrder $workOrder): RedirectResponse
+    {
+        $validated = $request->validate([
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.work_order_item_id' => ['required', 'integer'],
+            'items.*.qty' => ['required', 'integer', 'min:1'],
+            'received_at' => ['nullable', 'date'],
+            'notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $total = $this->receive->receiveBatch($validated['items'], $validated['received_at'] ?? null, $validated['notes'] ?? null, $request->user()->id);
+
+        return Redirect::back()->with('status', "{$total} pcs hancaan berhasil masuk ke gudang.");
+    }
+
+    public function update(StoreHancaanReceiptRequest $request, HancaanReceipt $receipt): RedirectResponse
+    {
+        $this->receive->updateQty($receipt, (int) $request->validated('qty'));
+
+        return Redirect::back()->with('status', 'Qty hancaan masuk diperbarui.');
+    }
+
     public function destroy(HancaanReceipt $receipt): RedirectResponse
     {
         $this->receive->undo($receipt);

@@ -77,8 +77,6 @@ function PrintSettings({ sheet, size, onSizeChange }: { sheet: LabelSheet; size:
                     <Printer aria-hidden />
                     Cetak / simpan PDF
                 </Button>
-                <p className="text-sm text-muted-foreground">Di jendela cetak, pilih printer (atau &quot;Simpan sebagai PDF&quot;) dan atur skala ke 100% / ukuran sebenarnya.</p>
-                <p className="text-sm text-muted-foreground">Di layar, label diperbesar supaya mudah dibaca. Hasil cetak mengikuti ukuran yang dipilih.</p>
             </div>
 
             {missing.length > 0 && (

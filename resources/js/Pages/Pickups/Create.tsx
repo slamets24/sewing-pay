@@ -70,12 +70,10 @@ export default function PickupCreate({ tailors, availableItems, presetTailorId }
                         </Link>
                     </Button>
                 }
-            >
-                Pilih penjahit, lalu barang yang dibawa. Satu kali ambil boleh beberapa artikel dari WO berbeda.
-            </PageIntro>
+            />
 
             <div className="flex flex-col gap-5 pb-40 lg:pb-28">
-                <Section title="1. Siapa yang ambil?" icon={UserRound}>
+                <Section title="1. Pilih penjahit" icon={UserRound}>
                     {tailors.length === 0 ? (
                         <EmptyState>Belum ada penjahit aktif. Owner bisa menambahkannya di menu Penjahit.</EmptyState>
                     ) : (
@@ -127,7 +125,7 @@ export default function PickupCreate({ tailors, availableItems, presetTailorId }
                     )}
                 </Section>
 
-                <Section title="2. Barang yang dibawa" icon={ShoppingBasket} description="Hanya barang yang sudah ada di gudang yang muncul di sini.">
+                <Section title="2. Barang yang dibawa" icon={ShoppingBasket}>
                     <div className="mb-4 flex flex-col gap-3">
                         <div className="relative">
                             <Search className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-muted-foreground" />

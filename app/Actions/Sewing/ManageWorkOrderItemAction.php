@@ -24,9 +24,13 @@ class ManageWorkOrderItemAction
             $variant = $this->variants->resolve($article, $data['color'] ?? null, $data['size'] ?? null);
 
             $existing = $workOrder->items()->where('article_variant_id', $variant->id)->lockForUpdate()->first();
+            $itemType = in_array($data['item_type'] ?? null, ['print', 'polosan'], true) ? $data['item_type'] : 'print';
 
             if ($existing) {
                 $existing->increment('planned_qty', $data['planned_qty']);
+                if ($existing->isPolosan()) {
+                    $existing->increment('cutting_qty', $data['planned_qty']);
+                }
 
                 return $existing->refresh();
             }
@@ -36,14 +40,21 @@ class ManageWorkOrderItemAction
                 'article_variant_id' => $variant->id,
                 'color' => $variant->color,
                 'size' => $variant->size,
+                'item_type' => $itemType,
                 'planned_qty' => $data['planned_qty'],
+                'cutting_qty' => $itemType === 'polosan' ? $data['planned_qty'] : 0,
             ]);
         });
     }
 
     public function updatePlannedQty(WorkOrderItem $item, int $plannedQty): WorkOrderItem
     {
-        $item->forceFill(['planned_qty' => $plannedQty])->save();
+        $payload = ['planned_qty' => $plannedQty];
+        if ($item->isPolosan()) {
+            $payload['cutting_qty'] = $plannedQty;
+        }
+
+        $item->forceFill($payload)->save();
 
         return $item;
     }
@@ -53,9 +64,9 @@ class ManageWorkOrderItemAction
         DB::transaction(function () use ($item) {
             $item = WorkOrderItem::query()->lockForUpdate()->findOrFail($item->id);
 
-            if ($item->received_qty > 0) {
+            if ($item->received_qty > 0 || (! $item->isPolosan() && $item->cutting_qty > 0)) {
                 throw ValidationException::withMessages([
-                    'item' => 'Baris ini sudah ada hancaan masuk gudang, jadi tidak bisa dihapus.',
+                    'item' => 'Baris ini sudah mulai diproses (di cutting atau di gudang), jadi tidak bisa dihapus.',
                 ]);
             }
 

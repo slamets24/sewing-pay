@@ -16,6 +16,19 @@ class ReceiveHancaanAction
     {
         return DB::transaction(function () use ($item, $qty, $receivedAt, $notes, $createdBy) {
             $item = WorkOrderItem::query()->lockForUpdate()->findOrFail($item->id);
+
+            $maxReceivable = max(0, $item->planned_qty - $item->received_qty);
+
+            if ($qty > $maxReceivable) {
+                throw ValidationException::withMessages([
+                    'qty' => "Hanya tersisa {$maxReceivable} pcs yang belum masuk gudang.",
+                ]);
+            }
+
+            if ($item->cutting_qty < $item->received_qty + $qty) {
+                $item->cutting_qty = $item->received_qty + $qty;
+            }
+
             $item->increment('received_qty', $qty);
 
             return $item->receipts()->create([
@@ -54,6 +67,33 @@ class ReceiveHancaanAction
         });
     }
 
+    /**
+     * @param list<array{work_order_item_id: int, qty: int}> $items
+     * @return int total received
+     */
+    public function receiveBatch(array $items, ?string $receivedAt = null, ?string $notes = null, ?int $createdBy = null): int
+    {
+        return DB::transaction(function () use ($items, $receivedAt, $notes, $createdBy) {
+            $total = 0;
+            foreach ($items as $entry) {
+                $item = WorkOrderItem::query()->lockForUpdate()->findOrFail($entry['work_order_item_id']);
+                $qty = (int) $entry['qty'];
+                if ($qty > 0) {
+                    $this->receive($item, $qty, $receivedAt, $notes, $createdBy);
+                    $total += $qty;
+                }
+            }
+
+            if ($total === 0) {
+                throw ValidationException::withMessages([
+                    'items' => 'Tidak ada hancaan yang dimasukkan ke gudang.',
+                ]);
+            }
+
+            return $total;
+        });
+    }
+
     public function undo(HancaanReceipt $receipt): void
     {
         DB::transaction(function () use ($receipt) {
@@ -68,6 +108,43 @@ class ReceiveHancaanAction
 
             $item->decrement('received_qty', $receipt->qty);
             $receipt->delete();
+        });
+    }
+
+    public function updateQty(HancaanReceipt $receipt, int $newQty): HancaanReceipt
+    {
+        return DB::transaction(function () use ($receipt, $newQty) {
+            $receipt = HancaanReceipt::query()->lockForUpdate()->findOrFail($receipt->id);
+            $item = WorkOrderItem::query()->lockForUpdate()->findOrFail($receipt->work_order_item_id);
+
+            $diff = $newQty - $receipt->qty;
+
+            if ($diff < 0) {
+                $minRequired = $item->assigned_qty + $item->revision_hold_qty;
+                if ($item->received_qty + $diff < $minRequired) {
+                    throw ValidationException::withMessages([
+                        'qty' => "Tidak bisa dikurangi menjadi {$newQty} pcs karena {$minRequired} pcs sudah diambil penjahit / menunggu revisi.",
+                    ]);
+                }
+            } elseif ($diff > 0) {
+                $maxAllowed = $item->planned_qty - $item->received_qty;
+                if ($diff > $maxAllowed) {
+                    throw ValidationException::withMessages([
+                        'qty' => "Maksimal penambahan adalah {$maxAllowed} pcs (sesuai total WO {$item->planned_qty} pcs).",
+                    ]);
+                }
+            }
+
+            if ($diff !== 0) {
+                $item->increment('received_qty', $diff);
+                if ($item->cutting_qty < $item->received_qty) {
+                    $item->cutting_qty = $item->received_qty;
+                    $item->save();
+                }
+                $receipt->update(['qty' => $newQty]);
+            }
+
+            return $receipt;
         });
     }
 }

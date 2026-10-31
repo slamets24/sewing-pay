@@ -90,7 +90,7 @@ export function CompletionForm({ assignments, idPrefix, quickQty = false, preset
             <Textarea
                 aria-label="Catatan selesai"
                 rows={2}
-                placeholder="Catatan revisi/cacat jika ada"
+                placeholder="Catatan"
                 value={form.data.notes}
                 onChange={(event) => form.setData('notes', event.target.value)}
             />

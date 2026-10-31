@@ -2,6 +2,7 @@
 
 use App\Enums\UserRole;
 use App\Http\Controllers\Sewing\ArticleController;
+use App\Http\Controllers\Sewing\CuttingReceiptController;
 use App\Http\Controllers\Sewing\DeliveryController;
 use App\Http\Controllers\Sewing\HancaanReceiptController;
 use App\Http\Controllers\Sewing\ManagedUserController;
@@ -64,8 +65,16 @@ Route::middleware('auth')->group(function () use ($owner, $warehouse) {
         Route::patch('/wo-items/{item}', [WorkOrderItemController::class, 'update'])->name('work-order-items.update');
         Route::delete('/wo-items/{item}', [WorkOrderItemController::class, 'destroy'])->name('work-order-items.destroy');
 
+        Route::post('/wo-items/{item}/cutting', [CuttingReceiptController::class, 'store'])->name('cutting-receipts.store');
+        Route::patch('/cutting/{receipt}', [CuttingReceiptController::class, 'update'])->name('cutting-receipts.update');
+        Route::post('/wo/{workOrder}/cutting-semua', [CuttingReceiptController::class, 'transferAll'])->name('cutting-receipts.transfer-all');
+        Route::post('/wo/{workOrder}/cutting-batch', [CuttingReceiptController::class, 'transferBatch'])->name('cutting-receipts.batch');
+        Route::delete('/cutting/{receipt}', [CuttingReceiptController::class, 'destroy'])->name('cutting-receipts.destroy');
+
         Route::post('/wo-items/{item}/hancaan', [HancaanReceiptController::class, 'store'])->name('hancaan-receipts.store');
+        Route::patch('/hancaan/{receipt}', [HancaanReceiptController::class, 'update'])->name('hancaan-receipts.update');
         Route::post('/wo/{workOrder}/hancaan-semua', [HancaanReceiptController::class, 'receiveAll'])->name('hancaan-receipts.receive-all');
+        Route::post('/wo/{workOrder}/hancaan-batch', [HancaanReceiptController::class, 'receiveBatch'])->name('hancaan-receipts.batch');
         Route::delete('/hancaan/{receipt}', [HancaanReceiptController::class, 'destroy'])->name('hancaan-receipts.destroy');
 
         Route::get('/loket', [QuickDeskController::class, 'index'])->name('desk.index');
@@ -86,6 +95,7 @@ Route::middleware('auth')->group(function () use ($owner, $warehouse) {
         Route::get('/revisi', [RevisionController::class, 'index'])->name('revisions.index');
         Route::post('/revisi', [RevisionController::class, 'store'])->name('revisions.store');
         Route::post('/revisi/{revision}/lanjut', [RevisionController::class, 'advance'])->name('revisions.advance');
+        Route::post('/revisi/{revision}/alihkan', [RevisionController::class, 'reassign'])->name('revisions.reassign');
         Route::delete('/revisi/{revision}', [RevisionController::class, 'destroy'])->name('revisions.destroy');
 
         Route::get('/absensi', [TailorAttendanceController::class, 'index'])->name('attendances.index');

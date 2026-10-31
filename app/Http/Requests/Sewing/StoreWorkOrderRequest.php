@@ -31,6 +31,7 @@ class StoreWorkOrderRequest extends FormRequest
             'items.*.article_id' => ['required', 'integer'],
             'items.*.color' => ['nullable', 'string', 'max:80'],
             'items.*.size' => ['nullable', 'string', 'max:20'],
+            'items.*.item_type' => ['nullable', 'string', 'in:print,polosan'],
             'items.*.planned_qty' => ['required', 'integer', 'min:1', 'max:100000'],
             'items.*.alias' => ['nullable', 'string', 'max:200'],
         ];

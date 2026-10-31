@@ -1,6 +1,6 @@
 /** Shapes of the props sent by the Laravel presenters in app/Presenters and the Sewing controllers. */
 
-export type Stage = 'other_division' | 'ready' | 'sewing' | 'waiting_revision' | 'done';
+export type Stage = 'other_division' | 'printing' | 'cutting' | 'ready' | 'internal_sewing' | 'makloon_sewing' | 'sewing' | 'waiting_revision' | 'done';
 export type TailorType = 'internal' | 'makloon';
 export type RevisionType = 'sewing' | 'material';
 export type RevisionStatus = 'waiting_material' | 'material_ready' | 'in_progress' | 'done';
@@ -17,6 +17,9 @@ export type TailorRecord = {
     notes: string | null;
     holding_qty?: number;
     items_count?: number;
+    revisions_count?: number;
+    today_delivered_qty?: number;
+    today_earnings?: number;
     has_portal?: boolean;
     portal_url?: string | null;
     portal_pin_is_default?: boolean;
@@ -48,9 +51,13 @@ export type WorkOrderSummary = {
     items_count: number;
     article_names: string[];
     planned_qty: number;
+    printing_qty: number;
+    cutting_qty: number;
     pending_qty: number;
     available_qty: number;
     sewing_qty: number;
+    sewing_internal_qty: number;
+    sewing_makloon_qty: number;
     hold_qty: number;
     delivered_qty: number;
     can_delete: boolean;
@@ -63,26 +70,46 @@ export type WorkOrderItemRecord = {
     due_at: string | null;
     article_id: number;
     article_name: string;
+    item_type: 'print' | 'polosan';
+    is_polosan: boolean;
     color: string | null;
     size: string | null;
     barcode_value: string | null;
     sewing_rate: number;
     planned_qty: number;
+    cutting_transferred_qty: number;
+    printing_qty: number;
+    cutting_qty: number;
     received_qty: number;
     assigned_qty: number;
     delivered_qty: number;
     pending_qty: number;
     available_qty: number;
     sewing_qty: number;
+    sewing_internal_qty: number;
+    sewing_makloon_qty: number;
     hold_qty: number;
     stage: Stage;
     stage_label: string;
     can_delete: boolean;
 };
 
+export type CuttingReceiptRecord = {
+    id: number;
+    work_order_item_id: number;
+    article_name: string;
+    color: string | null;
+    size: string | null;
+    qty: number;
+    transferred_at: string;
+    notes: string | null;
+    created_by_name: string | null;
+};
+
 export type WorkOrderDetail = WorkOrderSummary & {
     source_text: string | null;
     items: WorkOrderItemRecord[];
+    cutting_receipts?: CuttingReceiptRecord[];
 };
 
 export type HancaanReceiptRecord = {
@@ -112,6 +139,10 @@ export type PickupItemRecord = {
     qty: number;
     delivered_qty: number;
     remaining_qty: number;
+    deliverable_qty?: number;
+    open_revision_qty?: number;
+    blocked_revision_qty?: number;
+    in_progress_revision_qty?: number;
     sewing_rate: number;
     status: 'open' | 'done' | 'cancelled';
     status_label: string;
@@ -124,6 +155,7 @@ export type PickupItemRecord = {
 export type BoardRow = {
     tailor: TailorRecord;
     remaining_qty: number;
+    deliverable_qty?: number;
     items: PickupItemRecord[];
 };
 
@@ -177,6 +209,7 @@ export type RevisionRecord = {
     material_type: string | null;
     tailor_id: number;
     tailor_name: string;
+    pickup_item_id: number | null;
     qty: number;
     rate: number;
     subtotal: number;

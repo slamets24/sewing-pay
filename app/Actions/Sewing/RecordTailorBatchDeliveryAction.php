@@ -35,16 +35,16 @@ class RecordTailorBatchDeliveryAction
 
             $deliveries = collect();
             foreach ($openItems as $item) {
-                $remaining = $item->remainingQty();
-                if ($remaining > 0) {
+                $deliverable = $item->deliverableQty();
+                if ($deliverable > 0) {
                     $deliveries->push(
-                        $this->recordDelivery->execute($item, $remaining, $deliveredAt, $notes, $createdBy)
+                        $this->recordDelivery->execute($item, $deliverable, $deliveredAt, $notes, $createdBy)
                     );
                 }
             }
 
             if ($deliveries->isEmpty()) {
-                throw ValidationException::withMessages(['general' => "Semua barang {$tailor->name} sudah selesai disetor."]);
+                throw ValidationException::withMessages(['general' => "Tidak ada barang {$tailor->name} yang siap disetor saat ini (barang masih dalam proses revisi atau sudah selesai disetor)."]);
             }
 
             return $deliveries;

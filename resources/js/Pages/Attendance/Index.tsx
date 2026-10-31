@@ -162,7 +162,6 @@ export default function AttendanceIndex({ date, rows, summary }: AttendanceProps
                 <Section
                     title={`Daftar Absensi Penjahit (${date})`}
                     icon={CalendarCheck}
-                    description="Karyawan juga bisa melakukan absen masuk & pulang secara mandiri lewat portal masing-masing."
                 >
                     {rows.length === 0 ? (
                         <EmptyState className="text-base">Tidak ada penjahit internal yang aktif.</EmptyState>

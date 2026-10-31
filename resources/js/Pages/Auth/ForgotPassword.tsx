@@ -16,7 +16,7 @@ export default function ForgotPassword({ status }: { status?: string | null }) {
     };
 
     return (
-        <GuestLayout title="Lupa password" description="Masukkan email akun, kami kirim link untuk membuat password baru.">
+        <GuestLayout title="Lupa password">
             <Head title="Lupa Password" />
 
             {status && (

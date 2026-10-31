@@ -23,6 +23,7 @@ class WorkOrderItemRequest extends FormRequest
             'article_id' => [$isUpdate ? 'prohibited' : 'required', 'integer', 'exists:articles,id'],
             'color' => ['nullable', 'string', 'max:80'],
             'size' => ['nullable', 'string', 'max:20'],
+            'item_type' => ['nullable', 'string', 'in:print,polosan'],
             'planned_qty' => ['required', 'integer', 'min:1', 'max:100000'],
         ];
     }

@@ -87,7 +87,7 @@ export function PickupWizard({ tailors, articles, idPrefix, board, preset, stick
         <div className="flex flex-col gap-3">
             <WizardStep
                 number={1}
-                title="Siapa yang ambil?"
+                title="1. Penjahit"
                 state={draft.step === 'tailor' ? 'active' : 'done'}
                 summary={tailor?.name}
                 onEdit={() => setDraft(draft.withTailor(null))}
@@ -109,7 +109,7 @@ export function PickupWizard({ tailors, articles, idPrefix, board, preset, stick
 
             <WizardStep
                 number={2}
-                title="Ambil hancaan apa?"
+                title="2. Hancaan"
                 state={draft.step === 'tailor' ? 'locked' : draft.step === 'article' ? 'active' : 'done'}
                 summary={draft.article ? `${draft.article.article_name} · ${joinMeta(draft.article.color, draft.article.size)}` : undefined}
                 onEdit={() => setDraft(draft.withArticle(null))}
@@ -145,7 +145,7 @@ export function PickupWizard({ tailors, articles, idPrefix, board, preset, stick
                 </div>
             </WizardStep>
 
-            <WizardStep number={3} title="Berapa pcs?" state={draft.step === 'qty' ? 'active' : 'locked'}>
+            <WizardStep number={3} title="3. Jumlah" state={draft.step === 'qty' ? 'active' : 'locked'}>
                 <div className="flex flex-col gap-3">
                     <QtyStepper id={`${idPrefix}-qty`} value={draft.qty} max={draft.maxQty} presets={[5, 10, 20]} onChange={(qty) => setDraft(draft.withQty(qty))} />
                     {showNotes ? (
@@ -154,7 +154,7 @@ export function PickupWizard({ tailors, articles, idPrefix, board, preset, stick
                             <Textarea
                                 id={`${idPrefix}-notes`}
                                 rows={2}
-                                placeholder="Catatan opsional"
+                                placeholder="Catatan"
                                 value={draft.notes}
                                 onChange={(event) => setDraft(draft.withNotes(event.target.value))}
                             />

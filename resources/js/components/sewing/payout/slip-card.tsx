@@ -84,7 +84,7 @@ export function SlipCard({ slip }: { slip: PayoutSlipRecord }) {
                             aria-invalid={Boolean(adjustment.deductionError ?? errors.deduction_amount)}
                         />
                     </FormField>
-                    <FormField label="Catatan (boleh kosong)" htmlFor={`slip-${slip.id}-notes`} error={errors.notes} className="sm:col-span-2 lg:col-span-1">
+                    <FormField label="Catatan" htmlFor={`slip-${slip.id}-notes`} error={errors.notes} className="sm:col-span-2 lg:col-span-1">
                         <Input
                             id={`slip-${slip.id}-notes`}
                             value={form.data.notes}

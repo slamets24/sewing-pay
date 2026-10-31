@@ -26,9 +26,9 @@ export default function AppLayout({ title, children }: AppLayoutProps) {
         <div className="min-h-screen bg-background lg:grid lg:grid-cols-[16.5rem_minmax(0,1fr)] lg:gap-0">
             <Head title={title} />
 
-            <aside className="sidebar-shell sticky top-0 hidden h-screen flex-col px-4 py-6 lg:flex">
+            <aside className="sticky top-0 hidden h-screen flex-col border-r border-border bg-card px-4 py-6 lg:flex">
                 <Link href={route(user.home_route)} className="mb-8 px-2">
-                    <AppLogo subtitle="Divisi jahit" variant="on-dark" />
+                    <AppLogo subtitle="Divisi jahit & gudang" variant="default" />
                 </Link>
                 <nav className="flex flex-1 flex-col gap-6 overflow-y-auto" aria-label="Menu utama">
                     <NavGroups navigation={navigation} />
@@ -37,7 +37,7 @@ export default function AppLayout({ title, children }: AppLayoutProps) {
             </aside>
 
             <div className="flex min-w-0 flex-col lg:py-3 lg:pr-3">
-                <header className="sticky top-0 z-30 border-b border-border/60 bg-card/95 text-foreground shadow-sm backdrop-blur-md lg:top-3 lg:rounded-2xl lg:border">
+                <header className="sticky top-0 z-30 border-b border-border bg-card text-foreground shadow-xs lg:top-3 lg:rounded-xl lg:border">
                     <div className="flex h-14 items-center gap-3 px-4 sm:px-6 lg:h-16">
                         <Link href={route(user.home_route)} className="lg:hidden" aria-label="Ke beranda">
                             <AppLogoMark />
@@ -66,16 +66,16 @@ export default function AppLayout({ title, children }: AppLayoutProps) {
 
 function AppLogoMark() {
     return (
-        <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-            <span className="text-sm font-bold">SP</span>
+        <span className="flex size-9 items-center justify-center rounded-lg overflow-hidden border border-border/80 bg-white p-0.5 shadow-xs">
+            <img src="/images/az-icon.png" alt="OPSEW" className="size-full object-contain" />
         </span>
     );
 }
 
 function NavGroups({ navigation, onNavigate }: { navigation: Navigation; onNavigate?: () => void }) {
     return navigation.groups.map((group) => (
-        <div key={group.label} className="flex flex-col gap-1.5">
-            <p className="px-3 text-[0.65rem] font-semibold tracking-widest text-steel-muted uppercase">{group.label}</p>
+        <div key={group.label} className="flex flex-col gap-1">
+            <p className="px-3 text-[11px] font-bold tracking-wider text-muted-foreground/80 uppercase">{group.label}</p>
             {group.items.map((item) => (
                 <SideLink key={item.routeName} item={item} onNavigate={onNavigate} />
             ))}
@@ -93,11 +93,13 @@ function SideLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void
             onClick={onNavigate}
             aria-current={active ? 'page' : undefined}
             className={cn(
-                'flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors',
-                active ? 'bg-steel-accent text-steel-foreground shadow-sm' : 'text-steel-foreground/85 hover:bg-steel-accent/70',
+                'flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors',
+                active
+                    ? 'bg-primary/10 text-primary font-bold shadow-xs'
+                    : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
             )}
         >
-            <Icon className={cn('size-5 shrink-0', active ? 'text-steel-foreground' : 'text-steel-muted')} strokeWidth={1.75} />
+            <Icon className={cn('size-4.5 shrink-0', active ? 'text-primary' : 'text-muted-foreground')} strokeWidth={active ? 2.25 : 1.75} />
             {item.label}
         </Link>
     );
@@ -105,16 +107,16 @@ function SideLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void
 
 function UserBox({ name, roleLabel, onLogout }: { name: string; roleLabel: string; onLogout: () => void }) {
     return (
-        <div className="mt-4 flex items-center gap-3 rounded-2xl bg-steel-accent/80 px-3 py-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/20 text-sm font-bold">
+        <div className="mt-auto flex items-center gap-3 rounded-xl border border-border bg-muted/40 p-2.5">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary">
                 {name.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold">{name}</p>
-                <p className="truncate text-xs text-steel-muted">{roleLabel}</p>
+                <p className="truncate text-sm font-semibold text-foreground">{name}</p>
+                <p className="truncate text-xs text-muted-foreground">{roleLabel}</p>
             </div>
-            <Button variant="ghost" size="icon" className="text-steel-foreground hover:bg-white/15 hover:text-steel-foreground" onClick={onLogout} aria-label="Keluar">
-                <LogOut className="size-5" strokeWidth={1.75} />
+            <Button variant="ghost" size="icon" className="text-muted-foreground hover:bg-muted hover:text-foreground" onClick={onLogout} aria-label="Keluar">
+                <LogOut className="size-4.5" strokeWidth={1.75} />
             </Button>
         </div>
     );
@@ -128,10 +130,10 @@ function MobileMenu({ navigation, name, roleLabel, onLogout }: { navigation: Nav
                     <Menu className="size-6" strokeWidth={1.75} />
                 </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="sidebar-shell w-80 border-0 p-0 text-steel-foreground">
+            <SheetContent side="right" className="w-80 border-l border-border bg-card p-0 text-foreground">
                 <SheetHeader className="px-6 pt-6">
-                    <SheetTitle className="text-steel-foreground">
-                        <AppLogo subtitle="Divisi jahit" variant="on-dark" />
+                    <SheetTitle>
+                        <AppLogo subtitle="Divisi jahit & gudang" variant="default" />
                     </SheetTitle>
                 </SheetHeader>
                 <nav className="flex flex-1 flex-col gap-6 overflow-y-auto px-4 py-6" aria-label="Menu">

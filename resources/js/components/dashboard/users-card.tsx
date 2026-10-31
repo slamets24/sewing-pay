@@ -2,7 +2,7 @@ import { FormField, InputError } from '@/components/form-field';
 import { OptionSelect } from '@/components/option-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { ManagedUser, SelectOption } from '@/types';
@@ -25,7 +25,6 @@ export function UsersCard({ users, userRoles }: { users: ManagedUser[]; userRole
                     <UserCog className="size-4" />
                     Akun Pengguna
                 </CardTitle>
-                <CardDescription>Buat akun admin lapangan atau superadmin.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
                 <form className="flex flex-col gap-3" onSubmit={submit}>

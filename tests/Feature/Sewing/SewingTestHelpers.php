@@ -58,6 +58,7 @@ trait SewingTestHelpers
             'color' => 'Black',
             'size' => 'M',
             'planned_qty' => $qty,
+            'cutting_qty' => $qty,
             'received_qty' => $qty,
         ]);
     }

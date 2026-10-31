@@ -65,11 +65,7 @@ export default function Articles({ articles, tailors, benchmarkHourlyRate, packi
                         Tambah artikel manual
                     </Button>
                 }
-            >
-                {isOwner
-                    ? 'Tarif jahit per pcs untuk tiap artikel. Tarif disalin saat penjahit mengambil barang, jadi mengubah tarif tidak mengubah barang yang sudah diambil.'
-                    : 'Daftar artikel untuk WO. Tarif jahit hanya bisa diubah oleh owner.'}
-            </PageIntro>
+            />
 
             <div className="flex flex-col gap-5">
                 <PackingSyncPanel configured={packingConfigured} lastSyncedAt={lastSyncedAt} canSync={isOwner} />
@@ -327,7 +323,7 @@ function ArticleSheet({ state, isOwner, onOpenChange }: ArticleSheetProps) {
             open={state.open}
             onOpenChange={onOpenChange}
             title={article ? 'Ubah artikel' : 'Tambah artikel manual'}
-            description={article ? article.display_name : 'Untuk artikel yang belum ada di packingv2. Varian dan barcode bisa menyusul.'}
+            description={article?.display_name}
             processing={form.processing}
             onSubmit={submit}
         >

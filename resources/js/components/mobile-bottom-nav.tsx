@@ -51,7 +51,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
                         style={{ left: `${bubbleLeft}%` }}
                         aria-hidden
                     >
-                        <div className="flex size-[3.35rem] items-center justify-center rounded-full bg-card shadow-[0_10px_28px_oklch(0.35_0.08_275/0.18)] ring-[5px] ring-background">
+                        <div className="flex size-[3.35rem] items-center justify-center rounded-full bg-card shadow-[0_8px_20px_rgb(0,0,0,0.12)] ring-[5px] ring-background">
                             <span className="flex size-11 items-center justify-center rounded-full bg-primary/12 text-primary">
                                 <ActiveIcon className="size-[1.35rem]" strokeWidth={2.25} />
                             </span>

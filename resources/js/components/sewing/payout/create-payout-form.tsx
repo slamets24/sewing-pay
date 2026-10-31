@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { formatDate, todayIso } from '@/lib/format';
 import type { PayoutSummary } from '@/types/sewing';
 import { Link, useForm } from '@inertiajs/react';
-import { ArrowRight, CalendarCheck, Info, TriangleAlert } from 'lucide-react';
+import { ArrowRight, CalendarCheck, TriangleAlert } from 'lucide-react';
 import type { FormEvent } from 'react';
 
 /** Picks the cut-off date for a new pay run. Locked while another draft is still open. */
@@ -53,7 +53,7 @@ export function CreatePayoutForm({ hasDraft, draft }: { hasDraft: boolean; draft
                         aria-invalid={Boolean(form.errors.cutoff_date)}
                     />
                 </FormField>
-                <FormField label="Catatan (boleh kosong)" htmlFor="payout_notes" error={form.errors.notes}>
+                <FormField label="Catatan" htmlFor="payout_notes" error={form.errors.notes}>
                     <Input
                         id="payout_notes"
                         value={form.data.notes}
@@ -63,11 +63,6 @@ export function CreatePayoutForm({ hasDraft, draft }: { hasDraft: boolean; draft
                     />
                 </FormField>
             </fieldset>
-
-            <p className="flex items-start gap-2 text-base text-muted-foreground">
-                <Info className="mt-0.5 size-5 shrink-0" aria-hidden />
-                Semua setoran & revisi bahan sampai tanggal ini yang belum dibayar akan masuk.
-            </p>
 
             <div>
                 <Button type="submit" size="lg" disabled={locked || form.processing}>

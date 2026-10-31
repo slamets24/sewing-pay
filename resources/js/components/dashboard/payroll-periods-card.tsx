@@ -2,7 +2,7 @@ import { EmptyState } from '@/components/empty-state';
 import { FormField } from '@/components/form-field';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { formatIdr } from '@/lib/format';
@@ -23,7 +23,6 @@ export function PayrollPeriodFormCard() {
         <Card>
             <CardHeader>
                 <CardTitle className="text-base">Periode Gajian 2 Mingguan</CardTitle>
-                <CardDescription>Buat slot resmi 1-14 atau 15-akhir bulan.</CardDescription>
             </CardHeader>
             <CardContent>
                 <form className="flex flex-col gap-3" onSubmit={submit}>
@@ -53,7 +52,6 @@ export function PayrollPeriodsCard({ periods }: { periods: PayrollPeriod[] }) {
         <Card>
             <CardHeader>
                 <CardTitle className="text-base">Periode Terakhir</CardTitle>
-                <CardDescription>Generate slip dari qty selesai sesuai tanggal, lalu kunci sebelum dibayar.</CardDescription>
             </CardHeader>
             <CardContent>
                 {periods.length ? (

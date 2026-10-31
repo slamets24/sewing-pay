@@ -23,7 +23,7 @@ export default function PortalPin({ tailor, action, must_change }: PinProps) {
     return (
         <GuestLayout
             title={must_change ? 'Ganti PIN' : 'PIN portal'}
-            description={must_change ? `${tailor.name} masih memakai PIN awal. Buat PIN baru sebelum membuka portal.` : `Masukkan PIN 6 angka untuk ${tailor.name}.`}
+            description={tailor.name}
         >
             <Head title={must_change ? 'Ganti PIN' : 'PIN portal'} />
 
@@ -69,7 +69,6 @@ export default function PortalPin({ tailor, action, must_change }: PinProps) {
                                 required
                             />
                         </FormField>
-                        <p className="text-sm text-muted-foreground">6 angka, dan jangan memakai 123456.</p>
                     </>
                 )}
 
@@ -77,7 +76,6 @@ export default function PortalPin({ tailor, action, must_change }: PinProps) {
                     <LockKeyhole />
                     {must_change ? 'Simpan PIN' : 'Buka portal'}
                 </Button>
-                {!must_change && <p className="text-center text-sm text-muted-foreground">Lupa PIN? Minta owner mereset dari menu Penjahit.</p>}
             </form>
         </GuestLayout>
     );

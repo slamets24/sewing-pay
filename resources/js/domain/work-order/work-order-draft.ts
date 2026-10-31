@@ -4,11 +4,14 @@ import type { ParsedWorkOrder } from './work-order-text-parser';
 
 export type DraftLine = { key: string; color: string; size: string; qty: number };
 
+export type ItemType = 'print' | 'polosan';
+
 export type DraftGroup = {
     key: string;
     /** Name as typed in WhatsApp; remembered by the server as an alias once an article is chosen. */
     alias: string | null;
     articleId: number | null;
+    itemType: ItemType;
     declaredQty: number | null;
     lines: DraftLine[];
 };
@@ -25,12 +28,19 @@ export type DraftHeader = {
 
 export type WorkOrderPayload = DraftHeader & {
     source_text: string | null;
-    items: { article_id: number | null; color: string; size: string; planned_qty: number; alias: string | null }[];
+    items: { article_id: number | null; color: string; size: string; item_type: ItemType; planned_qty: number; alias: string | null }[];
 };
 
 let sequence = 0;
 const nextKey = () => `k${++sequence}`;
 const emptyLine = (): DraftLine => ({ key: nextKey(), color: '', size: '', qty: 1 });
+
+function addDays(isoDate: string, days: number): string {
+    const d = new Date(isoDate);
+    if (isNaN(d.getTime())) return '';
+    d.setDate(d.getDate() + days);
+    return d.toISOString().slice(0, 10);
+}
 
 /** Immutable state of the "new work order" form. Every edit returns a new draft. */
 export class WorkOrderDraft {
@@ -41,29 +51,41 @@ export class WorkOrderDraft {
     ) {}
 
     static empty(): WorkOrderDraft {
+        const today = todayIso();
         return new WorkOrderDraft(
-            { number: '', channel: '', category: '', ordered_at: todayIso(), due_at: '', notes: '', is_opening_stock: false },
-            [{ key: nextKey(), alias: null, articleId: null, declaredQty: null, lines: [emptyLine()] }],
+            { number: '', channel: '', category: 'PRINT', ordered_at: today, due_at: addDays(today, 7), notes: '', is_opening_stock: false },
+            [{ key: nextKey(), alias: null, articleId: null, itemType: 'print', declaredQty: null, lines: [emptyLine()] }],
             null,
         );
     }
 
     static fromParsed(parsed: ParsedWorkOrder, matcher: ArticleMatcher, sourceText: string, previous: WorkOrderDraft): WorkOrderDraft {
+        const orderedAt = parsed.orderedAt ?? previous.header.ordered_at;
+        const dueAt = previous.header.due_at || (orderedAt ? addDays(orderedAt, 7) : '');
+        const defaultCategory = parsed.category ?? previous.header.category ?? 'PRINT';
+
         return new WorkOrderDraft(
             {
                 ...previous.header,
                 number: parsed.number,
                 channel: parsed.channel ?? '',
-                category: parsed.category ?? '',
-                ordered_at: parsed.orderedAt ?? previous.header.ordered_at,
+                category: defaultCategory,
+                ordered_at: orderedAt,
+                due_at: dueAt,
             },
-            parsed.groups.map((group) => ({
-                key: nextKey(),
-                alias: group.name,
-                articleId: matcher.match(group.name),
-                declaredQty: group.declaredQty,
-                lines: group.lines.map((line) => ({ key: nextKey(), ...line })),
-            })),
+            parsed.groups.map((group) => {
+                const groupCategory = group.category ?? defaultCategory;
+                const isPolos = groupCategory.toLowerCase().includes('polos');
+
+                return {
+                    key: nextKey(),
+                    alias: group.name,
+                    articleId: matcher.match(group.name),
+                    itemType: isPolos ? 'polosan' : 'print',
+                    declaredQty: group.declaredQty,
+                    lines: group.lines.map((line) => ({ key: nextKey(), ...line })),
+                };
+            }),
             sourceText,
         );
     }
@@ -77,7 +99,12 @@ export class WorkOrderDraft {
     }
 
     addGroup(): WorkOrderDraft {
-        return new WorkOrderDraft(this.header, [...this.groups, { key: nextKey(), alias: null, articleId: null, declaredQty: null, lines: [emptyLine()] }], this.sourceText);
+        const isPolos = this.header.category.toLowerCase().includes('polos');
+        return new WorkOrderDraft(
+            this.header,
+            [...this.groups, { key: nextKey(), alias: null, articleId: null, itemType: isPolos ? 'polosan' : 'print', declaredQty: null, lines: [emptyLine()] }],
+            this.sourceText,
+        );
     }
 
     removeGroup(key: string): WorkOrderDraft {
@@ -137,6 +164,7 @@ export class WorkOrderDraft {
                     article_id: group.articleId,
                     color: line.color.trim(),
                     size: line.size.trim(),
+                    item_type: group.itemType,
                     planned_qty: line.qty,
                     alias: group.alias,
                 })),

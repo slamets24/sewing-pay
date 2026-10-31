@@ -36,7 +36,7 @@ class WorkOrderFlowTest extends TestCase
         $teal = $workOrder->items->firstWhere('color', 'Teal Blue');
         $this->assertSame('S', $teal->size);
         $this->assertSame(3, $teal->planned_qty);
-        $this->assertSame(WorkOrderItemStage::OtherDivision, $teal->stage());
+        $this->assertSame(WorkOrderItemStage::Printing, $teal->stage());
         $this->assertSame('XXL', $workOrder->items->firstWhere('color', 'Brown')->size);
         $this->assertSame($article->id, ArticleAlias::query()->where('alias', 'marina one set')->value('article_id'));
     }

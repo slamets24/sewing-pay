@@ -7,7 +7,7 @@ type FormSheetProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     title: string;
-    description: ReactNode;
+    description?: ReactNode;
     submitLabel?: string;
     processing: boolean;
     onSubmit: () => void;
@@ -27,7 +27,7 @@ export function FormSheet({ open, onOpenChange, title, description, submitLabel 
                 <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col" noValidate>
                     <SheetHeader className="border-b bg-muted/60">
                         <SheetTitle className="font-display text-2xl font-bold uppercase">{title}</SheetTitle>
-                        <SheetDescription className="text-base text-muted-foreground">{description}</SheetDescription>
+                        {description && <SheetDescription className="text-base text-muted-foreground">{description}</SheetDescription>}
                     </SheetHeader>
 
                     <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-4">{children}</div>

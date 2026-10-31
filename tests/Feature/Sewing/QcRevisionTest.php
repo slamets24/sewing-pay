@@ -120,6 +120,42 @@ class QcRevisionTest extends TestCase
         $this->actingAs($admin)->post(route('revisions.advance', $revision))->assertSessionHasErrors('revision');
     }
 
+    public function test_revision_can_be_reassigned_to_another_tailor_before_in_progress(): void
+    {
+        $delivery = $this->deliver();
+        $part = RevisionPart::create(['name' => 'Badan Belakang', 'price' => 8000, 'material_type' => 'print', 'is_active' => true]);
+        $admin = $this->warehouseAdmin();
+
+        $this->actingAs($admin)->post(route('revisions.store'), [
+            'type' => 'material',
+            'found_at' => 'sewing',
+            'sewing_delivery_id' => $delivery->id,
+            'revision_part_id' => $part->id,
+            'qty' => 1,
+        ])->assertSessionHasNoErrors();
+
+        $revision = Revision::query()->sole();
+        $newTailor = $this->tailor(name: 'Pak Budi');
+
+        $this->actingAs($admin)->post(route('revisions.reassign', $revision), [
+            'tailor_id' => $newTailor->id,
+        ])->assertSessionHasNoErrors();
+
+        $this->assertSame($newTailor->id, $revision->refresh()->tailor_id);
+        $this->assertSame(8000, $revision->subtotal);
+
+        // Advance to in_progress
+        $this->actingAs($admin)->post(route('revisions.advance', $revision));
+        $this->actingAs($admin)->post(route('revisions.advance', $revision));
+        $this->assertSame(RevisionStatus::InProgress, $revision->refresh()->status);
+
+        // Cannot reassign once in_progress
+        $otherTailor = $this->tailor(name: 'Pak Joko');
+        $this->actingAs($admin)->post(route('revisions.reassign', $revision), [
+            'tailor_id' => $otherTailor->id,
+        ])->assertSessionHasErrors('tailor_id');
+    }
+
     public function test_material_defect_found_while_sewing_can_stay_with_the_tailor(): void
     {
         $admin = $this->warehouseAdmin();
@@ -208,5 +244,229 @@ class QcRevisionTest extends TestCase
             'sewing_delivery_id' => $delivery->id,
             'qty' => 3,
         ])->assertSessionHasErrors('qty');
+    }
+
+    public function test_defective_item_kept_by_tailor_reduces_deliverable_qty_and_blocks_delivery(): void
+    {
+        $admin = $this->warehouseAdmin();
+        $part = RevisionPart::create(['name' => 'Badan Depan', 'price' => 10000, 'material_type' => 'print', 'is_active' => true]);
+        $item = $this->readyItem(qty: 2);
+        $tailor = $this->tailor();
+
+        $this->actingAs($admin)->post(route('pickups.store'), [
+            'tailor_id' => $tailor->id,
+            'items' => [['work_order_item_id' => $item->id, 'qty' => 2]],
+        ]);
+
+        $pickupItem = PickupItem::query()->sole();
+        $this->assertSame(2, $pickupItem->remainingQty());
+        $this->assertSame(2, $pickupItem->deliverableQty());
+
+        // Report 1 pcs defect, kept by tailor (return_to_warehouse = false)
+        $this->actingAs($admin)->post(route('revisions.store'), [
+            'type' => 'material',
+            'found_at' => 'sewing',
+            'pickup_item_id' => $pickupItem->id,
+            'revision_part_id' => $part->id,
+            'qty' => 1,
+            'return_to_warehouse' => false,
+        ])->assertSessionHasNoErrors();
+
+        $pickupItem->refresh();
+        $this->assertSame(2, $pickupItem->remainingQty());
+        $this->assertSame(1, $pickupItem->openRevisionQty());
+        $this->assertSame(1, $pickupItem->deliverableQty());
+
+        // Attempting to deliver 2 pcs fails because 1 pcs is defective
+        $this->actingAs($admin)->post(route('deliveries.store', $pickupItem), ['qty' => 2])
+            ->assertSessionHasErrors('qty');
+
+        // Delivering 1 good pcs succeeds
+        $this->actingAs($admin)->post(route('deliveries.store', $pickupItem), ['qty' => 1])
+            ->assertSessionHasNoErrors();
+
+        $pickupItem->refresh();
+        $this->assertSame(1, $pickupItem->remainingQty());
+        $this->assertSame(0, $pickupItem->deliverableQty());
+
+        // Batch delivery fails because 0 pcs are deliverable
+        $this->actingAs($admin)->post(route('deliveries.batch-tailor', $tailor->id))
+            ->assertSessionHasErrors('general');
+
+        // Advance revision to Done (Bahan Datang -> Dikerjakan -> Selesai)
+        $revision = Revision::query()->sole();
+        $this->actingAs($admin)->post(route('revisions.advance', $revision))->assertSessionHasNoErrors(); // material_ready
+        $this->actingAs($admin)->post(route('revisions.advance', $revision))->assertSessionHasNoErrors(); // in_progress
+        $this->actingAs($admin)->post(route('revisions.advance', $revision))->assertSessionHasNoErrors(); // done
+
+        $pickupItem->refresh();
+        $this->assertSame(0, $pickupItem->openRevisionQty());
+        $this->assertSame(1, $pickupItem->deliverableQty());
+
+        // Now the repaired piece can be delivered!
+        $this->actingAs($admin)->post(route('deliveries.store', $pickupItem), ['qty' => 1])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(0, $pickupItem->refresh()->remainingQty());
+    }
+
+    public function test_reassigning_revision_kept_by_tailor_transfers_item(): void
+    {
+        $admin = $this->warehouseAdmin();
+        $part = RevisionPart::create(['name' => 'Badan Depan', 'price' => 10000, 'material_type' => 'print', 'is_active' => true]);
+        $item = $this->readyItem(qty: 2);
+        $tailor1 = $this->tailor(name: 'Tailor A');
+        $tailor2 = $this->tailor(name: 'Tailor B');
+
+        $this->actingAs($admin)->post(route('pickups.store'), [
+            'tailor_id' => $tailor1->id,
+            'items' => [['work_order_item_id' => $item->id, 'qty' => 2]],
+        ]);
+
+        $pickupItem1 = PickupItem::query()->where('tailor_id', $tailor1->id)->sole();
+
+        // Report 1 pcs defect kept by tailor1
+        $this->actingAs($admin)->post(route('revisions.store'), [
+            'type' => 'material',
+            'found_at' => 'sewing',
+            'pickup_item_id' => $pickupItem1->id,
+            'revision_part_id' => $part->id,
+            'qty' => 1,
+            'return_to_warehouse' => false,
+        ])->assertSessionHasNoErrors();
+
+        $revision = Revision::query()->sole();
+
+        // Reassign revision to tailor2
+        $this->actingAs($admin)->post(route('revisions.reassign', $revision), [
+            'tailor_id' => $tailor2->id,
+        ])->assertSessionHasNoErrors();
+
+        $pickupItem1->refresh();
+        $revision->refresh();
+
+        // Tailor 1 now only has 1 pcs
+        $this->assertSame(1, $pickupItem1->qty);
+        $this->assertSame(0, $pickupItem1->openRevisionQty());
+        $this->assertSame(1, $pickupItem1->deliverableQty());
+
+        // Revision is now for tailor 2 and points to tailor 2's new pickup item
+        $this->assertSame($tailor2->id, $revision->tailor_id);
+        $pickupItem2 = PickupItem::query()->where('tailor_id', $tailor2->id)->sole();
+        $this->assertSame($pickupItem2->id, $revision->pickup_item_id);
+        $this->assertSame(1, $pickupItem2->qty);
+    }
+
+    public function test_material_revision_returned_to_warehouse_moves_to_tailor_on_in_progress_and_completes_on_delivery(): void
+    {
+        $admin = $this->warehouseAdmin();
+        $item = $this->readyItem(qty: 3);
+        $part = RevisionPart::create(['name' => 'Badan Belakang', 'price' => 8000, 'material_type' => 'print', 'is_active' => true]);
+        $tailor = $this->tailor(name: 'Bu Rini');
+
+        // Tailor takes 3 pcs
+        $this->actingAs($admin)->post(route('pickups.store'), [
+            'tailor_id' => $tailor->id,
+            'items' => [['work_order_item_id' => $item->id, 'qty' => 3]],
+        ]);
+        $pickupItem = PickupItem::query()->sole();
+
+        // Report 1 pcs defect handed back to warehouse (return_to_warehouse = true)
+        $this->actingAs($admin)->post(route('revisions.store'), [
+            'type' => 'material',
+            'found_at' => 'sewing',
+            'pickup_item_id' => $pickupItem->id,
+            'revision_part_id' => $part->id,
+            'qty' => 1,
+            'return_to_warehouse' => true,
+        ])->assertSessionHasNoErrors();
+
+        $pickupItem->refresh();
+        $revision = Revision::query()->sole();
+
+        // 1 pcs returned to warehouse, tailor now holds 2 pcs
+        $this->assertSame(2, $pickupItem->remainingQty());
+        $this->assertTrue($revision->returned_to_warehouse);
+        $this->assertSame(RevisionStatus::WaitingMaterial, $revision->status);
+
+        // Advance: Bahan Datang (material_ready)
+        $this->actingAs($admin)->post(route('revisions.advance', $revision))->assertSessionHasNoErrors();
+        $revision->refresh();
+        $this->assertSame(RevisionStatus::MaterialReady, $revision->status);
+
+        // Advance: Mulai Dikerjakan (in_progress) -> piece MUST move to the tailor working on it!
+        $this->actingAs($admin)->post(route('revisions.advance', $revision))->assertSessionHasNoErrors();
+        $revision->refresh();
+        $pickupItem->refresh();
+
+        $this->assertSame(RevisionStatus::InProgress, $revision->status);
+        $this->assertFalse($revision->returned_to_warehouse);
+        // Tailor now holds 3 pcs again (2 original + 1 repaired)
+        $this->assertSame(3, $pickupItem->remainingQty());
+        $this->assertSame(3, $pickupItem->deliverableQty());
+
+        // Now tailor setors all 3 pcs at the desk
+        $this->actingAs($admin)->post(route('deliveries.store', $pickupItem), ['qty' => 3])
+            ->assertSessionHasNoErrors();
+
+        $revision->refresh();
+        $pickupItem->refresh();
+
+        // Revision is automatically completed to Done when setor happens!
+        $this->assertSame(RevisionStatus::Done, $revision->status);
+        $this->assertNotNull($revision->completed_at);
+        $this->assertSame(0, $pickupItem->remainingQty());
+        $this->assertSame(3, SewingDelivery::query()->sole()->qty);
+    }
+
+    public function test_depositing_item_with_in_progress_revision_automatically_completes_revision(): void
+    {
+        $admin = $this->warehouseAdmin();
+        $item = $this->readyItem(qty: 1);
+        $part = RevisionPart::create(['name' => 'Badan Belakang', 'price' => 7000, 'material_type' => 'print', 'is_active' => true]);
+        $tailor = $this->tailor();
+
+        // Tailor takes 1 pcs
+        $this->actingAs($admin)->post(route('pickups.store'), [
+            'tailor_id' => $tailor->id,
+            'items' => [['work_order_item_id' => $item->id, 'qty' => 1]],
+        ]);
+        $pickupItem = PickupItem::query()->sole();
+
+        // Report 1 pcs defect kept by tailor
+        $this->actingAs($admin)->post(route('revisions.store'), [
+            'type' => 'material',
+            'found_at' => 'sewing',
+            'pickup_item_id' => $pickupItem->id,
+            'revision_part_id' => $part->id,
+            'qty' => 1,
+            'return_to_warehouse' => false,
+        ])->assertSessionHasNoErrors();
+
+        $revision = Revision::query()->sole();
+
+        // While waiting_material: deliverable is 0
+        $this->assertSame(0, $pickupItem->refresh()->deliverableQty());
+
+        // Bahan Datang -> Mulai Dikerjakan
+        $this->actingAs($admin)->post(route('revisions.advance', $revision))->assertSessionHasNoErrors(); // material_ready
+        $this->assertSame(0, $pickupItem->refresh()->deliverableQty());
+
+        $this->actingAs($admin)->post(route('revisions.advance', $revision))->assertSessionHasNoErrors(); // in_progress
+        $pickupItem->refresh();
+        $revision->refresh();
+
+        $this->assertSame(RevisionStatus::InProgress, $revision->status);
+        // In progress: deliverable is 1 pcs! Tailor can now setor directly without clicking Selesai first!
+        $this->assertSame(1, $pickupItem->deliverableQty());
+
+        // Setor directly
+        $this->actingAs($admin)->post(route('deliveries.store', $pickupItem), ['qty' => 1])
+            ->assertSessionHasNoErrors();
+
+        $revision->refresh();
+        $this->assertSame(RevisionStatus::Done, $revision->status);
+        $this->assertNotNull($revision->completed_at);
+        $this->assertSame(7000, $revision->subtotal);
     }
 }

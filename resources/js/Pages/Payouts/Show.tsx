@@ -135,14 +135,9 @@ function DraftActions({ payout, set }: { payout: PayoutSummary; set: PayoutSlipS
                         Hapus draft
                     </ConfirmButton>
                 </div>
-                <ul className="flex list-disc flex-col gap-1 pl-5 text-base text-muted-foreground">
-                    {hasPaidSlips ? (
-                        <li>Sudah ada slip yang dibayar, jadi draft ini tidak bisa dihitung ulang atau dihapus lagi.</li>
-                    ) : (
-                        <li>Ada setoran baru sebelum tanggal batas? Tekan Hitung ulang. Bonus dan potongan yang sudah diisi tetap tersimpan.</li>
-                    )}
-                    <li>Tombol bayar dan hapus perlu ditekan dua kali supaya tidak salah tekan.</li>
-                </ul>
+                {hasPaidSlips && (
+                    <p className="text-sm text-muted-foreground">Sebagian slip sudah dibayar. Draft tidak dapat dihitung ulang atau dihapus.</p>
+                )}
             </div>
         </Section>
     );

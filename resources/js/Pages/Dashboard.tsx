@@ -12,7 +12,7 @@ import { CompletionForm } from '@/components/tailor-payroll/completion-form';
 import { CompletionList } from '@/components/tailor-payroll/completion-list';
 import { StatCard } from '@/components/tailor-payroll/stat-card';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AuthenticatedLayout from '@/layouts/authenticated-layout';
 import { formatIdr, joinMeta } from '@/lib/format';
@@ -29,7 +29,7 @@ import type {
     WorkType,
 } from '@/types';
 import { Head } from '@inertiajs/react';
-import { CheckCheck, ClipboardCheck, Gauge, PackagePlus, Scissors, Shirt, WalletCards, type LucideIcon } from 'lucide-react';
+import { CheckCheck, Gauge, Scissors, Shirt, WalletCards } from 'lucide-react';
 
 type DashboardProps = {
     stats: Stats;
@@ -44,12 +44,6 @@ type DashboardProps = {
     payrollPeriods: PayrollPeriod[];
     payrollSlips: PayrollSlipSummary[];
 };
-
-const workflowSteps: { icon: LucideIcon; title: string; body: string }[] = [
-    { icon: PackagePlus, title: '1. Siapkan hancaan', body: 'Input artikel, warna, size, qty, dan tarif kerja.' },
-    { icon: Scissors, title: '2. Penjahit ambil', body: 'Qty tersedia berkurang otomatis dan tarif disnapshot.' },
-    { icon: ClipboardCheck, title: '3. Catat selesai', body: 'Bisa dicicil, riwayatnya jadi dasar gajian 2 mingguan.' },
-];
 
 export default function Dashboard(props: DashboardProps) {
     const { stats, tailors, workTypes, availableArticles, activeAssignments } = props;
@@ -94,20 +88,6 @@ export default function Dashboard(props: DashboardProps) {
                     />
                 </section>
 
-                <section className="hidden gap-3 md:grid lg:grid-cols-3">
-                    {workflowSteps.map(({ icon: Icon, title, body }) => (
-                        <div key={title} className="flex items-start gap-3 rounded-lg border bg-card p-4">
-                            <div className="rounded-md bg-muted p-2">
-                                <Icon className="size-4" />
-                            </div>
-                            <div className="flex flex-col gap-1">
-                                <p className="text-sm font-semibold">{title}</p>
-                                <p className="text-sm text-muted-foreground">{body}</p>
-                            </div>
-                        </div>
-                    ))}
-                </section>
-
                 <Tabs defaultValue="operasional" className="gap-4">
                     <TabsList className="grid h-auto w-full grid-cols-4 md:w-fit">
                         <TabsTrigger value="operasional" className="py-2">
@@ -129,7 +109,6 @@ export default function Dashboard(props: DashboardProps) {
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="text-base">Pengambilan Hancaan</CardTitle>
-                                    <CardDescription>Pilih hancaan siap, penjahit, dan qty diambil.</CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <AssignmentForm articles={availableArticles} tailors={activeTailors} idPrefix="assign" />
@@ -138,7 +117,6 @@ export default function Dashboard(props: DashboardProps) {
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="text-base">Catat Selesai</CardTitle>
-                                    <CardDescription>Input cicilan qty selesai untuk dasar gajian.</CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <CompletionForm assignments={openAssignments} idPrefix="complete" />
@@ -151,7 +129,6 @@ export default function Dashboard(props: DashboardProps) {
                                 <CardHeader className="flex flex-row items-start justify-between gap-2">
                                     <div className="flex flex-col gap-1.5">
                                         <CardTitle className="text-base">Pekerjaan Berjalan</CardTitle>
-                                        <CardDescription>{queueQty} pcs masih perlu diselesaikan.</CardDescription>
                                     </div>
                                     <Badge variant="secondary">{activeAssignments.length} pekerjaan</Badge>
                                 </CardHeader>
@@ -167,7 +144,6 @@ export default function Dashboard(props: DashboardProps) {
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="text-base">Hancaan Siap</CardTitle>
-                                    <CardDescription>{availableArticles.length} artikel masih bisa diambil.</CardDescription>
                                 </CardHeader>
                                 <CardContent className="flex flex-col gap-2">
                                     {availableArticles.length ? (
@@ -206,7 +182,6 @@ export default function Dashboard(props: DashboardProps) {
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-base">Selesai Terakhir</CardTitle>
-                                <CardDescription>Riwayat input qty untuk gajian.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <CompletionList completions={props.recentCompletions} />

@@ -23,7 +23,7 @@ export default function Login({ canResetPassword, status }: LoginProps) {
     };
 
     return (
-        <GuestLayout title="Masuk" description="Pakai email dan password yang diberikan owner.">
+        <GuestLayout title="Masuk">
             <Head title="Masuk" />
 
             {status && (

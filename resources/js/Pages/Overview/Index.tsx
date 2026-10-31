@@ -50,14 +50,34 @@ export default function Overview({ stats, board, dueSoon, recentDeliveries }: Ov
     return (
         <AppLayout title="Beranda">
             <div className="flex flex-col gap-6">
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-                    <div>
-                        <p className="text-3xl font-bold tracking-tight">Halo, {firstName}</p>
-                        <p className="text-base text-muted-foreground">Panel operasional internal divisi jahit hari ini.</p>
+                {/* Hero Greeting Banner with AZFLOW Gradient (Hireism style) */}
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#4F57F5] via-[#5D53FA] to-[#7A4DF7] p-6 text-white shadow-sm">
+                    <div className="relative z-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex flex-col gap-1.5">
+                            <div className="flex items-center gap-2">
+                                <span className="rounded-md bg-white/20 px-2 py-0.5 text-[11px] font-bold tracking-wider uppercase text-white backdrop-blur-xs">
+                                    OPSEW · Divisi Jahit & Gudang
+                                </span>
+                                <span className="text-[11px] font-medium text-white/80">
+                                    powered by AZFLOW
+                                </span>
+                            </div>
+                            <h2 className="text-2xl font-black tracking-tight sm:text-3xl">
+                                Halo, {firstName} 👋
+                            </h2>
+                            <p className="max-w-xl text-sm leading-relaxed text-white/90">
+                                Hari ini ada <strong className="font-bold underline decoration-white/50">{board.length} penjahit aktif</strong> memegang kain. Sebanyak <strong>{stats.available_qty} pcs</strong> potongan siap diambil di gudang.
+                            </p>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2.5 self-start sm:self-center">
+                            <Button asChild size="default" className="rounded-xl bg-white text-primary font-bold hover:bg-white/90 shadow-xs border-0">
+                                <Link href={route('desk.index')}>
+                                    Buka Meja Loket
+                                </Link>
+                            </Button>
+                        </div>
                     </div>
-                    <span className="text-sm font-semibold text-muted-foreground">
-                        {board.length} penjahit aktif memegang kain
-                    </span>
+                    <div className="pointer-events-none absolute -right-6 -bottom-10 size-44 rounded-full bg-white/10 blur-2xl" />
                 </div>
 
                 {/* Visual Workflow Stepper */}
@@ -127,10 +147,10 @@ function QuickAction({ href, icon: Icon, label }: { href: string; icon: LucideIc
     return (
         <Link
             href={href}
-            className="surface-card flex min-h-[4.75rem] flex-col items-center justify-center gap-2 px-3 py-4 text-center text-sm font-semibold text-foreground transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft-lg)] focus-visible:ring-4 focus-visible:ring-ring/40 focus-visible:outline-none"
+            className="surface-card flex min-h-[4.5rem] flex-col items-center justify-center gap-2 px-3 py-3.5 text-center text-sm font-semibold text-foreground transition-colors hover:border-foreground/30 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
-            <span className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <Icon className="size-6" strokeWidth={1.75} />
+            <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Icon className="size-5" strokeWidth={2} />
             </span>
             {label}
         </Link>

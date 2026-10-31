@@ -105,9 +105,7 @@ function PortalContent({
                 <p className="font-display text-3xl leading-tight font-bold break-words">
                     {TailorPortal.greeting()}, {tailor.name}
                 </p>
-                <p className="text-base text-muted-foreground">
-                    {joinMeta(tailor.code, tailor.type_label)}. {isInternal ? 'Catat kehadiran harian & pantau pekerjaan Anda.' : 'Halaman ini untuk melihat barang dan setoran Anda.'}
-                </p>
+                <p className="text-base text-muted-foreground">{joinMeta(tailor.code, tailor.type_label)}</p>
             </div>
 
             {/* Attendance Clock In / Out for Internal Tailor */}
@@ -131,11 +129,11 @@ function PortalContent({
                 </div>
             </div>
 
-            <Section title="Barang yang saya pegang" icon={Shirt} description="Sisa yang belum disetor ke gudang.">
+            <Section title="Barang yang saya pegang" icon={Shirt}>
                 <HoldingList items={holding} />
             </Section>
 
-            <Section title="Revisi saya" icon={Wrench} description="Revisi yang belum selesai.">
+            <Section title="Revisi saya" icon={Wrench}>
                 <RevisionList revisions={openRevisions} />
             </Section>
 
@@ -144,7 +142,7 @@ function PortalContent({
             </Section>
 
             {(portal.showsMoney || slips.length > 0) && (
-                <Section title="Slip gaji saya" icon={Receipt} description="Tekan Buka slip untuk melihat rincian dan mencetak.">
+                <Section title="Slip gaji saya" icon={Receipt}>
                     <PortalSlipList slips={slips} />
                 </Section>
             )}
@@ -176,10 +174,10 @@ function TailorClockCard({
     const hasClockOut = attendance !== null && Boolean(attendance.clock_out);
 
     return (
-        <div className="overflow-hidden rounded-2xl border-2 border-primary/20 bg-card p-5 shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-primary/20 bg-card p-4 sm:p-5 shadow-xs">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-start gap-3">
-                    <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                    <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                         <CalendarCheck className="size-6" />
                     </div>
                     <div>

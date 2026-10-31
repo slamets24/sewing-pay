@@ -40,9 +40,9 @@ export class TailorDirectory {
         return TYPE_TONES[type];
     }
 
-    static readonly typeOptions: { value: TailorType; label: string; description: string }[] = [
-        { value: 'internal', label: 'Internal', description: 'Penjahit sendiri. Setoran masuk slip gaji.' },
-        { value: 'makloon', label: 'Makloon', description: 'Hanya dicatat posisi barang, tidak masuk gaji.' },
+    static readonly typeOptions: { value: TailorType; label: string }[] = [
+        { value: 'internal', label: 'Internal' },
+        { value: 'makloon', label: 'Makloon' },
     ];
 }
 
