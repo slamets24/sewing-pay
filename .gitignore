@@ -64,4 +64,8 @@ Homestead.yaml
 # Local planning notes, not part of the app
 /docs/
 
+# Supabase
+/supabase/.temp/
+/supabase/
+
 .mcp.json
