@@ -23,6 +23,7 @@ class ArticleRequest extends FormRequest
             'brand_name' => ['nullable', 'string', 'max:100'],
             'category_name' => ['nullable', 'string', 'max:100'],
             'sewing_rate' => ['nullable', 'integer', 'min:0', 'max:10000000'],
+            'makloon_sewing_rate' => ['nullable', 'integer', 'min:0', 'max:10000000'],
             'is_active' => ['sometimes', 'boolean'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ];

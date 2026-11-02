@@ -86,7 +86,7 @@ export default function AttendanceIndex({ date, rows, summary }: AttendanceProps
     const isToday = date === todayStr;
 
     const handleBatchPresent = () => {
-        if (!confirm(`Tandai semua penjahit internal hadir 9 jam (uang makan Rp 30.000) untuk tanggal ${date}?`)) {
+        if (!confirm(`Tandai semua penjahit internal hadir 9 jam (uang makan Rp. 30.000) untuk tanggal ${date}?`)) {
             return;
         }
 
@@ -153,7 +153,7 @@ export default function AttendanceIndex({ date, rows, summary }: AttendanceProps
                     <StatTile
                         label="Aturan Uang Makan"
                         value="30rb / 35rb"
-                        hint="<10j: Rp 30.000 · ≥10j: Rp 35.000"
+                        hint="<10j: Rp. 30.000 · ≥10j: Rp. 35.000"
                         icon={Clock}
                         tone="sewing"
                     />
@@ -323,18 +323,23 @@ function AttendanceCard({
                     {/* Uang Makan Riil (Bisa diedit/custom) */}
                     <div className="flex flex-col gap-0.5">
                         <div className="flex items-center justify-between">
-                            <label className="text-xs font-medium text-muted-foreground">Uang Makan (Rp)</label>
+                            <label className="text-xs font-medium text-muted-foreground">Uang Makan (Rp.)</label>
                             <span className="text-[10px] text-muted-foreground">
                                 {hours >= 10 ? '≥10j: 35rb' : '<10j: 30rb'}
                             </span>
                         </div>
-                        <Input
-                            type="number"
-                            value={mealAllowance}
-                            onChange={(e) => setMealAllowance(Number(e.target.value))}
-                            className="h-9 px-2 text-sm font-semibold"
-                            disabled={!isPresent}
-                        />
+                        <div className="relative">
+                            <span className="pointer-events-none absolute inset-y-0 left-2.5 flex items-center text-xs font-semibold text-muted-foreground" aria-hidden>
+                                Rp.
+                            </span>
+                            <Input
+                                type="number"
+                                value={mealAllowance}
+                                onChange={(e) => setMealAllowance(Number(e.target.value))}
+                                className="h-9 pl-8.5 pr-2 text-sm font-semibold"
+                                disabled={!isPresent}
+                            />
+                        </div>
                     </div>
                 </div>
 

@@ -249,4 +249,41 @@ class PayoutTest extends TestCase
         $this->assertCount(2, $mealLines);
         $this->assertSame(65000, (int) $mealLines->sum('subtotal'));
     }
+
+    public function test_portal_only_shows_paid_slips_and_hides_draft_slips(): void
+    {
+        $owner = $this->owner();
+        $siti = $this->tailor(name: 'Bu Siti');
+        $this->delivered($siti, 2, '2026-10-05 10:00');
+        $siti->generatePortal();
+        $siti->changePortalPin('654321');
+
+        // Create a draft payout
+        $this->actingAs($owner)->post(route('payouts.store'), ['cutoff_date' => '2026-10-10'])->assertSessionHasNoErrors();
+        $payout = Payout::query()->latest('id')->first();
+        $slip = $payout->slips()->sole();
+        $this->assertTrue($payout->isDraft());
+
+        // Authenticate portal session
+        $this->post(route('portal.pin.store', ['tailor' => $siti->portal_token]), ['pin' => '654321']);
+
+        // In portal, slips count should be 0 because payout/slip is still draft
+        $this->get(route('portal.show', ['tailor' => $siti->portal_token]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Portal/Index')
+                ->has('slips', 0)
+            );
+
+        // Mark slip paid (posted)
+        $this->actingAs($owner)->post(route('payout-slips.paid', $slip))->assertSessionHasNoErrors();
+
+        // In portal, slip now appears
+        $this->get(route('portal.show', ['tailor' => $siti->portal_token]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Portal/Index')
+                ->has('slips', 1)
+            );
+    }
 }

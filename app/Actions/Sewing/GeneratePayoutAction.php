@@ -6,6 +6,7 @@ use App\Enums\PayoutLineType;
 use App\Enums\PayoutStatus;
 use App\Enums\RevisionStatus;
 use App\Enums\RevisionType;
+use App\Enums\TailorType;
 use App\Models\Payout;
 use App\Models\PayoutSlip;
 use App\Models\Revision;
@@ -86,6 +87,7 @@ class GeneratePayoutAction
             ->where('is_payable', true)
             ->where('delivered_at', '<=', $cutoff)
             ->whereDoesntHave('slipLine')
+            ->whereHas('tailor', fn ($q) => $q->where('type', TailorType::Internal->value))
             ->orderBy('delivered_at')
             ->get();
     }
@@ -102,6 +104,7 @@ class GeneratePayoutAction
             ->where('subtotal', '>', 0)
             ->where('completed_at', '<=', $cutoff)
             ->whereDoesntHave('slipLine')
+            ->whereHas('tailor', fn ($q) => $q->where('type', TailorType::Internal->value))
             ->orderBy('completed_at')
             ->get();
     }

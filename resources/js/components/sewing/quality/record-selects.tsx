@@ -1,6 +1,5 @@
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { RevisionTarget } from '@/domain/quality/revision-report-draft';
-import { formatIdr } from '@/lib/format';
 import type { RevisionPartRecord, TailorRecord } from '@/types/sewing';
 
 const ITEM_CLASS = 'py-2.5 text-base';
@@ -62,7 +61,7 @@ export function RevisionPartSelect({ id, parts, value, onChange, invalid, ...pro
                 <SelectGroup>
                     {parts.map((part) => (
                         <SelectItem key={part.id} value={String(part.id)} className={ITEM_CLASS}>
-                            {part.name} · {formatIdr(part.price)}
+                            {part.name}
                         </SelectItem>
                     ))}
                 </SelectGroup>

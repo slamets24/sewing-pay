@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PickupCart } from '@/domain/production/pickup-cart';
 import AppLayout from '@/layouts/app-layout';
-import { dueLabel, formatIdr, variantLabel } from '@/lib/format';
+import { dueLabel, variantLabel } from '@/lib/format';
 import { ToneStyle } from '@/lib/tone';
 import { cn } from '@/lib/utils';
 import { floorActions, FloorActions } from '@/services/floor-actions';
@@ -17,9 +17,9 @@ import { Link, router } from '@inertiajs/react';
 import {
     AlertCircle,
     ArrowLeftRight,
+    BarChart3,
     Check,
     ClipboardList,
-    Coins,
     HandPlatter,
     History,
     Package,
@@ -217,11 +217,12 @@ export default function DeskIndex({
         });
     };
 
-    // Filter recent deliveries for the active tailor
+    // Filter recent deliveries for the active tailor (only unpaid / belum cair)
     const tailorRecentDeliveries = useMemo(() => {
-        if (!selectedTailor) return recentDeliveries.slice(0, 5);
+        const unpaid = recentDeliveries.filter((d) => !d.is_paid);
+        if (!selectedTailor) return unpaid.slice(0, 5);
 
-        return recentDeliveries.filter((d) => d.tailor_id === selectedTailor.id);
+        return unpaid.filter((d) => d.tailor_id === selectedTailor.id);
     }, [recentDeliveries, selectedTailor]);
 
     // Group recent deliveries by Work Order (matching Ambil layout)
@@ -241,6 +242,12 @@ export default function DeskIndex({
             <PageIntro
                 actions={
                     <div className="flex gap-2">
+                        <Button asChild variant="outline" size="sm" className="rounded-xl shadow-xs transition-all hover:shadow-sm">
+                            <Link href={route('production-reports.index')}>
+                                <BarChart3 className="size-4" />
+                                Rekap Produksi
+                            </Link>
+                        </Button>
                         <Button asChild variant="outline" size="sm" className="rounded-xl shadow-xs transition-all hover:shadow-sm">
                             <Link href={route('deliveries.index')}>
                                 <PackageCheck className="size-4" />
@@ -507,8 +514,8 @@ export default function DeskIndex({
                                         Disetor Hari Ini
                                     </p>
                                     <p className="mt-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                                        {selectedTailor.today_earnings
-                                            ? `Upah: ${formatIdr(selectedTailor.today_earnings)}`
+                                        {(selectedTailor.today_delivered_qty ?? 0) > 0
+                                            ? `${selectedTailor.today_delivered_qty} pcs disetor`
                                             : selectedTailor.type === 'makloon'
                                               ? 'Tipe Makloon'
                                               : 'Belum setor hari ini'}
@@ -956,12 +963,9 @@ export default function DeskIndex({
                                     <span className="font-bold text-foreground">
                                         {cart.totalQty} pcs ({cart.lines.length} barang) dipilih
                                     </span>
-                                    <span className="flex items-center gap-1.5 text-muted-foreground">
-                                        <Coins className="size-3.5 text-amber-600" />
-                                        {selectedTailor.type === 'makloon'
-                                            ? 'Makloon'
-                                            : `Perkiraan upah: ${formatIdr(cart.estimatedWage)}`}
-                                    </span>
+                                    {selectedTailor.type === 'makloon' && (
+                                        <span className="text-muted-foreground font-medium">Makloon</span>
+                                    )}
                                 </div>
                             )}
 
@@ -1187,7 +1191,6 @@ function DeskItemRow({ item, qty, onQty }: { item: WorkOrderItemRecord; qty: num
                 <p className="text-xs text-muted-foreground font-semibold mt-0.5">{variantLabel(item.color, item.size)}</p>
                 <p className="text-[11px] text-muted-foreground mt-1">
                     Stok gudang: <strong className="text-stage-ready font-extrabold">{item.available_qty} pcs</strong>
-                    {item.sewing_rate > 0 ? ` · ${formatIdr(item.sewing_rate)}/pcs` : ''}
                 </p>
             </div>
 

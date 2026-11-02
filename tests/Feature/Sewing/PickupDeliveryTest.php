@@ -48,10 +48,12 @@ class PickupDeliveryTest extends TestCase
         $this->assertSame(0, $item->refresh()->assigned_qty);
     }
 
-    public function test_makloon_pickup_is_tracked_without_pay(): void
+    public function test_makloon_pickup_uses_makloon_rate_and_is_payable(): void
     {
         $admin = $this->warehouseAdmin();
-        $item = $this->readyItem(qty: 4);
+        $article = $this->article(name: 'Gamis Makloon', rate: 7000);
+        $article->update(['makloon_sewing_rate' => 8500]);
+        $item = $this->readyItem(qty: 4, article: $article);
 
         $this->actingAs($admin)->post(route('pickups.store'), [
             'tailor_id' => $this->tailor(TailorType::Makloon, 'Makloon Berkah')->id,
@@ -59,13 +61,13 @@ class PickupDeliveryTest extends TestCase
         ]);
 
         $pickupItem = PickupItem::query()->sole();
-        $this->assertSame(0, $pickupItem->sewing_rate);
+        $this->assertSame(8500, $pickupItem->sewing_rate);
 
         $this->actingAs($admin)->post(route('deliveries.store', $pickupItem), ['qty' => 4])->assertSessionHasNoErrors();
 
         $delivery = SewingDelivery::query()->sole();
-        $this->assertFalse($delivery->is_payable);
-        $this->assertSame(0, $delivery->subtotal);
+        $this->assertTrue($delivery->is_payable);
+        $this->assertSame(4 * 8500, $delivery->subtotal);
     }
 
     public function test_delivery_updates_counters_and_can_be_undone(): void

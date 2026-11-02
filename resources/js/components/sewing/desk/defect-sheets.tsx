@@ -4,7 +4,7 @@ import { ToneBadge } from '@/components/sewing/tone-badge';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
-import { formatIdr, variantLabel } from '@/lib/format';
+import { variantLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { floorActions, FloorActions } from '@/services/floor-actions';
 import type { PickupItemRecord, RevisionPartRecord, RevisionRecord, TailorRecord } from '@/types/sewing';
@@ -150,7 +150,7 @@ export function ReportDefectSheet({
                                     <option value="">-- Pilih Bagian --</option>
                                     {revisionParts.map((part) => (
                                         <option key={part.id} value={part.id}>
-                                            {part.name} ({part.material_type}) - Upah {formatIdr(part.price)}
+                                            {part.name} ({part.material_type})
                                         </option>
                                     ))}
                                 </select>

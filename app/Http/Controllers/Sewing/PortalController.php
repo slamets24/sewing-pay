@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Sewing;
 
+use App\Enums\PayoutStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Sewing\StorePortalPinRequest;
 use App\Models\PayoutSlip;
@@ -64,6 +65,7 @@ class PortalController extends Controller
             'slips' => PayoutSlip::query()
                 ->with(['tailor', 'payout'])
                 ->where('tailor_id', $tailor->id)
+                ->where('status', PayoutStatus::Paid->value)
                 ->latest('id')
                 ->limit(12)
                 ->get()

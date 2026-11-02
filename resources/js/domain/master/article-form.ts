@@ -5,6 +5,7 @@ export type ArticleFormData = {
     brand_name: string;
     category_name: string;
     sewing_rate: number;
+    makloon_sewing_rate: number | null;
     notes: string;
 };
 
@@ -15,7 +16,7 @@ export type ArticleFormData = {
  */
 export class ArticleForm {
     static blank(): ArticleFormData {
-        return { name: '', brand_name: '', category_name: '', sewing_rate: 0, notes: '' };
+        return { name: '', brand_name: '', category_name: '', sewing_rate: 0, makloon_sewing_rate: null, notes: '' };
     }
 
     static fromRecord(article: ArticleRecord): ArticleFormData {
@@ -24,6 +25,7 @@ export class ArticleForm {
             brand_name: article.brand_name ?? '',
             category_name: article.category_name ?? '',
             sewing_rate: article.sewing_rate,
+            makloon_sewing_rate: article.makloon_sewing_rate,
             notes: article.notes ?? '',
         };
     }
@@ -31,7 +33,10 @@ export class ArticleForm {
     static createPayload(data: ArticleFormData, canSetRate: boolean): Partial<ArticleFormData> {
         const payload: Partial<ArticleFormData> = { ...ArticleForm.naming(data), notes: data.notes };
 
-        if (canSetRate) payload.sewing_rate = data.sewing_rate;
+        if (canSetRate) {
+            payload.sewing_rate = data.sewing_rate;
+            payload.makloon_sewing_rate = data.makloon_sewing_rate;
+        }
 
         return payload;
     }

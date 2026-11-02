@@ -184,15 +184,27 @@ function ArticleCard({ article, isOwner, onEdit, onBenchmark }: { article: Artic
             </p>
 
             <div className="rounded-md border bg-muted/40 p-3">
-                <p className="text-sm font-semibold text-muted-foreground">Tarif jahit per pcs</p>
-                {article.sewing_rate > 0 ? (
-                    <p className="font-display text-3xl leading-tight font-bold tabular">{formatIdr(article.sewing_rate)}</p>
-                ) : (
-                    <ToneBadge tone="revision" className="mt-1">
-                        Tarif belum diisi
-                    </ToneBadge>
-                )}
-                {isOwner && <RateEditor key={`${article.id}-${article.sewing_rate}`} article={article} />}
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                    <div>
+                        <p className="text-[11px] font-semibold text-muted-foreground">Tarif Internal</p>
+                        {article.sewing_rate > 0 ? (
+                            <p className="font-display text-xl leading-tight font-bold tabular">{formatIdr(article.sewing_rate)}</p>
+                        ) : (
+                            <ToneBadge tone="revision" className="mt-1">Belum diisi</ToneBadge>
+                        )}
+                    </div>
+                    <div>
+                        <p className="text-[11px] font-semibold text-muted-foreground">Tarif Maklun</p>
+                        {article.makloon_sewing_rate ? (
+                            <p className="font-display text-xl leading-tight font-bold tabular text-primary">{formatIdr(article.makloon_sewing_rate)}</p>
+                        ) : article.sewing_rate > 0 ? (
+                            <p className="font-display text-xl leading-tight font-bold tabular text-muted-foreground" title="Sama dengan tarif internal">{formatIdr(article.sewing_rate)}</p>
+                        ) : (
+                            <ToneBadge tone="revision" className="mt-1">Belum diisi</ToneBadge>
+                        )}
+                    </div>
+                </div>
+                {isOwner && <RateEditor key={`${article.id}-${article.sewing_rate}-${article.makloon_sewing_rate}`} article={article} />}
                 <BenchmarkLine article={article} isOwner={isOwner} onOpen={onBenchmark} />
             </div>
 
@@ -244,7 +256,10 @@ function BenchmarkLine({ article, isOwner, onOpen }: { article: ArticleRecord; i
 
 /** Owner-only inline rate field. Keyed by the saved rate, so it re-reads the value whenever the server's rate changes. */
 function RateEditor({ article }: { article: ArticleRecord }) {
-    const form = useForm({ sewing_rate: article.sewing_rate });
+    const form = useForm({
+        sewing_rate: article.sewing_rate,
+        makloon_sewing_rate: article.makloon_sewing_rate ?? article.sewing_rate,
+    });
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
@@ -252,22 +267,39 @@ function RateEditor({ article }: { article: ArticleRecord }) {
     };
 
     return (
-        <form onSubmit={submit} className="mt-3 flex flex-col gap-1.5">
-            <div className="flex gap-2">
-                <MoneyField
-                    id={`rate-${article.id}`}
-                    value={form.data.sewing_rate}
-                    onChange={(value) => form.setData('sewing_rate', value)}
-                    invalid={!!form.errors.sewing_rate}
-                    aria-label={`Tarif jahit ${article.display_name}`}
-                    className="min-w-0 flex-1"
-                />
-                <Button type="submit" disabled={form.processing || !form.isDirty}>
-                    {form.processing ? <LoaderCircle className="animate-spin" /> : <Save />}
-                    Simpan
+        <form onSubmit={submit} className="mt-3 flex flex-col gap-2">
+            <div className="grid grid-cols-2 gap-2">
+                <div>
+                    <label className="text-[11px] font-semibold text-muted-foreground block mb-1">Tarif Internal</label>
+                    <MoneyField
+                        id={`rate-${article.id}`}
+                        value={form.data.sewing_rate}
+                        onChange={(value) => form.setData('sewing_rate', value)}
+                        invalid={!!form.errors.sewing_rate}
+                        aria-label={`Tarif internal ${article.display_name}`}
+                        className="w-full text-xs"
+                    />
+                </div>
+                <div>
+                    <label className="text-[11px] font-semibold text-muted-foreground block mb-1">Tarif Maklun</label>
+                    <MoneyField
+                        id={`makloon-rate-${article.id}`}
+                        value={form.data.makloon_sewing_rate}
+                        onChange={(value) => form.setData('makloon_sewing_rate', value)}
+                        invalid={!!form.errors.makloon_sewing_rate}
+                        aria-label={`Tarif maklun ${article.display_name}`}
+                        className="w-full text-xs"
+                    />
+                </div>
+            </div>
+            <div className="flex justify-end">
+                <Button type="submit" size="sm" disabled={form.processing || !form.isDirty}>
+                    {form.processing ? <LoaderCircle className="animate-spin" /> : <Save className="size-3.5" />}
+                    Simpan Tarif
                 </Button>
             </div>
-            <InputError message={form.errors.sewing_rate} />
+            {form.errors.sewing_rate && <InputError message={form.errors.sewing_rate} />}
+            {form.errors.makloon_sewing_rate && <InputError message={form.errors.makloon_sewing_rate} />}
         </form>
     );
 }
@@ -362,9 +394,14 @@ function ArticleSheet({ state, isOwner, onOpenChange }: ArticleSheetProps) {
             )}
 
             {!article && isOwner && (
-                <FormField label="Tarif jahit per pcs" htmlFor="article-rate" error={form.errors.sewing_rate}>
-                    <MoneyField id="article-rate" value={form.data.sewing_rate} onChange={(value) => form.setData('sewing_rate', value)} invalid={!!form.errors.sewing_rate} />
-                </FormField>
+                <div className="grid grid-cols-2 gap-3">
+                    <FormField label="Tarif Jahit Internal" htmlFor="article-rate" error={form.errors.sewing_rate}>
+                        <MoneyField id="article-rate" value={form.data.sewing_rate} onChange={(value) => form.setData('sewing_rate', value)} invalid={!!form.errors.sewing_rate} />
+                    </FormField>
+                    <FormField label="Tarif Jahit Maklun" htmlFor="article-makloon-rate" error={form.errors.makloon_sewing_rate}>
+                        <MoneyField id="article-makloon-rate" value={form.data.makloon_sewing_rate ?? 0} onChange={(value) => form.setData('makloon_sewing_rate', value)} invalid={!!form.errors.makloon_sewing_rate} />
+                    </FormField>
+                </div>
             )}
 
             <FormField label="Catatan" htmlFor="article-notes" error={form.errors.notes}>

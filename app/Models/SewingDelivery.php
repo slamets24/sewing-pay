@@ -60,6 +60,11 @@ class SewingDelivery extends Model
         return $this->hasOne(PayoutSlipLine::class);
     }
 
+    public function makloonPaymentLine(): HasOne
+    {
+        return $this->hasOne(MakloonPaymentLine::class);
+    }
+
     public function revisions(): HasMany
     {
         return $this->hasMany(Revision::class);
@@ -68,5 +73,10 @@ class SewingDelivery extends Model
     public function isShipped(): bool
     {
         return $this->qc_shipment_id !== null;
+    }
+
+    public function isPaid(): bool
+    {
+        return $this->slipLine()->exists() || $this->makloonPaymentLine()->exists();
     }
 }

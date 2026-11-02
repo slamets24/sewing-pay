@@ -1,7 +1,7 @@
 import { ConfirmButton } from '@/components/confirm-button';
 import { EmptyState } from '@/components/empty-state';
 import { ToneBadge } from '@/components/sewing/tone-badge';
-import { formatDateTime, formatIdr, variantLabel } from '@/lib/format';
+import { formatDateTime, variantLabel } from '@/lib/format';
 import { floorActions } from '@/services/floor-actions';
 import type { DeliveryRecord } from '@/types/sewing';
 
@@ -27,7 +27,7 @@ export function DeliveryList({ deliveries, undoable = false }: { deliveries: Del
                                 <ToneBadge tone="neutral">Belum dikirim QC</ToneBadge>
                             )}
                             {delivery.is_payable ? (
-                                <ToneBadge tone="done">{formatIdr(delivery.subtotal)}</ToneBadge>
+                                <ToneBadge tone="done">Internal</ToneBadge>
                             ) : (
                                 <ToneBadge tone="other">Makloon</ToneBadge>
                             )}

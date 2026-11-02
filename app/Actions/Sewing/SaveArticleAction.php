@@ -21,12 +21,13 @@ class SaveArticleAction
                 'brand_name' => $data['brand_name'] ?? null,
                 'category_name' => $data['category_name'] ?? null,
                 'sewing_rate' => (int) ($data['sewing_rate'] ?? 0),
+                'makloon_sewing_rate' => isset($data['makloon_sewing_rate']) ? (int) $data['makloon_sewing_rate'] : null,
                 'is_active' => true,
                 'notes' => $data['notes'] ?? null,
             ]);
         }
 
-        $changes = collect($data)->only(['sewing_rate', 'is_active', 'notes'])->all();
+        $changes = collect($data)->only(['sewing_rate', 'makloon_sewing_rate', 'is_active', 'notes'])->all();
 
         if ($article->source === ArticleSource::Manual) {
             $changes += collect($data)->only(['name', 'brand_name', 'category_name'])->all();

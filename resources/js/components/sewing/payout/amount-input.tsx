@@ -14,7 +14,7 @@ export function AmountInput({ value, onValueChange, className, ...props }: Amoun
     return (
         <div className="relative">
             <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-base font-semibold text-muted-foreground" aria-hidden>
-                Rp
+                Rp.
             </span>
             <Input
                 type="text"
@@ -23,7 +23,7 @@ export function AmountInput({ value, onValueChange, className, ...props }: Amoun
                 placeholder="0"
                 value={SlipAdjustment.groupDigits(value)}
                 onChange={(event) => onValueChange(SlipAdjustment.cleanInput(event.target.value))}
-                className={cn('pl-11 text-lg font-semibold tabular', className)}
+                className={cn('pl-12 text-lg font-semibold tabular', className)}
                 {...props}
             />
         </div>

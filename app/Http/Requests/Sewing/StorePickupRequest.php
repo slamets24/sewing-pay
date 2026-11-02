@@ -24,6 +24,7 @@ class StorePickupRequest extends FormRequest
             'items' => ['required', 'array', 'min:1', 'max:100'],
             'items.*.work_order_item_id' => ['required', 'integer', 'exists:work_order_items,id'],
             'items.*.qty' => ['required', 'integer', 'min:1', 'max:100000'],
+            'items.*.sewing_rate' => ['nullable', 'integer', 'min:0', 'max:10000000'],
         ];
     }
 

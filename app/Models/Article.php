@@ -19,6 +19,7 @@ class Article extends Model
         'brand_name',
         'category_name',
         'sewing_rate',
+        'makloon_sewing_rate',
         'is_active',
         'notes',
         'synced_at',
@@ -30,6 +31,7 @@ class Article extends Model
             'source' => ArticleSource::class,
             'packing_article_id' => 'integer',
             'sewing_rate' => 'integer',
+            'makloon_sewing_rate' => 'integer',
             'is_active' => 'boolean',
             'synced_at' => 'datetime',
         ];
@@ -58,6 +60,11 @@ class Article extends Model
     public function priceSuggestion(): HasOne
     {
         return $this->hasOne(ArticlePriceSuggestion::class);
+    }
+
+    public function makloonRate(): int
+    {
+        return $this->makloon_sewing_rate ?? $this->sewing_rate;
     }
 
     /** Name as shown on the floor, e.g. "Marina One Set". */

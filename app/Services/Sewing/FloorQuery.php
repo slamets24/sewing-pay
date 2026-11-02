@@ -47,10 +47,11 @@ class FloorQuery
     /**
      * @return Collection<int, SewingDelivery>
      */
-    public function recentDeliveries(int $limit = 30, ?int $tailorId = null): Collection
+    public function recentDeliveries(int $limit = 30, ?int $tailorId = null, bool $unpaidOnly = false): Collection
     {
         return $this->deliveries()
             ->when($tailorId, fn ($query) => $query->where('tailor_id', $tailorId))
+            ->when($unpaidOnly, fn ($query) => $query->whereDoesntHave('slipLine')->whereDoesntHave('makloonPaymentLine'))
             ->latest('delivered_at')
             ->latest('id')
             ->limit($limit)
@@ -91,7 +92,7 @@ class FloorQuery
     {
         return SewingDelivery::query()
             ->with(['tailor', 'shipment', 'workOrderItem.article', 'workOrderItem.workOrder', 'workOrderItem.variant'])
-            ->withExists(['slipLine', 'revisions']);
+            ->withExists(['slipLine', 'makloonPaymentLine', 'revisions']);
     }
 
     public function revisions()

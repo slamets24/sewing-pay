@@ -115,6 +115,7 @@ class ProductionPresenter
             'sewing_rate' => $delivery->sewing_rate,
             'subtotal' => $delivery->subtotal,
             'is_payable' => $delivery->is_payable,
+            'is_paid' => (bool) (($delivery->slip_line_exists ?? false) || ($delivery->makloon_payment_line_exists ?? false) || $delivery->isPaid()),
             'delivered_at' => $delivery->delivered_at->format('Y-m-d H:i'),
             'qc_shipment_id' => $delivery->qc_shipment_id,
             'qc_shipment_number' => $delivery->shipment?->number,

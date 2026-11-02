@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PickupCart } from '@/domain/production/pickup-cart';
 import AppLayout from '@/layouts/app-layout';
-import { dueLabel, formatIdr, variantLabel } from '@/lib/format';
+import { dueLabel, variantLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { FloorActions } from '@/services/floor-actions';
 import type { TailorRecord, WorkOrderItemRecord } from '@/types/sewing';
@@ -175,7 +175,7 @@ export default function PickupCreate({ tailors, availableItems, presetTailorId }
 
             <StickyBar
                 title={`${cart.tailor ? cart.tailor.name : 'Pilih penjahit'} · ${cart.totalQty} pcs`}
-                subtitle={`${cart.lines.length} barang${cart.tailor ? (cart.isMakloon ? ' · makloon (tidak masuk gaji)' : ` · perkiraan upah ${formatIdr(cart.estimatedWage)}`) : ''}`}
+                subtitle={`${cart.lines.length} barang${cart.tailor ? (cart.isMakloon ? ' · makloon' : '') : ''}`}
             >
                 {cart.lines.length > 0 && (
                     <Button variant="outline" onClick={() => setCart(PickupCart.start(cart.tailor))}>
@@ -202,7 +202,6 @@ function ItemRow({ item, qty, onQty }: { item: WorkOrderItemRecord; qty: number;
                 <p className="text-base">{variantLabel(item.color, item.size)}</p>
                 <p className="text-sm text-muted-foreground">
                     Di gudang: <span className="font-bold text-stage-ready">{item.available_qty} pcs</span>
-                    {item.sewing_rate > 0 ? ` · tarif ${formatIdr(item.sewing_rate)}` : ' · tarif belum diisi'}
                 </p>
             </div>
             {selected ? (

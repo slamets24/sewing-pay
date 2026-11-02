@@ -50,6 +50,7 @@ class ArticleController extends Controller
                 'brand_name' => $article->brand_name,
                 'category_name' => $article->category_name,
                 'sewing_rate' => $article->sewing_rate,
+                'makloon_sewing_rate' => $article->makloon_sewing_rate,
                 'is_active' => $article->is_active,
                 'notes' => $article->notes,
                 'variants_count' => $article->variants_count,
@@ -93,7 +94,7 @@ class ArticleController extends Controller
         $data = $request->validated();
 
         if (! $request->user()->isSuperadmin()) {
-            unset($data['sewing_rate']);
+            unset($data['sewing_rate'], $data['makloon_sewing_rate']);
         }
 
         $article = $save->execute($data);

@@ -163,7 +163,7 @@ class TailorAttendanceController extends Controller
             );
         }
 
-        return back()->with('status', "Semua penjahit internal ditandai hadir {$hours} jam (Uang makan: Rp ".number_format($allowance, 0, ',', '.').').');
+        return back()->with('status', "Semua penjahit internal ditandai hadir {$hours} jam (Uang makan: Rp. ".number_format($allowance, 0, ',', '.').').');
     }
 
     public function destroy(TailorAttendance $attendance): RedirectResponse

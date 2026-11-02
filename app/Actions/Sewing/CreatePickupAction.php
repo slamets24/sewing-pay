@@ -3,6 +3,7 @@
 namespace App\Actions\Sewing;
 
 use App\Enums\PickupItemStatus;
+use App\Enums\TailorType;
 use App\Models\Pickup;
 use App\Models\Tailor;
 use App\Models\WorkOrderItem;
@@ -33,6 +34,9 @@ class CreatePickupAction
             ]);
 
             $lines = collect($data['items'])->groupBy('work_order_item_id')->map(fn ($group) => (int) $group->sum('qty'));
+            $customRates = collect($data['items'])
+                ->filter(fn ($item) => isset($item['sewing_rate']) && $item['sewing_rate'] !== null && $item['sewing_rate'] !== '')
+                ->pluck('sewing_rate', 'work_order_item_id');
 
             foreach ($lines as $itemId => $qty) {
                 $item = WorkOrderItem::query()->with(['article', 'workOrder'])->lockForUpdate()->findOrFail($itemId);
@@ -45,11 +49,19 @@ class CreatePickupAction
 
                 $item->increment('assigned_qty', $qty);
 
+                if ($customRates->has($itemId)) {
+                    $rate = (int) $customRates->get($itemId);
+                } elseif ($tailor->type === TailorType::Makloon) {
+                    $rate = $item->article->makloonRate();
+                } else {
+                    $rate = $item->article->sewing_rate;
+                }
+
                 $pickup->items()->create([
                     'tailor_id' => $tailor->id,
                     'work_order_item_id' => $item->id,
                     'qty' => $qty,
-                    'sewing_rate' => $tailor->isPaidHere() ? $item->article->sewing_rate : 0,
+                    'sewing_rate' => $rate,
                     'status' => PickupItemStatus::Open,
                 ]);
             }

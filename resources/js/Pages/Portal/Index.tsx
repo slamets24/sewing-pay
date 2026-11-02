@@ -7,13 +7,12 @@ import { StatTile } from '@/components/sewing/stat-tile';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TailorPortal } from '@/domain/payout/tailor-portal';
-import { formatIdr, joinMeta } from '@/lib/format';
+import { joinMeta } from '@/lib/format';
 import type { DeliveryRecord, PickupItemRecord, RevisionRecord, TailorRecord } from '@/types/sewing';
 import { Head, router } from '@inertiajs/react';
 import {
     CalendarCheck,
     Clock,
-    DollarSign,
     Lock,
     LogIn,
     LogOut,
@@ -21,7 +20,6 @@ import {
     Receipt,
     Scissors,
     Shirt,
-    Wallet,
     Wrench,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -121,11 +119,7 @@ function PortalContent({
                 <StatTile label="Sedang saya jahit" value={portal.holdingQty} hint={`pcs, dari ${holding.length} barang`} icon={Scissors} tone="sewing" />
                 <StatTile label="Revisi terbuka" value={openRevisions.length} hint={`${portal.openRevisionQty} pcs`} icon={Wrench} tone="revision" />
                 <div className="col-span-2 lg:col-span-1">
-                    {portal.showsMoney ? (
-                        <StatTile label="Belum dibayar" value={formatIdr(unpaid.amount)} hint={`${unpaid.qty} pcs, masuk pencairan berikutnya`} icon={Wallet} tone="primary" />
-                    ) : (
-                        <StatTile label="Sudah disetor" value={portal.recentDeliveredQty} hint="pcs, dari setoran terakhir" icon={PackageCheck} tone="done" />
-                    )}
+                    <StatTile label="Setoran selesai" value={`${unpaid.qty} pcs`} hint="Masuk pencairan slip gaji berikutnya" icon={PackageCheck} tone="done" />
                 </div>
             </div>
 
@@ -138,7 +132,7 @@ function PortalContent({
             </Section>
 
             <Section title="Setoran terakhir" icon={PackageCheck}>
-                <DeliveryList deliveries={recentDeliveries} showMoney={portal.showsMoney} />
+                <DeliveryList deliveries={recentDeliveries} />
             </Section>
 
             {(portal.showsMoney || slips.length > 0) && (
@@ -250,11 +244,11 @@ function TailorClockCard({
 
                     {hasClockOut && (
                         <div className="flex items-center gap-2 rounded-xl bg-muted/60 px-4 py-2 text-right">
-                            <DollarSign className="size-5 text-emerald-600" />
+                            <Clock className="size-5 text-primary" />
                             <div>
-                                <p className="text-xs text-muted-foreground">Uang makan hari ini</p>
+                                <p className="text-xs text-muted-foreground">Durasi kerja hari ini</p>
                                 <p className="text-base font-bold text-foreground">
-                                    {formatIdr(attendance.meal_allowance)}
+                                    {attendance.working_hours} Jam
                                 </p>
                             </div>
                         </div>
@@ -288,10 +282,10 @@ function TailorClockCard({
                                         </span>
                                     </div>
                                     <div className="text-right">
-                                        <span className="font-bold text-emerald-700 dark:text-emerald-400">
-                                            {formatIdr(item.meal_allowance)}
+                                        <span className="font-semibold text-foreground">
+                                            {item.working_hours} Jam
                                         </span>
-                                        <span className="ml-1 text-muted-foreground">({item.working_hours}j)</span>
+                                        <span className="ml-1 text-muted-foreground">({item.status === 'present' ? 'Hadir' : item.status})</span>
                                     </div>
                                 </li>
                             ))}

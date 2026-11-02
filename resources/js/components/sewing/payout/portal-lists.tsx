@@ -69,8 +69,8 @@ export function RevisionList({ revisions }: { revisions: RevisionRecord[] }) {
     );
 }
 
-/** Latest sewing deliveries; the money column only for tailors paid through slips. */
-export function DeliveryList({ deliveries, showMoney }: { deliveries: DeliveryRecord[]; showMoney: boolean }) {
+/** Latest sewing deliveries for tailor portal. */
+export function DeliveryList({ deliveries }: { deliveries: DeliveryRecord[]; showMoney?: boolean }) {
     if (deliveries.length === 0) return <Empty icon={PackageCheck}>Belum ada setoran.</Empty>;
 
     return (
@@ -85,7 +85,6 @@ export function DeliveryList({ deliveries, showMoney }: { deliveries: DeliveryRe
                     </div>
                     <div className="flex shrink-0 flex-col items-end">
                         <span className="text-xl font-bold tabular">{delivery.qty} pcs</span>
-                        {showMoney && delivery.is_payable && <span className="text-base font-semibold text-muted-foreground tabular">{formatIdr(delivery.subtotal)}</span>}
                     </div>
                 </li>
             ))}

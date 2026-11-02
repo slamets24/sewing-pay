@@ -2,7 +2,6 @@ import { FormField } from '@/components/form-field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { formatIdr } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { SharedData } from '@/types';
 import type { CatalogArticle } from '@/types/sewing';
@@ -58,9 +57,9 @@ export function ArticlePicker({ articles, value, onChange, suggestedName, classN
                     {selected ? (
                         <span className="flex flex-col">
                             <span className="font-bold">{selected.display_name}</span>
-                            <span className="text-sm font-normal text-muted-foreground">
-                                {[selected.brand_name, selected.sewing_rate ? `Tarif ${formatIdr(selected.sewing_rate)}` : 'Tarif belum diisi'].filter(Boolean).join(' · ')}
-                            </span>
+                            {selected.brand_name && (
+                                <span className="text-sm font-normal text-muted-foreground">{selected.brand_name}</span>
+                            )}
                         </span>
                     ) : (
                         <span className="flex items-center gap-2">

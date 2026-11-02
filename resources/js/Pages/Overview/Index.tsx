@@ -12,6 +12,7 @@ import type { BoardRow, DeliveryRecord, WorkOrderSummary } from '@/types/sewing'
 import { Link, usePage } from '@inertiajs/react';
 import {
     AlarmClock,
+    BarChart3,
     ClipboardList,
     Factory,
     HandPlatter,
@@ -70,6 +71,12 @@ export default function Overview({ stats, board, dueSoon, recentDeliveries }: Ov
                             </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-2.5 self-start sm:self-center">
+                            <Button asChild size="default" variant="outline" className="rounded-xl border-white/40 bg-white/10 text-white font-bold hover:bg-white/20 shadow-xs">
+                                <Link href={route('production-reports.index')}>
+                                    <BarChart3 className="size-4 mr-1.5" />
+                                    Rekap Produksi
+                                </Link>
+                            </Button>
                             <Button asChild size="default" className="rounded-xl bg-white text-primary font-bold hover:bg-white/90 shadow-xs border-0">
                                 <Link href={route('desk.index')}>
                                     Buka Meja Loket

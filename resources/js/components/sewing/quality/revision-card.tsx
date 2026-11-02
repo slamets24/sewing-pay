@@ -3,7 +3,7 @@ import { FormField } from '@/components/form-field';
 import { ToneBadge } from '@/components/sewing/tone-badge';
 import { Button } from '@/components/ui/button';
 import { RevisionView } from '@/domain/quality/revision-view';
-import { formatDateTime, formatIdr, variantLabel } from '@/lib/format';
+import { formatDateTime, variantLabel } from '@/lib/format';
 import { ToneStyle } from '@/lib/tone';
 import { cn } from '@/lib/utils';
 import { floorActions } from '@/services/floor-actions';
@@ -46,11 +46,6 @@ export function RevisionCard({ revision, tailors }: { revision: RevisionRecord; 
                 {revision.part_name && <Fact label="Bagian" value={revision.material_type ? `${revision.part_name} (${revision.material_type})` : revision.part_name} />}
                 <Fact label="Qty" value={`${revision.qty} pcs`} />
                 <Fact label="Penjahit" value={revision.tailor_name} />
-                <Fact
-                    label="Upah revisi"
-                    value={RevisionView.money(revision)}
-                    hint={revision.type === 'material' && revision.rate > 0 ? `${formatIdr(revision.rate)} / pcs` : undefined}
-                />
             </dl>
 
             {revision.notes && <p className="rounded-md bg-muted/70 px-3 py-2 text-base">Catatan: {revision.notes}</p>}

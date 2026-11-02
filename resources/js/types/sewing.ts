@@ -175,6 +175,7 @@ export type DeliveryRecord = {
     sewing_rate: number;
     subtotal: number;
     is_payable: boolean;
+    is_paid?: boolean;
     delivered_at: string;
     qc_shipment_id: number | null;
     qc_shipment_number: string | null;
@@ -326,6 +327,7 @@ export type ArticleRecord = {
     brand_name: string | null;
     category_name: string | null;
     sewing_rate: number;
+    makloon_sewing_rate: number | null;
     is_active: boolean;
     notes: string | null;
     variants_count: number;

@@ -5,11 +5,13 @@ use App\Http\Controllers\Sewing\ArticleController;
 use App\Http\Controllers\Sewing\CuttingReceiptController;
 use App\Http\Controllers\Sewing\DeliveryController;
 use App\Http\Controllers\Sewing\HancaanReceiptController;
+use App\Http\Controllers\Sewing\MakloonPaymentController;
 use App\Http\Controllers\Sewing\ManagedUserController;
 use App\Http\Controllers\Sewing\OverviewController;
 use App\Http\Controllers\Sewing\PayoutController;
 use App\Http\Controllers\Sewing\PickupController;
 use App\Http\Controllers\Sewing\PortalController;
+use App\Http\Controllers\Sewing\ProductionReportController;
 use App\Http\Controllers\Sewing\PublicPayoutSlipController;
 use App\Http\Controllers\Sewing\QcShipmentController;
 use App\Http\Controllers\Sewing\QuickDeskController;
@@ -103,6 +105,8 @@ Route::middleware('auth')->group(function () use ($owner, $warehouse) {
         Route::post('/absensi/hadir-semua', [TailorAttendanceController::class, 'batchPresent'])->name('attendances.batch');
         Route::delete('/absensi/{attendance}', [TailorAttendanceController::class, 'destroy'])->name('attendances.destroy');
 
+        Route::get('/rekap-produksi', [ProductionReportController::class, 'index'])->name('production-reports.index');
+
         Route::get('/artikel', [ArticleController::class, 'index'])->name('articles.index');
         Route::post('/artikel', [ArticleController::class, 'store'])->name('articles.store');
     });
@@ -137,6 +141,12 @@ Route::middleware('auth')->group(function () use ($owner, $warehouse) {
         Route::delete('/gaji/{payout}', [PayoutController::class, 'destroy'])->name('payouts.destroy');
         Route::patch('/slip/{slip}', [PayoutController::class, 'updateSlip'])->name('payout-slips.update');
         Route::post('/slip/{slip}/bayar', [PayoutController::class, 'markSlipPaid'])->name('payout-slips.paid');
+
+        Route::get('/pembayaran-maklun', [MakloonPaymentController::class, 'index'])->name('makloon-payments.index');
+        Route::get('/pembayaran-maklun/baru', [MakloonPaymentController::class, 'create'])->name('makloon-payments.create');
+        Route::post('/pembayaran-maklun', [MakloonPaymentController::class, 'store'])->name('makloon-payments.store');
+        Route::get('/pembayaran-maklun/{makloonPayment}', [MakloonPaymentController::class, 'show'])->name('makloon-payments.show');
+        Route::delete('/pembayaran-maklun/{makloonPayment}', [MakloonPaymentController::class, 'destroy'])->name('makloon-payments.destroy');
     });
 });
 

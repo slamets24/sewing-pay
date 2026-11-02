@@ -151,7 +151,7 @@ export function PriceBenchmarkSheet({ article, tailors, isOwner, onOpenChange }:
                                         Catat Satu Sample
                                     </p>
                                     <span className="text-xs text-muted-foreground">
-                                        Rate: <strong>Rp {Math.round(ratePerMinute)}/menit</strong>
+                                        Rate: <strong>Rp. {Math.round(ratePerMinute)}/menit</strong>
                                     </span>
                                 </div>
 

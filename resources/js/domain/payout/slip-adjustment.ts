@@ -60,11 +60,11 @@ export class SlipAdjustment {
     }
 
     get bonusError(): string | null {
-        return this.bonus > SlipAdjustment.MAX_AMOUNT ? 'Bonus terlalu besar (maksimal Rp 100 juta).' : null;
+        return this.bonus > SlipAdjustment.MAX_AMOUNT ? 'Bonus terlalu besar (maksimal Rp. 100 juta).' : null;
     }
 
     get deductionError(): string | null {
-        if (this.deduction > SlipAdjustment.MAX_AMOUNT) return 'Potongan terlalu besar (maksimal Rp 100 juta).';
+        if (this.deduction > SlipAdjustment.MAX_AMOUNT) return 'Potongan terlalu besar (maksimal Rp. 100 juta).';
         if (this.net < 0) return 'Potongan tidak boleh melebihi gaji kotor ditambah bonus.';
 
         return null;

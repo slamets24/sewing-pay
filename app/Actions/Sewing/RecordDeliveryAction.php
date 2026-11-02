@@ -32,16 +32,14 @@ class RecordDeliveryAction
                 throw ValidationException::withMessages(['qty' => $msg]);
             }
 
-            $isPayable = $pickupItem->tailor->isPaidHere();
-
             $delivery = SewingDelivery::create([
                 'pickup_item_id' => $pickupItem->id,
                 'tailor_id' => $pickupItem->tailor_id,
                 'work_order_item_id' => $pickupItem->work_order_item_id,
                 'qty' => $qty,
                 'sewing_rate' => $pickupItem->sewing_rate,
-                'subtotal' => $isPayable ? $qty * $pickupItem->sewing_rate : 0,
-                'is_payable' => $isPayable,
+                'subtotal' => $qty * $pickupItem->sewing_rate,
+                'is_payable' => true,
                 'delivered_at' => $deliveredAt ? Carbon::parse($deliveredAt) : now(),
                 'notes' => $notes,
                 'created_by' => $createdBy,

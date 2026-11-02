@@ -9,28 +9,84 @@ import { cn } from '@/lib/utils';
 import type { SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { LogOut, Menu } from 'lucide-react';
-import { useMemo, type ReactNode } from 'react';
+import { useLayoutEffect, useMemo, useRef, type ReactNode } from 'react';
 
 type AppLayoutProps = {
     title: string;
     children: ReactNode;
 };
 
+let memorySidebarScrollTop = 0;
+const STORAGE_KEY = 'sweing-pay:sidebar-scroll';
+
 /** Shell for every signed-in page: gradient sidebar on desktop, top bar + bottom tab bar on phones. */
 export default function AppLayout({ title, children }: AppLayoutProps) {
-    const user = usePage<SharedData>().props.auth.user!;
+    const page = usePage<SharedData>();
+    const user = page.props.auth.user!;
     const navigation = useMemo(() => Navigation.forRole(user.role), [user.role]);
     const logout = () => router.post(route('logout'));
+
+    const navRef = useRef<HTMLElement>(null);
+
+    const onNavScroll = (e: React.UIEvent<HTMLElement>) => {
+        const top = e.currentTarget.scrollTop;
+        memorySidebarScrollTop = top;
+        try {
+            sessionStorage.setItem(STORAGE_KEY, String(top));
+        } catch {}
+    };
+
+    useLayoutEffect(() => {
+        const restoreScroll = () => {
+            if (!navRef.current) return;
+            let targetScroll = memorySidebarScrollTop;
+            if (targetScroll === 0) {
+                try {
+                    const saved = sessionStorage.getItem(STORAGE_KEY);
+                    if (saved !== null) {
+                        targetScroll = Number(saved);
+                        memorySidebarScrollTop = targetScroll;
+                    }
+                } catch {}
+            }
+
+            if (targetScroll > 0) {
+                navRef.current.scrollTop = targetScroll;
+            }
+
+            const activeEl = navRef.current.querySelector<HTMLElement>('[aria-current="page"]');
+            if (activeEl) {
+                const navRect = navRef.current.getBoundingClientRect();
+                const activeRect = activeEl.getBoundingClientRect();
+                if (activeRect.top < navRect.top || activeRect.bottom > navRect.bottom) {
+                    activeEl.scrollIntoView({ block: 'nearest' });
+                    memorySidebarScrollTop = navRef.current.scrollTop;
+                    try {
+                        sessionStorage.setItem(STORAGE_KEY, String(navRef.current.scrollTop));
+                    } catch {}
+                }
+            }
+        };
+
+        restoreScroll();
+        const frameId = requestAnimationFrame(restoreScroll);
+        return () => cancelAnimationFrame(frameId);
+    }, [page.url]);
 
     return (
         <div className="min-h-screen bg-background lg:grid lg:grid-cols-[16.5rem_minmax(0,1fr)] lg:gap-0">
             <Head title={title} />
 
-            <aside className="sticky top-0 hidden h-screen flex-col border-r border-border bg-card px-4 py-6 lg:flex">
-                <Link href={route(user.home_route)} className="mb-8 px-2">
+            <aside className="sticky top-0 hidden h-screen flex-col border-r border-border bg-card px-3.5 py-4 lg:flex">
+                <Link href={route(user.home_route)} className="mb-4 px-1">
                     <AppLogo subtitle="Divisi jahit & gudang" variant="default" />
                 </Link>
-                <nav className="flex flex-1 flex-col gap-6 overflow-y-auto" aria-label="Menu utama">
+                <nav
+                    ref={navRef}
+                    onScroll={onNavScroll}
+                    className="no-scrollbar flex flex-1 flex-col gap-4 overflow-y-auto pr-0.5"
+                    aria-label="Menu utama"
+                >
                     <NavGroups navigation={navigation} />
                 </nav>
                 <UserBox name={user.name} roleLabel={user.role_label} onLogout={logout} />
@@ -73,14 +129,25 @@ function AppLogoMark() {
 }
 
 function NavGroups({ navigation, onNavigate }: { navigation: Navigation; onNavigate?: () => void }) {
-    return navigation.groups.map((group) => (
-        <div key={group.label} className="flex flex-col gap-1">
-            <p className="px-3 text-[11px] font-bold tracking-wider text-muted-foreground/80 uppercase">{group.label}</p>
-            {group.items.map((item) => (
-                <SideLink key={item.routeName} item={item} onNavigate={onNavigate} />
+    return (
+        <div className="flex flex-col gap-3.5">
+            {navigation.topItem && (
+                <div className="flex flex-col">
+                    <SideLink item={navigation.topItem} onNavigate={onNavigate} />
+                </div>
+            )}
+            {navigation.groups.map((group) => (
+                <div key={group.label} className="flex flex-col gap-0.5">
+                    <p className="px-2.5 text-[10.5px] font-bold tracking-wider text-muted-foreground/75 uppercase mb-1">
+                        {group.label}
+                    </p>
+                    {group.items.map((item) => (
+                        <SideLink key={item.routeName} item={item} onNavigate={onNavigate} />
+                    ))}
+                </div>
             ))}
         </div>
-    ));
+    );
 }
 
 function SideLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
@@ -93,31 +160,33 @@ function SideLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void
             onClick={onNavigate}
             aria-current={active ? 'page' : undefined}
             className={cn(
-                'flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors',
+                'relative flex min-h-9 items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors',
                 active
-                    ? 'bg-primary/10 text-primary font-bold shadow-xs'
-                    : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
+                    ? 'bg-primary/10 text-primary font-bold shadow-2xs before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:rounded-r-full before:bg-primary'
+                    : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
             )}
         >
             <Icon className={cn('size-4.5 shrink-0', active ? 'text-primary' : 'text-muted-foreground')} strokeWidth={active ? 2.25 : 1.75} />
-            {item.label}
+            <span className="truncate">{item.label}</span>
         </Link>
     );
 }
 
 function UserBox({ name, roleLabel, onLogout }: { name: string; roleLabel: string; onLogout: () => void }) {
     return (
-        <div className="mt-auto flex items-center gap-3 rounded-xl border border-border bg-muted/40 p-2.5">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary">
-                {name.charAt(0).toUpperCase()}
+        <div className="mt-auto border-t border-border pt-3">
+            <div className="flex items-center gap-2.5 rounded-lg border border-border/80 bg-muted/30 p-2">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-xs font-bold text-primary">
+                    {name.charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-semibold text-foreground leading-tight">{name}</p>
+                    <p className="truncate text-[10px] text-muted-foreground mt-0.5">{roleLabel}</p>
+                </div>
+                <Button variant="ghost" size="icon" className="size-8 text-muted-foreground hover:bg-muted hover:text-foreground" onClick={onLogout} aria-label="Keluar">
+                    <LogOut className="size-4" strokeWidth={1.75} />
+                </Button>
             </div>
-            <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-foreground">{name}</p>
-                <p className="truncate text-xs text-muted-foreground">{roleLabel}</p>
-            </div>
-            <Button variant="ghost" size="icon" className="text-muted-foreground hover:bg-muted hover:text-foreground" onClick={onLogout} aria-label="Keluar">
-                <LogOut className="size-4.5" strokeWidth={1.75} />
-            </Button>
         </div>
     );
 }
@@ -131,15 +200,15 @@ function MobileMenu({ navigation, name, roleLabel, onLogout }: { navigation: Nav
                 </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-80 border-l border-border bg-card p-0 text-foreground">
-                <SheetHeader className="px-6 pt-6">
+                <SheetHeader className="px-5 pt-5 pb-2">
                     <SheetTitle>
                         <AppLogo subtitle="Divisi jahit & gudang" variant="default" />
                     </SheetTitle>
                 </SheetHeader>
-                <nav className="flex flex-1 flex-col gap-6 overflow-y-auto px-4 py-6" aria-label="Menu">
+                <nav className="no-scrollbar flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-4" aria-label="Menu">
                     <NavGroups navigation={navigation} />
                 </nav>
-                <div className="px-4 pb-6">
+                <div className="px-4 pb-5">
                     <UserBox name={name} roleLabel={roleLabel} onLogout={onLogout} />
                 </div>
             </SheetContent>
