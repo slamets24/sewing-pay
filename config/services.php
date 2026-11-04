@@ -40,4 +40,13 @@ return [
         'key' => env('PACKINGV2_API_KEY'),
     ],
 
+    'hr_azzahra' => [
+        'url' => env('HR_AZZAHRA_API_URL', 'https://hr.azzahrapremiumofficial.com'),
+        'key' => env('SWEING_PAY_INTERNAL_KEY'),
+    ],
+
+    'internal_api' => [
+        'key' => env('SWEING_PAY_INTERNAL_KEY'),
+    ],
+
 ];

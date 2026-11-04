@@ -37,10 +37,19 @@ export default function Tailors({ tailors, nextCode }: TailorsProps) {
         <AppLayout title="Penjahit">
             <PageIntro
                 actions={
-                    <Button onClick={() => openFor(null)}>
-                        <UserPlus />
-                        Tambah penjahit
-                    </Button>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => router.post(route('tailors.sync-hr'), {}, { preserveScroll: true })}
+                        >
+                            <RefreshCw />
+                            Tarik dari HR
+                        </Button>
+                        <Button onClick={() => openFor(null)}>
+                            <UserPlus />
+                            Tambah penjahit
+                        </Button>
+                    </div>
                 }
             />
 
@@ -101,7 +110,19 @@ function TailorRow({ tailor, onEdit }: { tailor: TailorRecord; onEdit: () => voi
         >
             <div className="min-w-0">
                 <p className={cn('text-lg leading-tight font-bold wrap-anywhere', !tailor.is_active && 'text-muted-foreground')}>{tailor.name}</p>
-                <p className="text-sm font-semibold text-muted-foreground tabular">{tailor.code ?? 'Tanpa kode'}</p>
+                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                    <span className="font-semibold tabular">{tailor.code ?? 'Tanpa kode'}</span>
+                    {tailor.hr_employee_number && (
+                        <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono font-medium text-foreground">
+                            NIK: {tailor.hr_employee_number}
+                        </span>
+                    )}
+                </div>
+                {tailor.tenure_label && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        Masa kerja: <strong className="text-foreground">{tailor.tenure_label}</strong>
+                    </p>
+                )}
             </div>
 
             <div className="flex flex-wrap items-center gap-2">

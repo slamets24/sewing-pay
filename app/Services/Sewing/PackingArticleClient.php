@@ -54,6 +54,51 @@ class PackingArticleClient
         } while ($page <= $lastPage);
     }
 
+    /**
+     * Minta penerbitan barcode SKU resmi ke packingv2 untuk artikel dan varian.
+     *
+     * @param  array{article_name: string, brand_name?: string|null, category_name?: string|null, variants: list<array{color: string, size: string, item_type?: string|null}>}  $payload
+     * @return array<string, mixed>
+     */
+    public function provisionArticle(array $payload): array
+    {
+        if (! $this->isConfigured()) {
+            throw new RuntimeException('PACKINGV2_API_URL / PACKINGV2_API_KEY belum diisi.');
+        }
+
+        $response = Http::baseUrl($this->baseUrl())
+            ->withHeaders(['X-Api-Key' => (string) config('services.packingv2.key')])
+            ->acceptJson()
+            ->timeout(20)
+            ->post('/api/v1/articles/provision', $payload);
+
+        if ($response->failed()) {
+            throw new RuntimeException("packingv2 menolak penerbitan barcode (HTTP {$response->status()}).");
+        }
+
+        return $response->json('data', []);
+    }
+
+    /**
+     * Mengirim koreksi nama artikel ke packingv2.
+     */
+    public function updateArticleName(int $packingArticleId, string $newName): bool
+    {
+        if (! $this->isConfigured()) {
+            return false;
+        }
+
+        $response = Http::baseUrl($this->baseUrl())
+            ->withHeaders(['X-Api-Key' => (string) config('services.packingv2.key')])
+            ->acceptJson()
+            ->timeout(15)
+            ->patch("/api/v1/articles/{$packingArticleId}", [
+                'name' => $newName,
+            ]);
+
+        return $response->successful();
+    }
+
     private function baseUrl(): string
     {
         return rtrim((string) config('services.packingv2.url'), '/');

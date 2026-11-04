@@ -24,6 +24,10 @@ class Tailor extends Model
         'name',
         'type',
         'user_id',
+        'hr_employee_id',
+        'hr_employee_number',
+        'gender',
+        'employment_status',
         'whatsapp_number',
         'address',
         'is_active',
@@ -132,5 +136,35 @@ class Tailor extends Model
     public function isPaidHere(): bool
     {
         return $this->type->isPaidHere();
+    }
+
+    /**
+     * Masa kerja / lama bergabung dalam teks yang mudah dibaca (misal: "2 tahun 4 bulan" atau "8 bulan").
+     */
+    public function tenureLabel(): ?string
+    {
+        if (! $this->joined_at) {
+            return null;
+        }
+
+        $diff = $this->joined_at->diff(now());
+        $years = $diff->y;
+        $months = $diff->m;
+
+        if ($years > 0 && $months > 0) {
+            return "{$years} tahun {$months} bulan";
+        }
+
+        if ($years > 0) {
+            return "{$years} tahun";
+        }
+
+        if ($months > 0) {
+            return "{$months} bulan";
+        }
+
+        $days = $diff->d;
+
+        return $days > 0 ? "{$days} hari" : 'Baru bergabung';
     }
 }

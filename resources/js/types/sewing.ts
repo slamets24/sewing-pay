@@ -11,6 +11,12 @@ export type TailorRecord = {
     name: string;
     type: TailorType;
     type_label: string;
+    hr_employee_id?: number | null;
+    hr_employee_number?: string | null;
+    gender?: string | null;
+    employment_status?: string | null;
+    joined_at?: string | null;
+    tenure_label?: string | null;
     whatsapp_number: string | null;
     address: string | null;
     is_active: boolean;

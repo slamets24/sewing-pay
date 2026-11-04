@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Sewing;
 
+use App\Actions\Sewing\SyncHrTailorsAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Sewing\TailorRequest;
 use App\Models\Tailor;
@@ -28,6 +29,17 @@ class TailorController extends Controller
                 ]),
             'nextCode' => $this->nextCode(),
         ]);
+    }
+
+    public function syncHr(SyncHrTailorsAction $syncAction): RedirectResponse
+    {
+        try {
+            $result = $syncAction->execute();
+
+            return Redirect::back()->with('status', "Sinkronisasi HR selesai: {$result['synced']} penjahit diperiksa ({$result['created']} baru, {$result['updated']} diperbarui).");
+        } catch (\Throwable $e) {
+            return Redirect::back()->with('error', 'Gagal menyinkronkan dengan HR: '.$e->getMessage());
+        }
     }
 
     public function store(TailorRequest $request): RedirectResponse

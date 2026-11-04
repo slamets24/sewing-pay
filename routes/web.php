@@ -116,8 +116,10 @@ Route::middleware('auth')->group(function () use ($owner, $warehouse) {
         Route::post('/artikel/{article}/sample', [ArticleController::class, 'storeSample'])->name('articles.samples.store');
         Route::delete('/artikel/{article}/sample/{sample}', [ArticleController::class, 'destroySample'])->name('articles.samples.destroy');
         Route::post('/artikel/tarik-packingv2', [ArticleController::class, 'sync'])->name('articles.sync');
+        Route::post('/artikel/{article}/minta-barcode-packing', [ArticleController::class, 'provisionPacking'])->name('articles.provision-packing');
 
         Route::get('/penjahit', [TailorController::class, 'index'])->name('tailors.index');
+        Route::post('/penjahit/sinkron-hr', [TailorController::class, 'syncHr'])->name('tailors.sync-hr');
         Route::post('/penjahit', [TailorController::class, 'store'])->name('tailors.store');
         Route::patch('/penjahit/{tailor}', [TailorController::class, 'update'])->name('tailors.update');
         Route::post('/penjahit/{tailor}/portal', [TailorController::class, 'openPortal'])->name('tailors.portal.store');

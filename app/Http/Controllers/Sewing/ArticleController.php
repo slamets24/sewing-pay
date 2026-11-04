@@ -121,4 +121,48 @@ class ArticleController extends Controller
 
         return Redirect::back()->with('status', "{$result['articles']} artikel dan {$result['variants']} varian ditarik dari packingv2.");
     }
+
+    public function provisionPacking(Article $article, PackingArticleClient $packing): RedirectResponse
+    {
+        $variants = $article->variants->map(fn ($v) => [
+            'color' => $v->color,
+            'size' => $v->size,
+            'item_type' => $v->item_type,
+        ])->all();
+
+        if (empty($variants)) {
+            return Redirect::back()->with('error', 'Artikel belum memiliki varian.');
+        }
+
+        try {
+            $result = $packing->provisionArticle([
+                'article_name' => $article->name,
+                'brand_name' => $article->brand_name,
+                'category_name' => $article->category_name,
+                'variants' => $variants,
+            ]);
+
+            $article->update([
+                'packing_article_id' => $result['packing_article_id'] ?? $article->packing_article_id,
+                'synced_at' => now(),
+            ]);
+
+            foreach ($result['variants'] ?? [] as $pv) {
+                $color = \App\Support\VariantName::color($pv['color'] ?? null);
+                $size = \App\Support\VariantName::size($pv['size'] ?? null);
+
+                $article->variants()
+                    ->where('color', $color)
+                    ->where('size', $size)
+                    ->update([
+                        'barcode_value' => $pv['barcode_value'] ?? null,
+                        'packing_master_barcode_id' => $pv['packing_master_barcode_id'] ?? null,
+                    ]);
+            }
+
+            return Redirect::back()->with('status', "Barcode resmi berhasil diterbitkan dari packingv2 untuk {$article->name}.");
+        } catch (\Throwable $e) {
+            return Redirect::back()->with('error', 'Gagal meminta barcode ke packingv2: '.$e->getMessage());
+        }
+    }
 }
