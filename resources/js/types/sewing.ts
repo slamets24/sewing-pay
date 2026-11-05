@@ -26,9 +26,6 @@ export type TailorRecord = {
     revisions_count?: number;
     today_delivered_qty?: number;
     today_earnings?: number;
-    has_portal?: boolean;
-    portal_url?: string | null;
-    portal_pin_is_default?: boolean;
 };
 
 export type CatalogArticle = {

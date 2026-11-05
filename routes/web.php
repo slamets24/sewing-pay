@@ -10,7 +10,6 @@ use App\Http\Controllers\Sewing\ManagedUserController;
 use App\Http\Controllers\Sewing\OverviewController;
 use App\Http\Controllers\Sewing\PayoutController;
 use App\Http\Controllers\Sewing\PickupController;
-use App\Http\Controllers\Sewing\PortalController;
 use App\Http\Controllers\Sewing\ProductionReportController;
 use App\Http\Controllers\Sewing\PublicPayoutSlipController;
 use App\Http\Controllers\Sewing\QcShipmentController;
@@ -36,7 +35,7 @@ Route::get('/', function () {
 
         return redirect()->route('login')->withErrors([
             'email' => $user->role === UserRole::Tailor
-                ? 'Penjahit masuk lewat tautan portal, bukan email.'
+                ? 'Penjahit menggunakan Portal Karyawan HR Azzahra.'
                 : 'Aplikasi ini hanya untuk internal divisi jahit. Divisi QC tidak memiliki akses login.',
         ]);
     }
@@ -45,13 +44,6 @@ Route::get('/', function () {
 });
 
 Route::get('/slip-gaji/{invoiceNumber}/{token}', PublicPayoutSlipController::class)->name('payout-slips.public');
-
-Route::post('/portal/{tailor:portal_token}/pin', [PortalController::class, 'storePin'])->middleware('throttle:10,1')->name('portal.pin.store');
-Route::middleware('portal.pin')->group(function () {
-    Route::get('/portal/{tailor:portal_token}', [PortalController::class, 'show'])->name('portal.show');
-    Route::post('/portal/{tailor:portal_token}/absen', [PortalController::class, 'clock'])->name('portal.clock.store');
-    Route::post('/portal/{tailor:portal_token}/kunci', [PortalController::class, 'lock'])->name('portal.lock');
-});
 
 Route::middleware('auth')->group(function () use ($owner, $warehouse) {
     Route::middleware($warehouse)->group(function () {
@@ -109,6 +101,11 @@ Route::middleware('auth')->group(function () use ($owner, $warehouse) {
 
         Route::get('/artikel', [ArticleController::class, 'index'])->name('articles.index');
         Route::post('/artikel', [ArticleController::class, 'store'])->name('articles.store');
+
+        Route::get('/pengguna', [ManagedUserController::class, 'index'])->name('users.index');
+        Route::post('/pengguna', [ManagedUserController::class, 'store'])->name('users.store');
+        Route::patch('/pengguna/{user}', [ManagedUserController::class, 'update'])->name('users.update');
+        Route::patch('/pengguna/{user}/password', [ManagedUserController::class, 'resetPassword'])->name('users.password.update');
     });
 
     Route::middleware($owner)->group(function () {
@@ -122,18 +119,11 @@ Route::middleware('auth')->group(function () use ($owner, $warehouse) {
         Route::post('/penjahit/sinkron-hr', [TailorController::class, 'syncHr'])->name('tailors.sync-hr');
         Route::post('/penjahit', [TailorController::class, 'store'])->name('tailors.store');
         Route::patch('/penjahit/{tailor}', [TailorController::class, 'update'])->name('tailors.update');
-        Route::post('/penjahit/{tailor}/portal', [TailorController::class, 'openPortal'])->name('tailors.portal.store');
-        Route::post('/penjahit/{tailor}/portal/pin', [TailorController::class, 'resetPortalPin'])->name('tailors.portal.pin.reset');
-        Route::post('/penjahit/{tailor}/portal/tautan', [TailorController::class, 'regeneratePortal'])->name('tailors.portal.regenerate');
 
         Route::get('/bagian-revisi', [RevisionPartController::class, 'index'])->name('revision-parts.index');
         Route::post('/bagian-revisi', [RevisionPartController::class, 'store'])->name('revision-parts.store');
         Route::patch('/bagian-revisi/{revisionPart}', [RevisionPartController::class, 'update'])->name('revision-parts.update');
 
-        Route::get('/pengguna', [ManagedUserController::class, 'index'])->name('users.index');
-        Route::post('/pengguna', [ManagedUserController::class, 'store'])->name('users.store');
-        Route::patch('/pengguna/{user}', [ManagedUserController::class, 'update'])->name('users.update');
-        Route::patch('/pengguna/{user}/password', [ManagedUserController::class, 'resetPassword'])->name('users.password.update');
 
         Route::get('/gaji', [PayoutController::class, 'index'])->name('payouts.index');
         Route::post('/gaji', [PayoutController::class, 'store'])->name('payouts.store');

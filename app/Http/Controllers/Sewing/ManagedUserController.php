@@ -29,7 +29,7 @@ class ManagedUserController extends Controller
                 'is_current_user' => $user->is($request->user()),
             ]),
             'roles' => collect(UserRole::cases())
-                ->filter(fn (UserRole $role) => $role->isStaff())
+                ->filter(fn (UserRole $role) => $role === UserRole::Admin)
                 ->map(fn (UserRole $role) => ['value' => $role->value, 'label' => $role->label()])
                 ->values(),
         ]);
@@ -52,6 +52,7 @@ class ManagedUserController extends Controller
 
     public function update(ManagedUserRequest $request, User $user): RedirectResponse
     {
+        abort_if(! $user->isAdmin(), 403);
         if ($request->user()->is($user)) {
             throw ValidationException::withMessages(['role' => 'Peran akun sendiri tidak bisa diubah dari sini.']);
         }
@@ -63,6 +64,7 @@ class ManagedUserController extends Controller
 
     public function resetPassword(ResetPasswordRequest $request, User $user): RedirectResponse
     {
+        abort_if($request->user()->is($user) || ($request->user()->isAdmin() && ! $user->isAdmin()), 403);
         $user->update(['password' => Hash::make($request->validated('password'))]);
 
         return Redirect::back()->with('status', 'Password direset.');

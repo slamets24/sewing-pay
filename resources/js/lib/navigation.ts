@@ -106,7 +106,7 @@ export class Navigation {
                         { label: 'Operasional Loket', items: LOKET_ITEMS },
                         { label: 'Produksi & QC', items: PRODUCTION_ITEMS },
                         { label: 'Kepegawaian', items: TAILOR_ITEMS },
-                        { label: 'Data', items: [item('Artikel & Tarif', 'articles.index', Shirt)] },
+                        { label: 'Data', items: [item('Artikel & Tarif', 'articles.index', Shirt), item('Pengguna Sistem', 'users.index', UserCog, 'users.*')] },
                     ],
                     [
                         DASHBOARD_ITEM,

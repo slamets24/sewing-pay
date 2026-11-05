@@ -21,12 +21,7 @@ class TailorController extends Controller
                 ->orderByDesc('is_active')
                 ->orderBy('name')
                 ->get()
-                ->map(fn (Tailor $tailor) => [
-                    ...$presenter->tailor($tailor),
-                    'has_portal' => filled($tailor->portal_token),
-                    'portal_url' => filled($tailor->portal_token) ? route('portal.show', ['tailor' => $tailor->portal_token]) : null,
-                    'portal_pin_is_default' => filled($tailor->portal_token) && $tailor->mustChangePortalPin(),
-                ]),
+                ->map(fn (Tailor $tailor) => $presenter->tailor($tailor)),
             'nextCode' => $this->nextCode(),
         ]);
     }
@@ -54,35 +49,6 @@ class TailorController extends Controller
         $tailor->update($request->validated());
 
         return Redirect::back()->with('status', "Data {$tailor->name} diperbarui.");
-    }
-
-    public function openPortal(Tailor $tailor): RedirectResponse
-    {
-        if (filled($tailor->portal_token)) {
-            return Redirect::back()->with('status', 'Portal sudah ada. Salin tautannya dari daftar penjahit.');
-        }
-
-        $tailor->generatePortal();
-
-        return Redirect::back()->with('status', "Tautan portal {$tailor->name} dibuat. PIN awal 123456, dan wajib diganti saat pertama dibuka.");
-    }
-
-    public function resetPortalPin(Tailor $tailor): RedirectResponse
-    {
-        abort_unless(filled($tailor->portal_token), 404);
-
-        $tailor->resetPortalPin();
-
-        return Redirect::back()->with('status', "PIN {$tailor->name} dikembalikan ke 123456. Penjahit wajib membuat PIN baru.");
-    }
-
-    public function regeneratePortal(Tailor $tailor): RedirectResponse
-    {
-        abort_unless(filled($tailor->portal_token), 404);
-
-        $tailor->regeneratePortalToken();
-
-        return Redirect::back()->with('status', "Tautan portal {$tailor->name} diganti. Tautan lama tidak bisa dipakai lagi.");
     }
 
     private function nextCode(): string

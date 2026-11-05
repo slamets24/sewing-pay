@@ -156,53 +156,6 @@ class PayoutTest extends TestCase
         $this->get(route('payout-slips.public', [$slip->invoice_number, 'wrong-token']))->assertNotFound();
     }
 
-    public function test_portal_shows_only_the_tailor_behind_the_link(): void
-    {
-        $siti = $this->tailor(name: 'Bu Siti');
-        $this->delivered($siti, 2, '2026-10-05 10:00');
-        $siti->generatePortal();
-        $siti->changePortalPin('654321');
-
-        $this->get(route('portal.show', ['tailor' => $siti->portal_token]))
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page->component('Portal/Pin'));
-
-        $this->post(route('portal.pin.store', ['tailor' => $siti->portal_token]), ['pin' => '654321'])
-            ->assertRedirect(route('portal.show', ['tailor' => $siti->portal_token]));
-
-        $this->get(route('portal.show', ['tailor' => $siti->portal_token]))
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page
-                ->component('Portal/Index')
-                ->where('tailor.id', $siti->id)
-                ->where('unpaid.qty', 2)
-                ->where('unpaid.amount', 14000));
-    }
-
-    public function test_a_new_portal_requires_a_new_pin_and_the_owner_can_create_the_link(): void
-    {
-        $owner = $this->owner();
-        $siti = $this->tailor(name: 'Bu Siti');
-
-        $this->actingAs($owner)->post(route('tailors.portal.store', $siti))->assertSessionHasNoErrors();
-        $siti->refresh();
-        $this->assertNotNull($siti->portal_token);
-
-        $this->post(route('portal.pin.store', ['tailor' => $siti->portal_token]), ['pin' => '123456'])
-            ->assertSessionHasErrors('new_pin');
-
-        $this->post(route('portal.pin.store', ['tailor' => $siti->portal_token]), [
-            'pin' => '123456',
-            'new_pin' => '654321',
-            'new_pin_confirmation' => '654321',
-        ])->assertRedirect(route('portal.show', ['tailor' => $siti->portal_token]));
-
-        $this->get(route('portal.show', ['tailor' => $siti->portal_token]))
-            ->assertInertia(fn ($page) => $page->component('Portal/Index')->where('tailor.name', 'Bu Siti'));
-
-        $this->get('/portal/tidak-ada')->assertNotFound();
-    }
-
     public function test_payout_includes_attendance_meal_allowance_in_slip_lines_and_accumulates(): void
     {
         $owner = $this->owner();
@@ -248,42 +201,5 @@ class PayoutTest extends TestCase
         $mealLines = $slip->lines()->where('type', 'meal_allowance')->get();
         $this->assertCount(2, $mealLines);
         $this->assertSame(65000, (int) $mealLines->sum('subtotal'));
-    }
-
-    public function test_portal_only_shows_paid_slips_and_hides_draft_slips(): void
-    {
-        $owner = $this->owner();
-        $siti = $this->tailor(name: 'Bu Siti');
-        $this->delivered($siti, 2, '2026-10-05 10:00');
-        $siti->generatePortal();
-        $siti->changePortalPin('654321');
-
-        // Create a draft payout
-        $this->actingAs($owner)->post(route('payouts.store'), ['cutoff_date' => '2026-10-10'])->assertSessionHasNoErrors();
-        $payout = Payout::query()->latest('id')->first();
-        $slip = $payout->slips()->sole();
-        $this->assertTrue($payout->isDraft());
-
-        // Authenticate portal session
-        $this->post(route('portal.pin.store', ['tailor' => $siti->portal_token]), ['pin' => '654321']);
-
-        // In portal, slips count should be 0 because payout/slip is still draft
-        $this->get(route('portal.show', ['tailor' => $siti->portal_token]))
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page
-                ->component('Portal/Index')
-                ->has('slips', 0)
-            );
-
-        // Mark slip paid (posted)
-        $this->actingAs($owner)->post(route('payout-slips.paid', $slip))->assertSessionHasNoErrors();
-
-        // In portal, slip now appears
-        $this->get(route('portal.show', ['tailor' => $siti->portal_token]))
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page
-                ->component('Portal/Index')
-                ->has('slips', 1)
-            );
     }
 }

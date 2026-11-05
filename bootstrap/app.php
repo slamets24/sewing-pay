@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Middleware\EnsurePortalPin;
 use App\Http\Middleware\EnsureUserRole;
 use App\Http\Middleware\EnsureValidInternalApiKey;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -27,7 +26,6 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'role' => EnsureUserRole::class,
-            'portal.pin' => EnsurePortalPin::class,
             'internal.key' => EnsureValidInternalApiKey::class,
         ]);
     })

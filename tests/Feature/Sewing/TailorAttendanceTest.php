@@ -87,36 +87,4 @@ class TailorAttendanceTest extends TestCase
         $this->assertSame(2, TailorAttendance::query()->whereDate('date', $today)->where('status', 'present')->count());
         $this->assertSame(30_000, TailorAttendance::query()->where('tailor_id', $t1->id)->value('meal_allowance'));
     }
-
-    public function test_tailor_can_clock_in_and_clock_out_from_portal(): void
-    {
-        $tailor = $this->tailor(name: 'Bu Siti');
-        $tailor->generatePortal();
-        $tailor->changePortalPin('654321');
-
-        // Unlock portal session
-        $this->post(route('portal.pin.store', ['tailor' => $tailor->portal_token]), ['pin' => '654321'])
-            ->assertRedirect(route('portal.show', ['tailor' => $tailor->portal_token]));
-
-        // First click: Clock In
-        $this->post(route('portal.clock.store', ['tailor' => $tailor->portal_token]))
-            ->assertRedirect()
-            ->assertSessionHas('status');
-
-        $attendance = TailorAttendance::query()->where('tailor_id', $tailor->id)->first();
-        $this->assertNotNull($attendance);
-        $this->assertNotNull($attendance->clock_in);
-        $this->assertNull($attendance->clock_out);
-        $this->assertTrue($attendance->is_self_clocked);
-        $this->assertSame(30_000, $attendance->meal_allowance);
-
-        // Second click: Clock Out
-        $this->post(route('portal.clock.store', ['tailor' => $tailor->portal_token]))
-            ->assertRedirect()
-            ->assertSessionHas('status');
-
-        $attendance->refresh();
-        $this->assertNotNull($attendance->clock_out);
-        $this->assertGreaterThanOrEqual(9, $attendance->working_hours);
-    }
 }

@@ -14,7 +14,7 @@ import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import type { TailorRecord } from '@/types/sewing';
 import { router, useForm } from '@inertiajs/react';
-import { Copy, KeyRound, Link2, Pencil, Phone, RefreshCw, UserPlus, Users, type LucideIcon } from 'lucide-react';
+import { Pencil, Phone, RefreshCw, UserPlus, Users, type LucideIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 type TailorsProps = {
@@ -87,7 +87,7 @@ function TailorList({ tailors, onEdit }: { tailors: TailorRecord[]; onEdit: (tai
             <div className={cn(ROW_GRID, 'hidden border-b bg-muted/60 px-4 py-2 text-sm font-bold tracking-wide text-muted-foreground uppercase')} aria-hidden>
                 <span>Nama</span>
                 <span>Jenis</span>
-                <span>WhatsApp &amp; portal</span>
+                <span>WhatsApp</span>
                 <span />
             </div>
             <ul className="grid gap-3 md:grid-cols-2 lg:grid-cols-1 lg:gap-0 lg:divide-y">
@@ -132,7 +132,6 @@ function TailorRow({ tailor, onEdit }: { tailor: TailorRecord; onEdit: () => voi
 
             <div className="flex min-w-0 flex-col gap-3 lg:gap-1">
                 <InfoCell icon={Phone} label="WhatsApp" value={tailor.whatsapp_number} empty="WA belum diisi" />
-                <PortalAccess tailor={tailor} />
             </div>
 
             <Button variant="outline" onClick={onEdit} className="w-full" aria-label={`Ubah data ${tailor.name}`}>
@@ -140,64 +139,6 @@ function TailorRow({ tailor, onEdit }: { tailor: TailorRecord; onEdit: () => voi
                 Ubah
             </Button>
         </li>
-    );
-}
-
-function PortalAccess({ tailor }: { tailor: TailorRecord }) {
-    if (!tailor.has_portal || !tailor.portal_url) {
-        return (
-            <Button type="button" variant="outline" className="w-full justify-start" onClick={() => router.post(route('tailors.portal.store', tailor.id), {}, { preserveScroll: true })}>
-                <Link2 />
-                Buat tautan portal
-            </Button>
-        );
-    }
-
-    const copyLink = async () => {
-        await navigator.clipboard.writeText(tailor.portal_url ?? '');
-    };
-
-    return (
-        <div className="flex min-w-0 flex-col gap-2">
-            <p className="text-sm font-semibold text-muted-foreground lg:sr-only">Portal</p>
-            <p className="flex items-start gap-2 text-sm break-all">
-                <Link2 className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
-                <span>{tailor.portal_url}</span>
-            </p>
-            {tailor.portal_pin_is_default && <p className="text-sm text-muted-foreground">PIN awal 123456. Penjahit wajib menggantinya saat pertama membuka tautan.</p>}
-            <div className="flex flex-wrap gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={copyLink}>
-                    <Copy />
-                    Salin
-                </Button>
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                        if (window.confirm(`Kembalikan PIN ${tailor.name} ke 123456?`)) {
-                            router.post(route('tailors.portal.pin.reset', tailor.id), {}, { preserveScroll: true });
-                        }
-                    }}
-                >
-                    <KeyRound />
-                    Reset PIN
-                </Button>
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                        if (window.confirm(`Ganti tautan ${tailor.name}? Tautan lama tidak bisa dipakai lagi.`)) {
-                            router.post(route('tailors.portal.regenerate', tailor.id), {}, { preserveScroll: true });
-                        }
-                    }}
-                >
-                    <RefreshCw />
-                    Ganti tautan
-                </Button>
-            </div>
-        </div>
     );
 }
 

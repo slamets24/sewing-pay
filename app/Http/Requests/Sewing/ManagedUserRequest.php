@@ -27,7 +27,7 @@ class ManagedUserRequest extends FormRequest
             'name' => [$isCreate ? 'required' : 'prohibited', 'string', 'max:255'],
             'email' => [$isCreate ? 'required' : 'prohibited', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'password' => [$isCreate ? 'required' : 'prohibited', 'confirmed', Password::defaults()],
-            'role' => ['required', Rule::enum(UserRole::class), Rule::notIn([UserRole::Tailor->value, UserRole::Qc->value])],
+            'role' => ['required', Rule::in([UserRole::Admin->value])],
         ];
     }
 
