@@ -23,4 +23,18 @@ class ExampleTest extends TestCase
         $this->actingAs($superadmin)->get('/')->assertRedirect(route('dashboard'));
         $this->actingAs($admin)->get('/')->assertRedirect(route('dashboard'));
     }
+
+    public function test_app_shell_renders_fixed_opsew_title_and_favicon_links(): void
+    {
+        config(['app.name' => '\\']);
+
+        $response = $this->get(route('login'));
+
+        $response->assertOk();
+        $response->assertSee('<title inertia>OPSEW</title>', false);
+        $response->assertSee('<link rel="icon" type="image/png" href="/images/favicon.png">', false);
+        $response->assertSee('<link rel="icon" type="image/x-icon" href="/favicon.ico">', false);
+        $this->assertGreaterThan(0, filesize(public_path('favicon.ico')));
+        $this->assertGreaterThan(0, filesize(public_path('images/favicon.png')));
+    }
 }
