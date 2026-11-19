@@ -11,6 +11,7 @@ use App\Models\WorkOrderItem;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Validation\Rule;
 
 class CuttingReceiptController extends Controller
 {
@@ -37,8 +38,8 @@ class CuttingReceiptController extends Controller
     {
         $validated = $request->validate([
             'items' => ['required', 'array', 'min:1'],
-            'items.*.work_order_item_id' => ['required', 'integer'],
-            'items.*.qty' => ['required', 'integer', 'min:1'],
+            'items.*.work_order_item_id' => ['required', 'integer', Rule::exists('work_order_items', 'id')->where('work_order_id', $workOrder->id)],
+            'items.*.qty' => ['required', 'integer', 'min:0', 'max:100000'],
             'transferred_at' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:500'],
         ]);

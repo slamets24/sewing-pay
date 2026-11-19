@@ -65,18 +65,39 @@ class RecordDeliveryAction
                 ->lockForUpdate()
                 ->get();
 
-            $remainingDeliverQty = $qty;
-            foreach ($inProgressRevisions as $rev) {
-                if ($remainingDeliverQty <= 0) {
-                    break;
-                }
+            $completedAt = $deliveredAt ? Carbon::parse($deliveredAt) : now();
+            $close = function (Revision $rev) use ($pickupItem, $completedAt): void {
                 $rev->status = RevisionStatus::Done;
-                $rev->completed_at = $deliveredAt ? Carbon::parse($deliveredAt) : now();
+                $rev->completed_at = $completedAt;
                 if (! $rev->pickup_item_id) {
                     $rev->pickup_item_id = $pickupItem->id;
                 }
                 $rev->save();
-                $remainingDeliverQty -= $rev->qty;
+            };
+
+            // Revisions tied to this pickup: their pieces are part of what the tailor still holds.
+            // Assume the repaired pieces come back last, so a revision only closes once every piece of it
+            // must have been deposited (never early, so it is never paid before the work is in).
+            $linked = $inProgressRevisions->where('pickup_item_id', $pickupItem->id)->values();
+            $linkedQty = (int) $linked->sum('qty');
+            $depositedRevisionQty = $linkedQty - min($linkedQty, $pickupItem->remainingQty());
+            $closedQty = 0;
+            foreach ($linked as $rev) {
+                if ($closedQty + $rev->qty > $depositedRevisionQty) {
+                    break;
+                }
+                $close($rev);
+                $closedQty += $rev->qty;
+            }
+
+            // Revisions not tied to a pickup (e.g. from QC): close only those fully covered by this deposit.
+            $budget = $qty - $closedQty;
+            foreach ($inProgressRevisions->whereNull('pickup_item_id') as $rev) {
+                if ($rev->qty > $budget) {
+                    break;
+                }
+                $close($rev);
+                $budget -= $rev->qty;
             }
 
             return $delivery;

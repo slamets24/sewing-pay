@@ -8,12 +8,13 @@ import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import type { WorkOrderSummary } from '@/types/sewing';
 import { Link, router } from '@inertiajs/react';
-import { Plus, Search } from 'lucide-react';
+import { Plus, RefreshCw, Search } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 
 type IndexProps = {
     filters: { status: 'open' | 'done' | 'all'; search: string };
     workOrders: WorkOrderSummary[];
+    packingConfigured: boolean;
 };
 
 const STATUS_FILTERS = [
@@ -22,8 +23,16 @@ const STATUS_FILTERS = [
     { value: 'all', label: 'Semua' },
 ] as const;
 
-export default function WorkOrderIndex({ filters, workOrders }: IndexProps) {
+export default function WorkOrderIndex({ filters, workOrders, packingConfigured }: IndexProps) {
     const [search, setSearch] = useState(filters.search);
+    const [pulling, setPulling] = useState(false);
+
+    const pullFromPacking = () =>
+        router.post(
+            route('work-orders.pull-packing'),
+            {},
+            { preserveScroll: true, onStart: () => setPulling(true), onFinish: () => setPulling(false) },
+        );
 
     const visit = (params: Partial<IndexProps['filters']>) =>
         router.get(route('work-orders.index'), { ...filters, ...params }, { preserveState: true, preserveScroll: true, replace: true });
@@ -43,20 +52,29 @@ export default function WorkOrderIndex({ filters, workOrders }: IndexProps) {
             sewing_qty: sum.sewing_qty + workOrder.sewing_qty,
             hold_qty: sum.hold_qty + workOrder.hold_qty,
             delivered_qty: sum.delivered_qty + workOrder.delivered_qty,
+            qc_qty: sum.qc_qty + workOrder.qc_qty,
         }),
-        { printing_qty: 0, cutting_qty: 0, available_qty: 0, sewing_internal_qty: 0, sewing_makloon_qty: 0, sewing_qty: 0, hold_qty: 0, delivered_qty: 0 },
+        { printing_qty: 0, cutting_qty: 0, available_qty: 0, sewing_internal_qty: 0, sewing_makloon_qty: 0, sewing_qty: 0, hold_qty: 0, delivered_qty: 0, qc_qty: 0 },
     );
 
     return (
         <AppLayout title="Work order">
             <PageIntro
                 actions={
-                    <Button asChild size="lg">
-                        <Link href={route('work-orders.create')}>
-                            <Plus />
-                            WO baru
-                        </Link>
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                        {packingConfigured && (
+                            <Button size="lg" variant="outline" onClick={pullFromPacking} disabled={pulling}>
+                                <RefreshCw className={cn(pulling && 'animate-spin')} />
+                                {pulling ? 'Menarik WO…' : 'Tarik dari Packing'}
+                            </Button>
+                        )}
+                        <Button asChild size="lg">
+                            <Link href={route('work-orders.create')}>
+                                <Plus />
+                                WO baru
+                            </Link>
+                        </Button>
+                    </div>
                 }
             />
 
@@ -101,7 +119,7 @@ export default function WorkOrderIndex({ filters, workOrders }: IndexProps) {
                     </Button>
                 </EmptyState>
             ) : (
-                <div className={cn('grid gap-4 md:grid-cols-2 xl:grid-cols-3')}>
+                <div className={cn('grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3')}>
                     {workOrders.map((workOrder) => (
                         <WorkOrderCard key={workOrder.id} workOrder={workOrder} />
                     ))}

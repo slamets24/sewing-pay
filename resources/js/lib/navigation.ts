@@ -55,7 +55,7 @@ const PRODUCTION_ITEMS: NavItem[] = [
 // 3. Kepegawaian & Penjahit
 const TAILOR_ITEMS: NavItem[] = [
     item('Kehadiran', 'attendances.index', CalendarCheck, 'attendances.*'),
-    item('Data Penjahit', 'tailors.index', Users, 'tailors.*'),
+    item('Penjahit & Makloon', 'tailors.index', Users, 'tailors.*'),
 ];
 
 // 4. Keuangan & Gaji
@@ -105,8 +105,9 @@ export class Navigation {
                     [
                         { label: 'Operasional Loket', items: LOKET_ITEMS },
                         { label: 'Produksi & QC', items: PRODUCTION_ITEMS },
-                        { label: 'Kepegawaian', items: TAILOR_ITEMS },
-                        { label: 'Data', items: [item('Artikel & Tarif', 'articles.index', Shirt), item('Pengguna Sistem', 'users.index', UserCog, 'users.*')] },
+                        // Data Penjahit is owner-only (routes/web.php); admins only record attendance.
+                        { label: 'Kepegawaian', items: TAILOR_ITEMS.filter((navItem) => navItem.routeName !== 'tailors.index') },
+                        { label: 'Data', items: [item('Artikel & Tarif', 'articles.index', Shirt, 'articles.*'), item('Pengguna Sistem', 'users.index', UserCog, 'users.*')] },
                     ],
                     [
                         DASHBOARD_ITEM,

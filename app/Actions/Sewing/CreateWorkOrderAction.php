@@ -44,7 +44,9 @@ class CreateWorkOrderAction
             foreach ($this->mergeDuplicates($data['items']) as $line) {
                 $article = $articles[$line['article_id']];
                 $variant = $this->variants->resolve($article, $line['color'] ?? null, $line['size'] ?? null);
-                $itemType = in_array($line['item_type'] ?? null, ['print', 'polosan'], true) ? $line['item_type'] : 'print';
+                $itemType = in_array($line['item_type'] ?? null, ['print', 'polosan'], true)
+                    ? $line['item_type']
+                    : (Article::itemTypeForFabric($article->fabric_type) ?? 'print');
 
                 $cuttingQty = $isOpeningStock || $itemType === 'polosan' ? $line['planned_qty'] : 0;
                 $receivedQty = $isOpeningStock ? $line['planned_qty'] : 0;

@@ -4,10 +4,12 @@ namespace App\Models;
 
 use App\Enums\TailorType;
 use App\Enums\WorkOrderItemStage;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 /**
  * One article × color × size line of a work order, with qty counters for each stage:
@@ -19,6 +21,7 @@ class WorkOrderItem extends Model
 
     protected $fillable = [
         'work_order_id',
+        'packing_production_order_item_id',
         'article_id',
         'article_variant_id',
         'color',
@@ -35,6 +38,7 @@ class WorkOrderItem extends Model
     protected function casts(): array
     {
         return [
+            'packing_production_order_item_id' => 'integer',
             'planned_qty' => 'integer',
             'cutting_qty' => 'integer',
             'received_qty' => 'integer',
@@ -67,6 +71,11 @@ class WorkOrderItem extends Model
     public function cuttingReceipts(): HasMany
     {
         return $this->hasMany(CuttingReceipt::class);
+    }
+
+    public function deliveries(): HasMany
+    {
+        return $this->hasMany(SewingDelivery::class);
     }
 
     public function pickupItems(): HasMany
@@ -103,6 +112,28 @@ class WorkOrderItem extends Model
     public function pendingQty(): int
     {
         return max(0, $this->planned_qty - $this->received_qty);
+    }
+
+    /** Sewn pieces already handed over to QC. Uses `qc_shipped_qty` when loaded with WorkOrderItem::withQcShippedQty(). */
+    public function qcShippedQty(): int
+    {
+        if (array_key_exists('qc_shipped_qty', $this->attributes)) {
+            return (int) $this->attributes['qc_shipped_qty'];
+        }
+
+        return (int) $this->deliveries()->whereNotNull('qc_shipment_id')->sum('qty');
+    }
+
+    /** Eager-load the QC qty for a list of lines (avoids one query per line). */
+    public static function withQcShippedQty(Builder|Relation $query): Builder|Relation
+    {
+        return $query->withSum(['deliveries as qc_shipped_qty' => fn ($q) => $q->whereNotNull('qc_shipment_id')], 'qty');
+    }
+
+    /** Lowest planned qty allowed: what already arrived in the warehouse (and, for print items, what went to cutting). */
+    public function minimumPlannedQty(): int
+    {
+        return $this->isPolosan() ? $this->received_qty : max($this->received_qty, $this->cutting_qty);
     }
 
     /** In the warehouse, ready for a tailor to take. */

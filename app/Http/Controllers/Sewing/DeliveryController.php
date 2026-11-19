@@ -41,7 +41,12 @@ class DeliveryController extends Controller
 
     public function storeBatchForTailor(Request $request, Tailor $tailor, RecordTailorBatchDeliveryAction $batchRecord): RedirectResponse
     {
-        $deliveries = $batchRecord->execute($tailor, $request->input('delivered_at'), $request->input('notes'), $request->user()->id);
+        $data = $request->validate([
+            'delivered_at' => ['nullable', 'date'],
+            'notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $deliveries = $batchRecord->execute($tailor, $data['delivered_at'] ?? null, $data['notes'] ?? null, $request->user()->id);
         $totalQty = $deliveries->sum('qty');
         $itemsCount = $deliveries->count();
 

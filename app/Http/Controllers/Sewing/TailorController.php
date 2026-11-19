@@ -22,7 +22,8 @@ class TailorController extends Controller
                 ->orderBy('name')
                 ->get()
                 ->map(fn (Tailor $tailor) => $presenter->tailor($tailor)),
-            'nextCode' => $this->nextCode(),
+            'nextCode' => $this->nextCode('PNJ'),
+            'nextMakloonCode' => $this->nextCode('MKL'),
         ]);
     }
 
@@ -41,7 +42,7 @@ class TailorController extends Controller
     {
         $tailor = Tailor::create([...$request->validated(), 'is_active' => true]);
 
-        return Redirect::back()->with('status', "Penjahit {$tailor->name} ditambahkan.");
+        return Redirect::back()->with('status', ($tailor->type->value === 'makloon' ? 'Makloon' : 'Penjahit')." {$tailor->name} ditambahkan.");
     }
 
     public function update(TailorRequest $request, Tailor $tailor): RedirectResponse
@@ -51,12 +52,12 @@ class TailorController extends Controller
         return Redirect::back()->with('status', "Data {$tailor->name} diperbarui.");
     }
 
-    private function nextCode(): string
+    private function nextCode(string $prefix): string
     {
-        $number = Tailor::query()->count() + 1;
+        $number = Tailor::query()->where('code', 'like', $prefix.'-%')->count() + 1;
 
         do {
-            $code = 'PNJ-'.str_pad((string) $number, 3, '0', STR_PAD_LEFT);
+            $code = $prefix.'-'.str_pad((string) $number, 3, '0', STR_PAD_LEFT);
             $number++;
         } while (Tailor::query()->where('code', $code)->exists());
 

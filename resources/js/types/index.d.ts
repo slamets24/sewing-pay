@@ -16,6 +16,7 @@ export interface SharedData {
     };
     flash: {
         status: string | null;
+        error?: string | null;
         undo: FlashUndo | null;
         created_article_id?: number | null;
     };

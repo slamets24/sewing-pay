@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Sewing;
 
+use App\Actions\Sewing\ApplyArticleRateAction;
 use App\Actions\Sewing\DeleteArticleSampleAction;
 use App\Actions\Sewing\RecordArticleSampleAction;
 use App\Actions\Sewing\SaveArticleAction;
@@ -14,6 +15,7 @@ use App\Models\ArticleSewingSample;
 use App\Models\ArticleVariant;
 use App\Models\Tailor;
 use App\Services\Sewing\PackingArticleClient;
+use App\Support\VariantName;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
@@ -49,6 +51,7 @@ class ArticleController extends Controller
                 'display_name' => $article->displayName(),
                 'brand_name' => $article->brand_name,
                 'category_name' => $article->category_name,
+                'fabric_type' => $article->fabric_type,
                 'sewing_rate' => $article->sewing_rate,
                 'makloon_sewing_rate' => $article->makloon_sewing_rate,
                 'is_active' => $article->is_active,
@@ -104,11 +107,17 @@ class ArticleController extends Controller
             ->with('created_article_id', $article->id);
     }
 
-    public function update(ArticleRequest $request, Article $article, SaveArticleAction $save): RedirectResponse
+    public function update(ArticleRequest $request, Article $article, SaveArticleAction $save, ApplyArticleRateAction $applyRate): RedirectResponse
     {
-        $save->execute($request->validated(), $article);
+        $oldInternalRate = (int) $article->sewing_rate;
+        $oldMakloonRate = $article->makloonRate();
 
-        return Redirect::back()->with('status', "Artikel {$article->name} diperbarui.");
+        $article = $save->execute($request->validated(), $article);
+        $pieces = $applyRate->execute($article, $oldInternalRate, $oldMakloonRate);
+
+        return Redirect::back()->with('status', $pieces > 0
+            ? "Tarif {$article->name} diperbarui. {$pieces} pcs pekerjaan yang belum dibayar ikut tarif baru."
+            : "Artikel {$article->name} diperbarui.");
     }
 
     public function sync(Request $request, SyncPackingArticlesAction $sync): RedirectResponse
@@ -148,8 +157,8 @@ class ArticleController extends Controller
             ]);
 
             foreach ($result['variants'] ?? [] as $pv) {
-                $color = \App\Support\VariantName::color($pv['color'] ?? null);
-                $size = \App\Support\VariantName::size($pv['size'] ?? null);
+                $color = VariantName::color($pv['color'] ?? null);
+                $size = VariantName::size($pv['size'] ?? null);
 
                 $article->variants()
                     ->where('color', $color)

@@ -21,13 +21,18 @@ class SaveArticleAction
                 'brand_name' => $data['brand_name'] ?? null,
                 'category_name' => $data['category_name'] ?? null,
                 'sewing_rate' => (int) ($data['sewing_rate'] ?? 0),
-                'makloon_sewing_rate' => isset($data['makloon_sewing_rate']) ? (int) $data['makloon_sewing_rate'] : null,
+                'makloon_sewing_rate' => ! empty($data['makloon_sewing_rate']) ? (int) $data['makloon_sewing_rate'] : null,
                 'is_active' => true,
                 'notes' => $data['notes'] ?? null,
             ]);
         }
 
         $changes = collect($data)->only(['sewing_rate', 'makloon_sewing_rate', 'is_active', 'notes'])->all();
+
+        // 0 / empty makloon rate means "same as internal", so it follows later internal rate changes.
+        if (array_key_exists('makloon_sewing_rate', $changes) && ! $changes['makloon_sewing_rate']) {
+            $changes['makloon_sewing_rate'] = null;
+        }
 
         if ($article->source === ArticleSource::Manual) {
             $changes += collect($data)->only(['name', 'brand_name', 'category_name'])->all();

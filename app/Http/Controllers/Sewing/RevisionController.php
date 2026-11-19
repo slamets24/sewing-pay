@@ -18,7 +18,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -62,56 +61,13 @@ class RevisionController extends Controller
         return Redirect::back()->with('status', "Revisi sekarang: {$revision->status->label()}.");
     }
 
-    public function reassign(Request $request, Revision $revision): RedirectResponse
+    public function reassign(Request $request, Revision $revision, AdvanceRevisionAction $advance): RedirectResponse
     {
         $data = $request->validate(['tailor_id' => ['required', 'integer', Rule::exists('tailors', 'id')]]);
 
-        if ($revision->status === RevisionStatus::InProgress || $revision->isDone()) {
-            throw ValidationException::withMessages(['tailor_id' => 'Penjahit tidak bisa diganti setelah revisi mulai dikerjakan atau selesai.']);
-        }
+        $revision = $advance->reassignTo($revision, (int) $data['tailor_id']);
 
-        $tailor = Tailor::query()->findOrFail($data['tailor_id']);
-        $oldTailorId = $revision->tailor_id;
-
-        if ($oldTailorId !== $tailor->id && $revision->pickup_item_id && ! $revision->returned_to_warehouse) {
-            $oldPickupItem = \App\Models\PickupItem::query()->find($revision->pickup_item_id);
-            if ($oldPickupItem) {
-                $oldPickupItem->qty = max(0, $oldPickupItem->qty - $revision->qty);
-                if ($oldPickupItem->remainingQty() === 0) {
-                    $oldPickupItem->status = $oldPickupItem->delivered_qty > 0 ? \App\Enums\PickupItemStatus::Done : \App\Enums\PickupItemStatus::Cancelled;
-                }
-                $oldPickupItem->save();
-
-                $newPickup = \App\Models\Pickup::create([
-                    'tailor_id' => $tailor->id,
-                    'picked_at' => now(),
-                    'notes' => "Pengalihan revisi #{$revision->id} dari {$oldPickupItem->tailor->name}",
-                ]);
-
-                $newPickupItem = \App\Models\PickupItem::create([
-                    'pickup_id' => $newPickup->id,
-                    'tailor_id' => $tailor->id,
-                    'work_order_item_id' => $revision->work_order_item_id,
-                    'qty' => $revision->qty,
-                    'delivered_qty' => 0,
-                    'sewing_rate' => $oldPickupItem->sewing_rate,
-                    'status' => \App\Enums\PickupItemStatus::Open,
-                ]);
-
-                $revision->pickup_item_id = $newPickupItem->id;
-            }
-        }
-
-        $rate = $revision->type->isPaid() && $tailor->isPaidHere() ? (int) ($revision->part?->price ?? $revision->rate) : 0;
-
-        $revision->update([
-            'pickup_item_id' => $revision->pickup_item_id,
-            'tailor_id' => $tailor->id,
-            'rate' => $rate,
-            'subtotal' => $rate * $revision->qty,
-        ]);
-
-        return Redirect::back()->with('status', "Revisi dialihkan ke {$tailor->name}.");
+        return Redirect::back()->with('status', "Revisi dialihkan ke {$revision->tailor->name}.");
     }
 
     public function destroy(Revision $revision, DeleteRevisionAction $delete): RedirectResponse

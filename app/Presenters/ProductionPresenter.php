@@ -110,6 +110,7 @@ class ProductionPresenter
             'tailor_id' => $delivery->tailor_id,
             'tailor_name' => $delivery->tailor->name,
             'tailor_code' => $delivery->tailor->code,
+            'tailor_type' => $delivery->tailor->type->value,
             'work_order_item_id' => $workOrderItem->id,
             'work_order_number' => $workOrderItem->workOrder->number,
             'brand_name' => $workOrderItem->article->brand_name,
@@ -125,7 +126,7 @@ class ProductionPresenter
             'delivered_at' => $delivery->delivered_at->format('Y-m-d H:i'),
             'qc_shipment_id' => $delivery->qc_shipment_id,
             'qc_shipment_number' => $delivery->shipment?->number,
-            'can_undo' => ! $delivery->isShipped() && ! ($delivery->slip_line_exists ?? false) && ! ($delivery->revisions_exists ?? false),
+            'can_undo' => ! $delivery->isShipped() && ! ($delivery->slip_line_exists ?? false) && ! ($delivery->makloon_payment_line_exists ?? false) && ! ($delivery->revisions_exists ?? false),
         ];
     }
 

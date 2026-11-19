@@ -12,6 +12,7 @@ class WorkOrder extends Model
     use HasFactory;
 
     protected $fillable = [
+        'packing_production_order_id',
         'number',
         'channel',
         'category',
@@ -20,6 +21,7 @@ class WorkOrder extends Model
         'is_opening_stock',
         'source_text',
         'notes',
+        'packing_synced_at',
         'created_by',
     ];
 
@@ -29,6 +31,8 @@ class WorkOrder extends Model
             'ordered_at' => 'date',
             'due_at' => 'date',
             'is_opening_stock' => 'boolean',
+            'packing_production_order_id' => 'integer',
+            'packing_synced_at' => 'datetime',
         ];
     }
 

@@ -1,7 +1,7 @@
 import type { RevisionStatus, Stage } from '@/types/sewing';
 
 /** Color families used across the floor UI. Each stage of the goods has its own fixed color. */
-export type Tone = 'other' | 'ready' | 'sewing' | 'done' | 'revision' | 'qc' | 'primary' | 'neutral';
+export type Tone = 'other' | 'ready' | 'sewing' | 'done' | 'revision' | 'qc' | 'shipped' | 'primary' | 'neutral';
 
 const SOFT: Record<Tone, string> = {
     other: 'border-stage-other/35 bg-stage-other/12 text-stage-other',
@@ -10,6 +10,7 @@ const SOFT: Record<Tone, string> = {
     done: 'border-stage-done/35 bg-stage-done/12 text-stage-done',
     revision: 'border-stage-revision/35 bg-stage-revision/12 text-stage-revision',
     qc: 'border-stage-qc/35 bg-stage-qc/12 text-stage-qc',
+    shipped: 'border-stage-shipped/35 bg-stage-shipped/12 text-stage-shipped',
     primary: 'border-primary/25 bg-primary/10 text-primary',
     neutral: 'border-border bg-muted text-foreground',
 };
@@ -21,6 +22,7 @@ const SOLID: Record<Tone, string> = {
     done: 'bg-stage-done text-white',
     revision: 'bg-stage-revision text-white',
     qc: 'bg-stage-qc text-white',
+    shipped: 'bg-stage-shipped text-white',
     primary: 'bg-primary text-primary-foreground',
     neutral: 'bg-foreground text-background',
 };
@@ -32,6 +34,7 @@ const TOP_BORDER: Record<Tone, string> = {
     done: 'border-t-stage-done',
     revision: 'border-t-stage-revision',
     qc: 'border-t-stage-qc',
+    shipped: 'border-t-stage-shipped',
     primary: 'border-t-primary',
     neutral: 'border-t-foreground',
 };

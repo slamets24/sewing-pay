@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils';
 import { floorActions } from '@/services/floor-actions';
 import type { CatalogArticle, CuttingReceiptRecord, HancaanReceiptRecord, WorkOrderDetail, WorkOrderItemRecord } from '@/types/sewing';
 import { Link } from '@inertiajs/react';
-import { ArrowLeft, Barcode, Building2, CheckCircle2, CheckSquare, ClipboardList, History, HandPlatter, PackagePlus, Pencil, Plus, Printer, Scissors, Shirt, Trash2, Warehouse, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, Building2, CheckCircle2, CheckSquare, ClipboardList, History, HandPlatter, PackagePlus, Pencil, Plus, Printer, Scissors, Shirt, Trash2, Truck, Warehouse, Wrench, type LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 
 type ShowProps = {
@@ -96,15 +96,13 @@ export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [
                         {workOrder.is_done && <ToneBadge tone="done">Selesai jahit</ToneBadge>}
                         {!workOrder.is_done && due && <ToneBadge tone={workOrder.is_overdue ? 'revision' : 'neutral'}>Deadline {formatDate(workOrder.due_at)} · {due}</ToneBadge>}
                         {workOrder.is_opening_stock && <ToneBadge tone="ready">Stok awal</ToneBadge>}
+                        {workOrder.from_packing && <ToneBadge tone="shipped">Dari Packing</ToneBadge>}
                     </div>
-                    <div className={`grid grid-cols-2 gap-2.5 ${hasPrint ? 'sm:grid-cols-4 lg:grid-cols-7' : 'sm:grid-cols-3 lg:grid-cols-6'}`}>
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-[repeat(auto-fit,minmax(8.5rem,1fr))] sm:gap-2.5">
                         <Figure label="WO" value={workOrder.planned_qty} icon={ClipboardList} />
-                        {hasPrint && <Figure label="Printing" value={workOrder.printing_qty} tone="other" icon={Printer} />}
-                        <Figure label="Cutting" value={workOrder.cutting_qty} tone="primary" icon={Scissors} />
-                        <Figure label="Di gudang" value={workOrder.available_qty} tone="ready" icon={Warehouse} />
-                        <Figure label="Penjahit" value={workOrder.sewing_internal_qty} tone="sewing" icon={Shirt} />
-                        <Figure label="Makloon" value={workOrder.sewing_makloon_qty} tone="qc" icon={Building2} />
-                        <Figure label="Selesai" value={workOrder.delivered_qty} tone="done" icon={CheckCircle2} />
+                        {STAGE_FIGURES.filter((figure) => figure.getValue(workOrder) > 0).map((figure) => (
+                            <Figure key={figure.key} label={figure.label} value={figure.getValue(workOrder)} tone={figure.tone} icon={figure.icon} />
+                        ))}
                     </div>
                     {workOrder.hold_qty > 0 && (
                         <p className="rounded-xl border border-stage-revision/40 bg-stage-revision/10 px-3.5 py-2.5 text-base font-semibold text-stage-revision">
@@ -172,7 +170,8 @@ export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [
                         </div>
                     }
                 >
-                    <div className="flex flex-col gap-3">
+                    {/* Phone: one card per row. Tablet / laptop: two cards side by side. */}
+                    <div className="grid gap-3 md:grid-cols-2">
                         {workOrder.items.map((item) => (
                             <ItemRow
                                 key={item.id}
@@ -311,14 +310,25 @@ export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [
     );
 }
 
+/** Stages shown in the summary; only those holding pieces are rendered. */
+const STAGE_FIGURES: { key: string; label: string; icon: LucideIcon; tone: Tone; getValue: (wo: WorkOrderDetail) => number }[] = [
+    { key: 'print', label: 'Printing', icon: Printer, tone: 'other', getValue: (wo) => wo.printing_qty },
+    { key: 'cut', label: 'Cutting', icon: Scissors, tone: 'primary', getValue: (wo) => wo.cutting_qty },
+    { key: 'gudang', label: 'Di gudang', icon: Warehouse, tone: 'ready', getValue: (wo) => wo.available_qty },
+    { key: 'jahit', label: 'Penjahit', icon: Shirt, tone: 'sewing', getValue: (wo) => wo.sewing_internal_qty },
+    { key: 'makloon', label: 'Makloon', icon: Building2, tone: 'qc', getValue: (wo) => wo.sewing_makloon_qty },
+    { key: 'selesai', label: 'Selesai jahit', icon: CheckCircle2, tone: 'done', getValue: (wo) => Math.max(0, wo.delivered_qty - wo.qc_qty) },
+    { key: 'qc', label: 'Kirim QC', icon: Truck, tone: 'shipped', getValue: (wo) => wo.qc_qty },
+];
+
 function Figure({ label, value, tone, icon: Icon }: { label: string; value: number; tone?: Tone; icon?: LucideIcon }) {
     return (
-        <div className={`flex flex-col justify-between rounded-xl border p-3.5 shadow-2xs ${tone ? ToneStyle.soft(tone) : 'bg-muted/30 border-border'}`}>
+        <div className={`flex flex-col justify-between rounded-xl border p-2.5 shadow-2xs sm:p-3.5 ${tone ? ToneStyle.soft(tone) : 'bg-muted/30 border-border'}`}>
             <div className="flex items-center justify-between gap-1 text-xs font-semibold text-muted-foreground">
                 <span className="truncate">{label}</span>
                 {Icon && <Icon className="size-4 shrink-0 opacity-70" />}
             </div>
-            <p className="mt-1 font-display text-2xl font-black text-foreground tabular lg:text-3xl leading-none">{value}</p>
+            <p className="mt-1 font-display text-xl font-black text-foreground tabular sm:text-2xl lg:text-3xl leading-none">{value}</p>
         </div>
     );
 }
@@ -337,9 +347,12 @@ const STAGE_CELLS: {
     { key: 'gudang', label: 'Gudang', abbr: 'GUD', icon: Warehouse, tone: 'ready', getValue: (i) => i.available_qty },
     { key: 'jahit', label: 'Penjahit', abbr: 'JAH', icon: Shirt, tone: 'sewing', getValue: (i) => i.sewing_internal_qty },
     { key: 'makloon', label: 'Makloon', abbr: 'MAK', icon: Building2, tone: 'qc', getValue: (i) => i.sewing_makloon_qty },
-    { key: 'selesai', label: 'Selesai', abbr: 'SEL', icon: CheckCircle2, tone: 'done', getValue: (i) => i.delivered_qty },
+    { key: 'hold', label: 'Tunggu revisi', abbr: 'REV', icon: Wrench, tone: 'revision', getValue: (i) => i.hold_qty },
+    { key: 'selesai', label: 'Selesai jahit', abbr: 'SEL', icon: CheckCircle2, tone: 'done', getValue: (i) => Math.max(0, i.delivered_qty - i.qc_qty) },
+    { key: 'qc', label: 'Kirim QC', abbr: 'QC', icon: Truck, tone: 'shipped', getValue: (i) => i.qc_qty },
 ];
 
+/** One article line in two rows: name + status on top, stage icons (only stages it is in) + actions below. */
 function ItemRow({
     item,
     selected,
@@ -349,94 +362,41 @@ function ItemRow({
     selected: boolean;
     onToggle: () => void;
 }) {
+    const cells = STAGE_CELLS.filter((cell) => {
+        const value = cell.getValue(item);
+        return cell.key === 'wo' || (typeof value === 'number' && value > 0);
+    });
+    const isDone = item.planned_qty > 0 && item.delivered_qty >= item.planned_qty;
+
     return (
         <div
             className={cn(
-                'group flex flex-col gap-3 rounded-xl border bg-card p-3.5 sm:p-4 shadow-2xs transition-colors hover:border-foreground/30 lg:flex-row lg:items-center',
-                selected
-                    ? 'border-primary/60 bg-primary/[0.04] ring-2 ring-primary/20 shadow-xs'
-                    : 'border-border',
+                'flex flex-wrap items-center gap-x-2.5 gap-y-1 rounded-xl border bg-card p-3 shadow-2xs transition-colors hover:border-foreground/30',
+                selected ? 'border-primary/60 bg-primary/[0.04] ring-2 ring-primary/20' : 'border-border',
             )}
         >
-            {/* Batch selection checkbox */}
-            <div className="flex shrink-0 items-center pt-0.5 lg:pt-0">
-                <Checkbox
-                    checked={selected}
-                    onCheckedChange={onToggle}
-                    aria-label={`Pilih baris ${item.article_name}`}
-                    className="size-5 rounded-md cursor-pointer"
-                />
-            </div>
-
-            {/* Left: Article info */}
-            <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-base font-bold leading-tight">{item.article_name}</p>
-                    <span className="text-sm font-medium text-muted-foreground">{variantLabel(item.color, item.size) || 'Tanpa varian'}</span>
-                    <ToneBadge tone={item.is_polosan ? 'neutral' : 'other'} className="text-[11px] px-2 py-0.5">
-                        {item.is_polosan ? 'Polosan' : 'Print'}
-                    </ToneBadge>
-                    <ToneBadge tone={ToneStyle.forStage(item.stage)} className="text-[11px] px-2 py-0.5">
-                        {item.stage_label}
-                    </ToneBadge>
-                </div>
-                <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1 font-mono">
-                        <Barcode className="size-3.5" />
-                        {item.barcode_value ?? 'Belum ada barcode'}
-                    </span>
-                    {item.hold_qty > 0 && (
-                        <span className="font-semibold text-stage-revision">
-                            {item.hold_qty} pcs menunggu revisi di gudang
-                        </span>
-                    )}
-                </div>
-            </div>
-
-            {/* Middle: Minimalist Icon-based Stage Indicators */}
-            <div className="grid grid-cols-7 gap-1.5 text-center sm:gap-2 lg:w-[26rem] shrink-0">
-                {STAGE_CELLS.map((cell) => {
-                    const rawVal = cell.getValue(item);
-                    const isDash = rawVal === '-';
-                    const numVal = typeof rawVal === 'number' ? rawVal : 0;
-                    const isActive = numVal > 0 && cell.key !== 'wo';
-                    const Icon = cell.icon;
-
-                    return (
-                        <div
-                            key={cell.key}
-                            title={`${cell.label}: ${rawVal} pcs`}
-                            className={cn(
-                                'flex flex-col items-center justify-center rounded-lg border py-1.5 px-1 transition-all',
-                                isDash
-                                    ? 'border-transparent bg-muted/20 text-muted-foreground/30'
-                                    : isActive
-                                      ? cn('shadow-xs', ToneStyle.soft(cell.tone ?? 'neutral'), 'border-current/30 font-semibold')
-                                      : 'border-transparent bg-muted/40 text-muted-foreground/50 hover:bg-muted/60',
-                            )}
-                        >
-                            <Icon className={cn('size-3.5 mb-0.5 shrink-0', isActive ? 'opacity-90' : 'opacity-40')} />
-                            <span className={cn('font-display text-base font-bold tabular leading-none', isActive ? 'text-foreground' : 'text-muted-foreground/60')}>
-                                {rawVal}
-                            </span>
-                            <span className={cn('text-[9px] font-semibold uppercase tracking-wider mt-0.5 leading-none', isActive ? 'opacity-80' : 'opacity-40')}>
-                                {cell.abbr}
-                            </span>
-                        </div>
-                    );
-                })}
-            </div>
-
-            {/* Right: Actions */}
-            <div className="flex flex-wrap items-center gap-1.5 lg:w-auto shrink-0">
+            {/*
+              Always two rows. Phone & tablet: [pilih · nama · aksi] / [ikon tahap].
+              Laptop (wide 2-column cards): [pilih · nama · status] / [ikon tahap · aksi].
+            */}
+            <Checkbox checked={selected} onCheckedChange={onToggle} aria-label={`Pilih baris ${item.article_name}`} className="order-1 size-5 shrink-0 cursor-pointer rounded-md" />
+            <p className="order-2 min-w-0 flex-1 truncate font-bold leading-tight" title={item.barcode_value ? `Barcode ${item.barcode_value}` : 'Belum ada barcode'}>
+                {item.article_name}
+                <span className="font-medium text-muted-foreground"> · {variantLabel(item.color, item.size) || 'Tanpa varian'}</span>
+                {item.is_polosan && <span className="font-medium text-muted-foreground"> · polosan</span>}
+            </p>
+            <ToneBadge tone={ToneStyle.forStage(item.stage)} className="order-3 hidden shrink-0 px-2 py-0.5 text-[11px] sm:inline-flex md:hidden xl:inline-flex">
+                {isDone ? 'Selesai' : item.stage_label}
+            </ToneBadge>
+            <div className="order-4 flex shrink-0 items-center gap-1.5 xl:order-6 xl:ml-auto">
                 {!item.is_polosan && item.printing_qty > 0 && (
                     <TransferCuttingSheet
                         item={item}
                         trigger={
-                            <Button variant="default" size="sm" className="h-9 gap-1.5 px-3 text-xs font-semibold">
+                            <Button size="sm" className="h-9 gap-1.5 px-3 text-xs font-semibold" aria-label={`Kirim ${item.printing_qty} pcs ke cutting`}>
                                 <Scissors className="size-3.5" />
-                                <span>Kirim ke cutting</span>
-                                <span className="rounded-full bg-white/20 px-1.5 py-0.2 text-[11px] font-bold">{item.printing_qty}</span>
+                                <span className="hidden sm:inline md:hidden 2xl:inline">Kirim ke cutting</span>
+                                <span className="rounded-full bg-white/20 px-1.5 text-[11px] font-bold">{item.printing_qty}</span>
                             </Button>
                         }
                     />
@@ -449,28 +409,23 @@ function ItemRow({
                                 variant={!item.is_polosan && item.printing_qty > 0 ? 'outline' : 'default'}
                                 size="sm"
                                 className="h-9 gap-1.5 px-3 text-xs font-semibold"
+                                aria-label={`${item.cutting_qty} pcs hancaan masuk gudang`}
                             >
                                 <Warehouse className="size-3.5" />
-                                <span>Hancaan masuk</span>
-                                <span className="rounded-full bg-primary/20 px-1.5 py-0.2 text-[11px] font-bold">{item.cutting_qty}</span>
+                                <span className="hidden sm:inline md:hidden 2xl:inline">Hancaan masuk</span>
+                                <span className="rounded-full bg-primary/20 px-1.5 text-[11px] font-bold">{item.cutting_qty}</span>
                             </Button>
                         }
                     />
                 )}
                 {item.printing_qty === 0 && item.cutting_qty === 0 && item.available_qty > 0 && (
                     <Button asChild variant="secondary" size="sm" className="h-9 gap-1.5 px-3 text-xs font-semibold">
-                        <Link href={route('pickups.create')}>
+                        <Link href={route('pickups.create')} aria-label={`Ambil ${item.available_qty} pcs`}>
                             <HandPlatter className="size-3.5" />
-                            <span>Ambil</span>
-                            <span className="rounded-full bg-foreground/10 px-1.5 py-0.2 text-[11px] font-bold">{item.available_qty}</span>
+                            <span className="hidden sm:inline md:hidden 2xl:inline">Ambil</span>
+                            <span className="rounded-full bg-foreground/10 px-1.5 text-[11px] font-bold">{item.available_qty}</span>
                         </Link>
                     </Button>
-                )}
-                {item.delivered_qty >= item.planned_qty && item.planned_qty > 0 && (
-                    <span className="flex items-center gap-1 rounded-md bg-stage-done/15 px-2.5 py-1 text-xs font-bold text-stage-done">
-                        <CheckCircle2 className="size-3.5" />
-                        Selesai
-                    </span>
                 )}
                 <PlannedQtySheet
                     item={item}
@@ -481,10 +436,39 @@ function ItemRow({
                     }
                 />
                 {item.can_delete && (
-                    <ConfirmButton size="icon" confirmLabel={<Trash2 className="size-4" />} aria-label="Hapus baris" idleClassName="size-9 rounded-lg border border-transparent hover:border-destructive/30 hover:bg-destructive/10 text-destructive" onConfirm={() => floorActions.send('delete', route('work-order-items.destroy', item.id))}>
+                    <ConfirmButton
+                        size="icon"
+                        confirmLabel={<Trash2 className="size-4" />}
+                        aria-label="Hapus baris"
+                        idleClassName="size-9 rounded-lg border border-transparent text-destructive hover:border-destructive/30 hover:bg-destructive/10"
+                        onConfirm={() => floorActions.send('delete', route('work-order-items.destroy', item.id))}
+                    >
                         <Trash2 className="size-4" />
                     </ConfirmButton>
                 )}
+            </div>
+            <div className="order-5 basis-full xl:order-4" aria-hidden />
+            <div className="order-6 flex flex-wrap gap-1 sm:gap-1.5 sm:pl-7.5 xl:order-5">
+                {cells.map((cell) => {
+                    const value = cell.getValue(item);
+                    const isTotal = cell.key === 'wo';
+                    const Icon = cell.icon;
+
+                    return (
+                        <div
+                            key={cell.key}
+                            title={`${cell.label}: ${value} pcs`}
+                            className={cn(
+                                'flex w-10 flex-col items-center justify-center rounded-lg border py-1 text-center sm:w-12',
+                                isTotal ? 'border-transparent bg-muted/40 text-muted-foreground' : cn('font-semibold', ToneStyle.soft(cell.tone ?? 'neutral')),
+                            )}
+                        >
+                            <Icon className={cn('size-3.5 shrink-0', isTotal ? 'opacity-50' : 'opacity-90')} />
+                            <span className={cn('font-display text-sm leading-tight font-bold tabular', !isTotal && 'text-foreground')}>{value}</span>
+                            <span className="text-[9px] leading-none font-semibold tracking-wider uppercase opacity-70">{cell.abbr}</span>
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );

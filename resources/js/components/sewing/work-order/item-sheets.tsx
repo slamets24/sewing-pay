@@ -337,8 +337,11 @@ export function PlannedQtySheet({ item, trigger }: { item: WorkOrderItemRecord; 
             onSubmit={(close) => form.patch(route('work-order-items.update', item.id), { preserveScroll: true, onSuccess: close })}
         >
             <FormField label="Qty WO" error={form.errors.planned_qty}>
-                <QtyStepper value={form.data.planned_qty} min={1} onChange={(qty) => form.setData('planned_qty', qty)} />
+                <QtyStepper value={form.data.planned_qty} min={Math.max(1, item.min_planned_qty)} onChange={(qty) => form.setData('planned_qty', qty)} />
             </FormField>
+            {item.min_planned_qty > 0 && (
+                <p className="text-sm text-muted-foreground">Minimal {item.min_planned_qty} pcs, karena sudah sebanyak itu yang jalan ke cutting / gudang.</p>
+            )}
         </SheetForm>
     );
 }

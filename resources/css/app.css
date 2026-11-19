@@ -50,6 +50,7 @@
     --color-stage-done: var(--stage-done);
     --color-stage-revision: var(--stage-revision);
     --color-stage-qc: var(--stage-qc);
+    --color-stage-shipped: var(--stage-shipped);
 }
 
 :root {
@@ -89,6 +90,7 @@
     --stage-done: oklch(0.60 0.16 155);
     --stage-revision: oklch(0.55 0.22 25);
     --stage-qc: oklch(0.56 0.24 285);
+    --stage-shipped: oklch(0.58 0.11 195);
 
     --shadow-soft: 0 1px 3px 0 rgb(15 23 42 / 0.04), 0 1px 2px -1px rgb(15 23 42 / 0.03);
     --shadow-soft-lg: 0 8px 24px -4px rgb(79 87 245 / 0.14), 0 4px 12px -2px rgb(15 23 42 / 0.05);
@@ -116,6 +118,7 @@
     --stage-done: oklch(0.38 0.15 150);
     --stage-revision: oklch(0.45 0.22 25);
     --stage-qc: oklch(0.35 0.15 285);
+    --stage-shipped: oklch(0.38 0.09 195);
 }
 
 html.text-large {

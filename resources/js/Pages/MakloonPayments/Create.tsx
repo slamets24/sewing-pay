@@ -56,7 +56,11 @@ export default function MakloonPaymentCreate({ tailors, selectedTailorId, unpaid
     const form = useForm({
         tailor_id: selectedTailorId ?? 0,
         delivery_ids: selectedIds,
-        payment_date: new Date().toISOString().split('T')[0],
+        // Local date (toISOString() would be yesterday before 07:00 WIB).
+        payment_date: (() => {
+            const now = new Date();
+            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        })(),
         adjustment_amount: 0,
         payment_method: 'transfer',
         notes: '',

@@ -39,4 +39,10 @@ return [
         'ten_hours_or_more' => 35_000,
     ],
 
+    /*
+    | Password untuk akun Owner/Admin yang dibuat UserSeeder. Wajib diisi di production;
+    | di lokal kosong berarti "password".
+    */
+    'seed_user_password' => env('SEED_USER_PASSWORD'),
+
 ];

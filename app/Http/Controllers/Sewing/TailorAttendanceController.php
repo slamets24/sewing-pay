@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\Sewing;
 
+use App\Enums\TailorType;
 use App\Http\Controllers\Controller;
 use App\Models\Tailor;
 use App\Models\TailorAttendance;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -15,8 +18,7 @@ class TailorAttendanceController extends Controller
 {
     public function index(Request $request): Response
     {
-        $dateStr = $request->query('date', today()->toDateString());
-        $date = Carbon::parse($dateStr)->toDateString();
+        $date = $this->safeDate($request->query('date'));
 
         $internalTailors = Tailor::query()
             ->where('is_active', true)
@@ -82,14 +84,16 @@ class TailorAttendanceController extends Controller
     public function storeOrUpdate(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'tailor_id' => ['required', 'integer', 'exists:tailors,id'],
+            'tailor_id' => ['required', 'integer', Rule::exists('tailors', 'id')->where('type', TailorType::Internal->value)],
             'date' => ['required', 'date'],
-            'clock_in' => ['nullable', 'string'],
-            'clock_out' => ['nullable', 'string'],
+            'clock_in' => ['nullable', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
+            'clock_out' => ['nullable', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
             'working_hours' => ['required', 'integer', 'in:9,10,11,12'],
             'meal_allowance' => ['nullable', 'integer', 'min:0'],
             'status' => ['required', 'string', 'in:present,permission,sick,alpha,off'],
             'note' => ['nullable', 'string', 'max:500'],
+        ], [
+            'tailor_id.exists' => 'Absensi hanya untuk penjahit internal.',
         ]);
 
         $date = Carbon::parse($validated['date'])->toDateString();
@@ -108,31 +112,45 @@ class TailorAttendanceController extends Controller
             ->whereDate('date', $date)
             ->first();
 
+        $wasOnDraftSlip = false;
         if ($attendance) {
+            $slip = $attendance->slipLine?->slip;
+            if ($slip?->isPaid()) {
+                throw ValidationException::withMessages([
+                    'attendance' => 'Absensi ini sudah dibayar di slip '.$slip->invoice_number.', jadi tidak bisa diubah lagi.',
+                ]);
+            }
+            $wasOnDraftSlip = $slip !== null;
+
             $attendance->update([
-                'clock_in' => $validated['clock_in'] ?: null,
-                'clock_out' => $validated['clock_out'] ?: null,
+                'clock_in' => ($validated['clock_in'] ?? null) ?: null,
+                'clock_out' => ($validated['clock_out'] ?? null) ?: null,
                 'working_hours' => $workingHours,
                 'meal_allowance' => $mealAllowance,
                 'status' => $validated['status'],
-                'note' => $validated['note'] ?: null,
+                'note' => ($validated['note'] ?? null) ?: null,
                 'created_by' => $request->user()->id,
             ]);
         } else {
             TailorAttendance::query()->create([
                 'tailor_id' => $validated['tailor_id'],
                 'date' => $date,
-                'clock_in' => $validated['clock_in'] ?: null,
-                'clock_out' => $validated['clock_out'] ?: null,
+                'clock_in' => ($validated['clock_in'] ?? null) ?: null,
+                'clock_out' => ($validated['clock_out'] ?? null) ?: null,
                 'working_hours' => $workingHours,
                 'meal_allowance' => $mealAllowance,
                 'status' => $validated['status'],
-                'note' => $validated['note'] ?: null,
+                'note' => ($validated['note'] ?? null) ?: null,
                 'created_by' => $request->user()->id,
             ]);
         }
 
-        return back()->with('status', 'Absensi berhasil disimpan.');
+        if ($wasOnDraftSlip) {
+            return back()->with('status', 'Absensi disimpan. Absensi ini sudah ada di draft gaji, jadi tekan "Hitung ulang" di draft itu supaya nominalnya ikut berubah.');
+        }
+
+        // The attendance page saves on every tap and shows "Tersimpan" inline, so it asks for no toast.
+        return $request->boolean('quiet') ? back() : back()->with('status', 'Absensi berhasil disimpan.');
     }
 
     public function batchPresent(Request $request): RedirectResponse
@@ -142,7 +160,7 @@ class TailorAttendanceController extends Controller
             'working_hours' => ['nullable', 'integer', 'in:9,10,11,12'],
         ]);
 
-        $date = $validated['date'];
+        $date = Carbon::parse($validated['date'])->toDateString();
         $hours = $validated['working_hours'] ?? 9;
         $allowance = TailorAttendance::calculateMealAllowance($hours);
 
@@ -168,8 +186,30 @@ class TailorAttendanceController extends Controller
 
     public function destroy(TailorAttendance $attendance): RedirectResponse
     {
+        $slip = $attendance->slipLine?->slip;
+        if ($slip) {
+            throw ValidationException::withMessages([
+                'attendance' => $slip->isPaid()
+                    ? 'Absensi ini sudah dibayar di slip '.$slip->invoice_number.', jadi tidak bisa dihapus.'
+                    : 'Absensi ini sudah masuk draft gaji. Hapus draft gaji itu dulu.',
+            ]);
+        }
+
         $attendance->delete();
 
         return back()->with('status', 'Catatan absensi dihapus.');
+    }
+
+    private function safeDate(mixed $value): string
+    {
+        if (! is_string($value) || $value === '') {
+            return today()->toDateString();
+        }
+
+        try {
+            return Carbon::parse($value)->toDateString();
+        } catch (\Throwable) {
+            return today()->toDateString();
+        }
     }
 }

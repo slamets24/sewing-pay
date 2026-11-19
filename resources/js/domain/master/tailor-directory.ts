@@ -48,8 +48,8 @@ export class TailorDirectory {
 
 /** Shapes the add/edit tailor form from and to the server record. */
 export class TailorForm {
-    static blank(nextCode: string): TailorFormData {
-        return { code: nextCode, name: '', type: 'internal', whatsapp_number: '', address: '', notes: '', is_active: true };
+    static blank(nextCode: string, type: TailorType = 'internal'): TailorFormData {
+        return { code: nextCode, name: '', type, whatsapp_number: '', address: '', notes: '', is_active: true };
     }
 
     static fromRecord(tailor: TailorRecord): TailorFormData {

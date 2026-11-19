@@ -34,6 +34,7 @@ export type CatalogArticle = {
     display_name: string;
     brand_name: string | null;
     category_name: string | null;
+    fabric_type?: 'polos' | 'print' | null;
     sewing_rate: number;
     source: 'manual' | 'packingv2';
 };
@@ -48,6 +49,7 @@ export type WorkOrderSummary = {
     ordered_at: string | null;
     due_at: string | null;
     is_opening_stock: boolean;
+    from_packing?: boolean;
     is_overdue: boolean;
     is_done: boolean;
     notes: string | null;
@@ -63,6 +65,8 @@ export type WorkOrderSummary = {
     sewing_makloon_qty: number;
     hold_qty: number;
     delivered_qty: number;
+    /** Sewn pieces already handed over to QC. */
+    qc_qty: number;
     can_delete: boolean;
 };
 
@@ -81,11 +85,14 @@ export type WorkOrderItemRecord = {
     sewing_rate: number;
     planned_qty: number;
     cutting_transferred_qty: number;
+    min_planned_qty: number;
     printing_qty: number;
     cutting_qty: number;
     received_qty: number;
     assigned_qty: number;
     delivered_qty: number;
+    /** Sewn pieces already handed over to QC. */
+    qc_qty: number;
     pending_qty: number;
     available_qty: number;
     sewing_qty: number;
@@ -167,6 +174,7 @@ export type DeliveryRecord = {
     tailor_id: number;
     tailor_name: string;
     tailor_code: string | null;
+    tailor_type: TailorType;
     work_order_item_id: number;
     work_order_number: string;
     brand_name: string | null;
@@ -329,6 +337,7 @@ export type ArticleRecord = {
     display_name: string;
     brand_name: string | null;
     category_name: string | null;
+    fabric_type?: 'polos' | 'print' | null;
     sewing_rate: number;
     makloon_sewing_rate: number | null;
     is_active: boolean;

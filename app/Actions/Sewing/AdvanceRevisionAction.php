@@ -4,6 +4,7 @@ namespace App\Actions\Sewing;
 
 use App\Enums\PickupItemStatus;
 use App\Enums\RevisionStatus;
+use App\Enums\TailorType;
 use App\Models\Pickup;
 use App\Models\PickupItem;
 use App\Models\Revision;
@@ -61,10 +62,42 @@ class AdvanceRevisionAction
         });
     }
 
+    /** Swaps the fixing tailor without moving the status, atomically. */
+    public function reassignTo(Revision $revision, int $tailorId): Revision
+    {
+        return DB::transaction(function () use ($revision, $tailorId) {
+            $revision = Revision::query()->with('part')->lockForUpdate()->findOrFail($revision->id);
+            $tailor = Tailor::query()->findOrFail($tailorId);
+
+            if (! $tailor->is_active) {
+                throw ValidationException::withMessages(['tailor_id' => 'Penjahit ini sedang tidak aktif.']);
+            }
+
+            if ($tailor->id !== $revision->tailor_id) {
+                $this->reassign($revision, $tailor);
+                $revision->save();
+            }
+
+            return $revision->load('tailor');
+        });
+    }
+
     private function moveToTailor(Revision $revision): void
     {
         if ($revision->returned_to_warehouse) {
-            $workOrderItem = WorkOrderItem::query()->lockForUpdate()->findOrFail($revision->work_order_item_id);
+            // Normally released at "bahan datang"; release here too so the counters stay consistent.
+            $this->hold->release($revision);
+
+            $workOrderItem = WorkOrderItem::query()->with('article')->lockForUpdate()->findOrFail($revision->work_order_item_id);
+
+            // After "bahan datang" the piece is back in the warehouse and can be taken through Ambil Barang.
+            // If someone already took it, moving it to the revision tailor would assign the same piece twice.
+            if ($workOrderItem->availableQty() < $revision->qty) {
+                throw ValidationException::withMessages([
+                    'revision' => "Barang revisi ini sudah diambil lewat Ambil Barang (sisa di gudang {$workOrderItem->availableQty()} pcs). "
+                        .'Batalkan pengambilan itu dulu, atau hapus revisi ini.',
+                ]);
+            }
 
             $pickupItem = PickupItem::query()
                 ->where('tailor_id', $revision->tailor_id)
@@ -89,7 +122,7 @@ class AdvanceRevisionAction
                     'work_order_item_id' => $revision->work_order_item_id,
                     'qty' => $revision->qty,
                     'delivered_qty' => 0,
-                    'sewing_rate' => $workOrderItem->sewing_rate,
+                    'sewing_rate' => $this->sewingRateFor($revision, $workOrderItem),
                     'status' => PickupItemStatus::Open,
                 ]);
             }
@@ -116,7 +149,7 @@ class AdvanceRevisionAction
     private function reassign(Revision $revision, Tailor $tailor): void
     {
         if ($revision->status === RevisionStatus::InProgress || $revision->isDone()) {
-            throw ValidationException::withMessages(['tailor_id' => 'Penjahit tidak bisa diganti setelah revisi mulai dikerjakan.']);
+            throw ValidationException::withMessages(['tailor_id' => 'Penjahit tidak bisa diganti setelah revisi mulai dikerjakan atau selesai.']);
         }
 
         $oldTailorId = $revision->tailor_id;
@@ -156,5 +189,24 @@ class AdvanceRevisionAction
         $revision->tailor_id = $tailor->id;
         $revision->rate = $rate;
         $revision->subtotal = $rate * $revision->qty;
+    }
+
+    /**
+     * Rate for the piece going back to the revision tailor: the rate of the pickup it was handed back from
+     * (same tailor), otherwise the article rate for this tailor's type.
+     */
+    private function sewingRateFor(Revision $revision, WorkOrderItem $workOrderItem): int
+    {
+        $original = $revision->pickup_item_id ? PickupItem::query()->find($revision->pickup_item_id) : null;
+
+        if ($original && $original->tailor_id === $revision->tailor_id) {
+            return (int) $original->sewing_rate;
+        }
+
+        $tailor = Tailor::query()->findOrFail($revision->tailor_id);
+
+        return (int) ($tailor->type === TailorType::Makloon
+            ? $workOrderItem->article->makloonRate()
+            : $workOrderItem->article->sewing_rate);
     }
 }

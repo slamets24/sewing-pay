@@ -18,7 +18,7 @@ class OverviewController extends Controller
     {
         $items = WorkOrderItem::query()->get();
         $openWorkOrders = WorkOrder::query()
-            ->with(['items.article'])
+            ->with(['items' => fn ($query) => WorkOrderItem::withQcShippedQty($query), 'items.article'])
             ->get()
             ->reject(fn (WorkOrder $workOrder) => $workOrder->isDone());
 
@@ -43,7 +43,7 @@ class OverviewController extends Controller
                 ->take(8)
                 ->values()
                 ->map(fn (WorkOrder $workOrder) => $workOrders->summary($workOrder)),
-            'recentDeliveries' => $floor->recentDeliveries(8)->map(fn ($delivery) => $production->delivery($delivery)),
+            'recentDeliveries' => $floor->recentDeliveries(5)->map(fn ($delivery) => $production->delivery($delivery)),
         ]);
     }
 }

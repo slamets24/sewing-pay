@@ -4,22 +4,21 @@ import { StatTile } from '@/components/sewing/stat-tile';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
-import { formatIdr } from '@/lib/format';
+import { formatDate, formatIdr } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import { Head, router } from '@inertiajs/react';
 import {
     CalendarCheck,
     ChevronLeft,
     ChevronRight,
-    Clock,
     DollarSign,
     Save,
     Sparkles,
     UserCheck,
-    UserX,
 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 type AttendanceRow = {
     id: number | null;
@@ -47,24 +46,26 @@ type AttendanceProps = {
         unrecorded_count: number;
         total_internal: number;
     };
-    mealAllowanceRules?: {
-        under_10_hours: number;
-        ten_hours_or_more: number;
-    };
+    mealAllowanceRules?: MealAllowanceRules;
 };
 
-const STATUS_LABELS: Record<string, string> = {
-    present: 'Hadir',
-    permission: 'Izin',
-    sick: 'Sakit',
-    alpha: 'Alpa',
-    off: 'Libur',
-};
+type MealAllowanceRules = { under_10_hours: number; ten_hours_or_more: number };
+
+/** Fallback only; the server sends the real rules from config/sewing.php. */
+const DEFAULT_MEAL_RULES: MealAllowanceRules = { under_10_hours: 30000, ten_hours_or_more: 35000 };
+
+const allowanceFor = (hours: number, rules: MealAllowanceRules) => (hours >= 10 ? rules.ten_hours_or_more : rules.under_10_hours);
+
+/** YYYY-MM-DD in the browser's own timezone (toISOString() would give the UTC date). */
+const localDateString = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+/** This page has no field to hang errors on (e.g. "sudah dibayar"), so show them as a toast. */
+const showFirstError = (errors: Record<string, string>) => toast.error(Object.values(errors)[0] ?? 'Gagal menyimpan. Coba lagi.');
 
 const WORKING_HOURS_OPTIONS = [9, 10, 11, 12];
 
-export default function AttendanceIndex({ date, rows, summary }: AttendanceProps) {
-    const [submittingId, setSubmittingId] = useState<number | null>(null);
+export default function AttendanceIndex({ date, rows, summary, mealAllowanceRules = DEFAULT_MEAL_RULES }: AttendanceProps) {
 
     const changeDate = (newDate: string) => {
         router.get(route('attendances.index'), { date: newDate }, { preserveState: false });
@@ -82,15 +83,15 @@ export default function AttendanceIndex({ date, rows, summary }: AttendanceProps
         changeDate(d.toISOString().split('T')[0]);
     };
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = localDateString(new Date());
     const isToday = date === todayStr;
 
     const handleBatchPresent = () => {
-        if (!confirm(`Tandai semua penjahit internal hadir 9 jam (uang makan Rp. 30.000) untuk tanggal ${date}?`)) {
+        if (!confirm(`Tandai semua penjahit internal hadir 9 jam (uang makan ${formatIdr(mealAllowanceRules.under_10_hours)}) untuk tanggal ${date}?`)) {
             return;
         }
 
-        router.post(route('attendances.batch'), { date, working_hours: 9 }, { preserveScroll: true });
+        router.post(route('attendances.batch'), { date, working_hours: 9 }, { preserveScroll: true, onError: showFirstError });
     };
 
     return (
@@ -128,51 +129,31 @@ export default function AttendanceIndex({ date, rows, summary }: AttendanceProps
             />
 
             <div className="flex flex-col gap-5">
-                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <div className="grid gap-3 sm:grid-cols-2">
                     <StatTile
-                        label="Penjahit Hadir"
+                        label="Penjahit hadir"
                         value={`${summary.present_count} / ${summary.total_internal}`}
-                        hint={`${summary.unrecorded_count} belum dicatat`}
+                        hint={[summary.unrecorded_count > 0 ? `${summary.unrecorded_count} belum dicatat` : null, summary.permission_count > 0 ? `${summary.permission_count} izin/sakit` : null].filter(Boolean).join(' · ') || 'Semua sudah dicatat'}
                         icon={UserCheck}
                         tone="done"
                     />
-                    <StatTile
-                        label="Total Uang Makan Hari Ini"
-                        value={formatIdr(summary.total_allowance)}
-                        hint="Diakumulasi ke slip gaji"
-                        icon={DollarSign}
-                        tone="primary"
-                    />
-                    <StatTile
-                        label="Izin / Sakit"
-                        value={summary.permission_count}
-                        hint="Tidak dapat uang makan"
-                        icon={UserX}
-                        tone="other"
-                    />
-                    <StatTile
-                        label="Aturan Uang Makan"
-                        value="30rb / 35rb"
-                        hint="<10j: Rp. 30.000 · ≥10j: Rp. 35.000"
-                        icon={Clock}
-                        tone="sewing"
-                    />
+                    <StatTile label="Uang makan hari ini" value={formatIdr(summary.total_allowance)} hint="Masuk ke slip gaji" icon={DollarSign} tone="primary" />
                 </div>
 
                 <Section
-                    title={`Daftar Absensi Penjahit (${date})`}
+                    title={`Absensi ${formatDate(date)}`}
                     icon={CalendarCheck}
+                    description={`Tap status / jam kerja langsung tersimpan. Uang makan <10 jam ${formatIdr(mealAllowanceRules.under_10_hours)}, ≥10 jam ${formatIdr(mealAllowanceRules.ten_hours_or_more)}.`}
                 >
                     {rows.length === 0 ? (
                         <EmptyState className="text-base">Tidak ada penjahit internal yang aktif.</EmptyState>
                     ) : (
-                        <div className="flex flex-col gap-3">
+                        <div className="grid gap-2 lg:grid-cols-2 [&>*]:min-w-0">
                             {rows.map((row) => (
                                 <AttendanceCard
                                     key={row.tailor_id}
                                     row={row}
-                                    isSubmitting={submittingId === row.tailor_id}
-                                    setSubmittingId={setSubmittingId}
+                                    mealRules={mealAllowanceRules}
                                 />
                             ))}
                         </div>
@@ -183,179 +164,181 @@ export default function AttendanceIndex({ date, rows, summary }: AttendanceProps
     );
 }
 
+const STATUS_OPTIONS: { value: AttendanceRow['status']; label: string }[] = [
+    { value: 'present', label: 'Hadir' },
+    { value: 'permission', label: 'Izin' },
+    { value: 'sick', label: 'Sakit' },
+    { value: 'alpha', label: 'Alpa' },
+    { value: 'off', label: 'Libur' },
+];
+
+type SaveState = 'idle' | 'saving' | 'saved';
+
+/**
+ * One tailor in two rows: name + meal allowance, then status and hours.
+ * Status and hours save themselves on tap; clock times, a custom allowance and notes sit behind "Detail".
+ */
 function AttendanceCard({
     row,
-    isSubmitting,
-    setSubmittingId,
+    mealRules,
 }: {
     row: AttendanceRow;
-    isSubmitting: boolean;
-    setSubmittingId: (id: number | null) => void;
+    mealRules: MealAllowanceRules;
 }) {
     const [status, setStatus] = useState<AttendanceRow['status']>(row.status);
+    const [hours, setHours] = useState(row.working_hours);
     const [clockIn, setClockIn] = useState(row.clock_in ?? '');
     const [clockOut, setClockOut] = useState(row.clock_out ?? '');
-    const [hours, setHours] = useState(row.working_hours);
+    const [mealAllowance, setMealAllowance] = useState(row.meal_allowance ?? allowanceFor(row.working_hours, mealRules));
+    const [note, setNote] = useState(row.note ?? '');
+    const [showDetail, setShowDetail] = useState(false);
+    const [saveState, setSaveState] = useState<SaveState>('idle');
+    const [recorded, setRecorded] = useState(row.is_recorded);
     const isPresent = status === 'present';
-    const defaultAllowance = isPresent ? (hours >= 10 ? 35000 : 30000) : 0;
-    const [mealAllowance, setMealAllowance] = useState(row.meal_allowance ?? defaultAllowance);
-    const [note, setNote] = useState(row.note);
 
-    const handleHoursChange = (opt: number) => {
-        setHours(opt);
-        if (isPresent) {
-            setMealAllowance(opt >= 10 ? 35000 : 30000);
-        }
-    };
+    type Values = { status: AttendanceRow['status']; hours: number; mealAllowance: number; clockIn: string; clockOut: string; note: string };
 
-    const handleStatusChange = (val: AttendanceRow['status']) => {
-        setStatus(val);
-        if (val !== 'present') {
-            setMealAllowance(0);
-        } else {
-            setMealAllowance(hours >= 10 ? 35000 : 30000);
-        }
-    };
-
-    const handleSave = () => {
-        setSubmittingId(row.tailor_id);
+    const save = (changes: Partial<Values> = {}) => {
+        const values: Values = { status, hours, mealAllowance, clockIn, clockOut, note, ...changes };
+        setSaveState('saving');
         router.post(
             route('attendances.store'),
             {
                 tailor_id: row.tailor_id,
                 date: row.date,
-                status,
-                clock_in: clockIn,
-                clock_out: clockOut,
-                working_hours: hours,
-                meal_allowance: mealAllowance,
-                note,
+                status: values.status,
+                working_hours: values.hours,
+                meal_allowance: values.status === 'present' ? values.mealAllowance : 0,
+                clock_in: values.clockIn || null,
+                clock_out: values.clockOut || null,
+                note: values.note || null,
+                quiet: true,
             },
             {
                 preserveScroll: true,
-                onFinish: () => setSubmittingId(null),
-            }
+                preserveState: true,
+                onSuccess: () => {
+                    setSaveState('saved');
+                    setRecorded(true);
+                },
+                onError: (errors) => {
+                    setSaveState('idle');
+                    showFirstError(errors);
+                },
+            },
         );
     };
 
+    const changeStatus = (value: AttendanceRow['status']) => {
+        const allowance = value === 'present' ? allowanceFor(hours, mealRules) : 0;
+        setStatus(value);
+        setMealAllowance(allowance);
+        save({ status: value, mealAllowance: allowance });
+    };
+
+    const changeHours = (value: number) => {
+        const allowance = allowanceFor(value, mealRules);
+        setHours(value);
+        setMealAllowance(allowance);
+        save({ hours: value, mealAllowance: allowance });
+    };
+
     return (
-        <div className="rounded-xl border bg-card p-4 shadow-xs transition-colors hover:border-primary/40">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div className="min-w-0 md:w-1/4">
-                    <div className="flex items-center gap-2">
-                        <p className="font-semibold text-base truncate">{row.tailor_name}</p>
+        <div className={cn('flex min-w-0 flex-col gap-2 rounded-xl border bg-card p-3 shadow-2xs', !recorded && 'border-dashed')}>
+            {/* Row 1: who, allowance, detail toggle */}
+            <div className="flex items-center gap-2">
+                <div className="min-w-0 flex-1">
+                    <p className="truncate font-bold">{row.tailor_name}</p>
+                    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                        <span className="truncate">
+                            {[row.tailor_code, clockIn && clockOut ? `${clockIn}–${clockOut}` : null, note || null].filter(Boolean).join(' · ')}
+                        </span>
                         {row.is_self_clocked && (
-                            <Badge variant="secondary" className="text-xs bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                            <Badge variant="secondary" className="bg-emerald-50 text-[11px] text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
                                 Portal HP
                             </Badge>
                         )}
-                        {!row.is_recorded && (
-                            <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">
-                                Belum Absen
+                        {!recorded && (
+                            <Badge variant="outline" className="border-amber-300 text-[11px] text-amber-600">
+                                Belum dicatat
                             </Badge>
                         )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">{row.tailor_code ?? 'Internal'}</p>
+                    </p>
                 </div>
+                <div className="shrink-0 text-right">
+                    <p className="font-display text-base font-bold tabular">{isPresent ? formatIdr(mealAllowance) : '—'}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                        {saveState === 'saving' ? 'Menyimpan…' : saveState === 'saved' ? 'Tersimpan ✓' : 'uang makan'}
+                    </p>
+                </div>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setShowDetail(!showDetail)} aria-expanded={showDetail} aria-label="Detail" className="px-2">
+                    <span className="hidden sm:inline">Detail</span>
+                    <ChevronRight className={cn('size-4 transition-transform', showDetail && 'rotate-90')} />
+                </Button>
+            </div>
 
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:flex-1 md:items-center">
-                    {/* Status */}
-                    <div className="flex flex-col gap-1">
-                        <label className="text-xs font-medium text-muted-foreground">Status</label>
-                        <Select value={status} onValueChange={(val) => handleStatusChange(val as AttendanceRow['status'])}>
-                            <SelectTrigger className="h-9">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {Object.entries(STATUS_LABELS).map(([k, label]) => (
-                                    <SelectItem key={k} value={k}>
-                                        {label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+            {/* Row 2: status and hours, saved on tap */}
+            <div className="flex flex-wrap items-center gap-2">
+                <div className="flex gap-1 rounded-lg bg-muted/50 p-0.5" role="group" aria-label={`Status ${row.tailor_name}`}>
+                    {STATUS_OPTIONS.map((option) => (
+                        <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => option.value !== status && changeStatus(option.value)}
+                            aria-pressed={status === option.value}
+                            className={cn(
+                                'rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors',
+                                status === option.value ? 'bg-primary text-primary-foreground shadow-xs' : 'text-muted-foreground hover:bg-muted',
+                            )}
+                        >
+                            {option.label}
+                        </button>
+                    ))}
+                </div>
+                {isPresent && (
+                    <div className="flex gap-1 rounded-lg bg-muted/50 p-0.5" role="group" aria-label={`Jam kerja ${row.tailor_name}`}>
+                        {WORKING_HOURS_OPTIONS.map((option) => (
+                            <button
+                                key={option}
+                                type="button"
+                                onClick={() => option !== hours && changeHours(option)}
+                                aria-pressed={hours === option}
+                                className={cn(
+                                    'rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors',
+                                    hours === option ? 'bg-primary text-primary-foreground shadow-xs' : 'text-muted-foreground hover:bg-muted',
+                                )}
+                            >
+                                {option}j
+                            </button>
+                        ))}
                     </div>
+                )}
+            </div>
 
-                    {/* Jam Masuk & Pulang */}
+            {showDetail && (
+                <div className="grid gap-3 rounded-lg bg-muted/40 p-3 sm:grid-cols-[auto_10rem_1fr_auto] sm:items-end">
                     <div className="flex flex-col gap-1">
                         <label className="text-xs font-medium text-muted-foreground">Masuk — Pulang</label>
                         <div className="flex items-center gap-1">
-                            <Input
-                                type="time"
-                                value={clockIn}
-                                onChange={(e) => setClockIn(e.target.value)}
-                                className="h-9 px-2 text-xs"
-                                disabled={!isPresent}
-                            />
-                            <span className="text-muted-foreground">-</span>
-                            <Input
-                                type="time"
-                                value={clockOut}
-                                onChange={(e) => setClockOut(e.target.value)}
-                                className="h-9 px-2 text-xs"
-                                disabled={!isPresent}
-                            />
+                            <Input type="time" value={clockIn} onChange={(e) => setClockIn(e.target.value)} className="h-9 w-28 px-2" disabled={!isPresent} />
+                            <span className="text-muted-foreground">–</span>
+                            <Input type="time" value={clockOut} onChange={(e) => setClockOut(e.target.value)} className="h-9 w-28 px-2" disabled={!isPresent} />
                         </div>
                     </div>
-
-                    {/* Shift Jam Kerja */}
                     <div className="flex flex-col gap-1">
-                        <label className="text-xs font-medium text-muted-foreground">Jam Kerja</label>
-                        <div className="flex gap-1">
-                            {WORKING_HOURS_OPTIONS.map((opt) => (
-                                <button
-                                    key={opt}
-                                    type="button"
-                                    onClick={() => handleHoursChange(opt)}
-                                    disabled={!isPresent}
-                                    className={`flex-1 rounded-md py-1.5 text-xs font-semibold border transition-all ${
-                                        hours === opt && isPresent
-                                            ? 'bg-primary text-primary-foreground border-primary shadow-xs'
-                                            : 'bg-muted/40 hover:bg-muted text-muted-foreground'
-                                    }`}
-                                >
-                                    {opt}j
-                                </button>
-                            ))}
-                        </div>
+                        <label className="text-xs font-medium text-muted-foreground">Uang makan (Rp)</label>
+                        <Input type="number" min={0} value={mealAllowance} onChange={(e) => setMealAllowance(Number(e.target.value))} className="h-9 font-semibold tabular" disabled={!isPresent} />
                     </div>
-
-                    {/* Uang Makan Riil (Bisa diedit/custom) */}
-                    <div className="flex flex-col gap-0.5">
-                        <div className="flex items-center justify-between">
-                            <label className="text-xs font-medium text-muted-foreground">Uang Makan (Rp.)</label>
-                            <span className="text-[10px] text-muted-foreground">
-                                {hours >= 10 ? '≥10j: 35rb' : '<10j: 30rb'}
-                            </span>
-                        </div>
-                        <div className="relative">
-                            <span className="pointer-events-none absolute inset-y-0 left-2.5 flex items-center text-xs font-semibold text-muted-foreground" aria-hidden>
-                                Rp.
-                            </span>
-                            <Input
-                                type="number"
-                                value={mealAllowance}
-                                onChange={(e) => setMealAllowance(Number(e.target.value))}
-                                className="h-9 pl-8.5 pr-2 text-sm font-semibold"
-                                disabled={!isPresent}
-                            />
-                        </div>
+                    <div className="flex flex-col gap-1">
+                        <label className="text-xs font-medium text-muted-foreground">Catatan</label>
+                        <Input value={note} onChange={(e) => setNote(e.target.value)} className="h-9" placeholder="Opsional" />
                     </div>
-                </div>
-
-                <div className="flex items-center gap-2 pt-2 md:pt-0 md:pl-2">
-                    <Input
-                        placeholder="Catatan..."
-                        value={note}
-                        onChange={(e) => setNote(e.target.value)}
-                        className="h-9 text-xs md:w-36"
-                    />
-                    <Button type="button" size="sm" onClick={handleSave} disabled={isSubmitting}>
-                        {isSubmitting ? <Clock className="size-4 animate-spin" /> : <Save className="size-4" />}
-                        Simpan
+                    <Button type="button" size="sm" className="h-9" onClick={() => save()} disabled={saveState === 'saving'}>
+                        <Save className="size-4" />
+                        Simpan detail
                     </Button>
                 </div>
-            </div>
+            )}
         </div>
     );
 }

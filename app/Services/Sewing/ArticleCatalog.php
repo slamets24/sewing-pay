@@ -24,6 +24,7 @@ class ArticleCatalog
                     'display_name' => $article->displayName(),
                     'brand_name' => $article->brand_name,
                     'category_name' => $article->category_name,
+                    'fabric_type' => $article->fabric_type,
                     'sewing_rate' => $article->sewing_rate,
                     'source' => $article->source->value,
                 ])

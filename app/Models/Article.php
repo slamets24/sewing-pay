@@ -18,6 +18,7 @@ class Article extends Model
         'name',
         'brand_name',
         'category_name',
+        'fabric_type',
         'sewing_rate',
         'makloon_sewing_rate',
         'is_active',
@@ -62,14 +63,25 @@ class Article extends Model
         return $this->hasOne(ArticlePriceSuggestion::class);
     }
 
+    /** Effective rate for makloon tailors; 0 / empty means "same as the internal rate". */
     public function makloonRate(): int
     {
-        return $this->makloon_sewing_rate ?? $this->sewing_rate;
+        return $this->makloon_sewing_rate ?: $this->sewing_rate;
     }
 
-    /** Name as shown on the floor, e.g. "Marina One Set". */
+    /** Name as shown everywhere: just the article name. Category has its own field. */
     public function displayName(): string
     {
-        return trim($this->name.' '.($this->category_name && ! str_contains(mb_strtolower($this->name), mb_strtolower($this->category_name)) ? $this->category_name : ''));
+        return trim($this->name);
+    }
+
+    /** Jenis kain packingv2 ('polos' / 'print') diterjemahkan ke jenis baris WO ('polosan' / 'print'). */
+    public static function itemTypeForFabric(?string $fabricType): ?string
+    {
+        return match ($fabricType) {
+            'polos' => 'polosan',
+            'print' => 'print',
+            default => null,
+        };
     }
 }

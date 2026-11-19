@@ -80,7 +80,7 @@ export default function DeliveryIndex({ board, recentDeliveries }: IndexProps) {
                 </Section>
 
                 <Section title="Setoran terakhir" icon={History}>
-                    <DeliveryList deliveries={recentDeliveries} undoable />
+                    <DeliveryList deliveries={recentDeliveries} undoable limit={5} />
                 </Section>
             </div>
         </AppLayout>

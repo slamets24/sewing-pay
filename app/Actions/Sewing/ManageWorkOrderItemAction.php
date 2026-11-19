@@ -49,14 +49,27 @@ class ManageWorkOrderItemAction
 
     public function updatePlannedQty(WorkOrderItem $item, int $plannedQty): WorkOrderItem
     {
-        $payload = ['planned_qty' => $plannedQty];
-        if ($item->isPolosan()) {
-            $payload['cutting_qty'] = $plannedQty;
-        }
+        return DB::transaction(function () use ($item, $plannedQty) {
+            $item = WorkOrderItem::query()->lockForUpdate()->findOrFail($item->id);
 
-        $item->forceFill($payload)->save();
+            // Never plan fewer pieces than already left printing / arrived in the warehouse.
+            $minimum = $item->minimumPlannedQty();
+            if ($plannedQty < $minimum) {
+                throw ValidationException::withMessages([
+                    'planned_qty' => "Qty WO minimal {$minimum} pcs, karena sebanyak itu sudah "
+                        .($item->isPolosan() ? 'masuk gudang.' : 'dikirim ke cutting atau masuk gudang.'),
+                ]);
+            }
 
-        return $item;
+            $payload = ['planned_qty' => $plannedQty];
+            if ($item->isPolosan()) {
+                $payload['cutting_qty'] = $plannedQty;
+            }
+
+            $item->forceFill($payload)->save();
+
+            return $item;
+        });
     }
 
     public function remove(WorkOrderItem $item): void

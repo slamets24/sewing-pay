@@ -11,13 +11,17 @@ export type QtyBreakdown = {
     sewing_qty: number;
     hold_qty?: number;
     delivered_qty: number;
+    /** Part of delivered_qty already handed over to QC; shown as its own stage when given. */
+    qc_qty?: number;
 };
 
 type Segment = { key: keyof QtyBreakdown; label: string; tone: Tone };
 
 /** Stacked bar of where every piece is: printing → cutting → warehouse → tailor / makloon (or waiting for a material fix) → done. */
 export function QtyBar({ breakdown, showLegend = false, className }: { breakdown: QtyBreakdown; showLegend?: boolean; className?: string }) {
-    const qty = (key: keyof QtyBreakdown) => breakdown[key] ?? 0;
+    // Every piece is in exactly one stage: sewn pieces sent to QC leave "Selesai jahit".
+    const qty = (key: keyof QtyBreakdown) =>
+        key === 'delivered_qty' ? Math.max(0, breakdown.delivered_qty - (breakdown.qc_qty ?? 0)) : (breakdown[key] ?? 0);
 
     const segments: Segment[] = [];
     if (breakdown.printing_qty !== undefined || breakdown.cutting_qty !== undefined) {
@@ -37,7 +41,8 @@ export function QtyBar({ breakdown, showLegend = false, className }: { breakdown
     }
 
     segments.push({ key: 'hold_qty', label: 'Menunggu revisi', tone: 'revision' });
-    segments.push({ key: 'delivered_qty', label: 'Selesai', tone: 'done' });
+    segments.push({ key: 'delivered_qty', label: 'Selesai jahit', tone: 'done' });
+    if (breakdown.qc_qty !== undefined) segments.push({ key: 'qc_qty', label: 'Kirim QC', tone: 'shipped' });
 
     const total = segments.reduce((sum, segment) => sum + qty(segment.key), 0);
     const visible = segments.filter((segment) => (segment.key !== 'hold_qty' && segment.key !== 'printing_qty') || qty(segment.key) > 0);

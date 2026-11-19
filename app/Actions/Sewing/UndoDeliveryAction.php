@@ -18,7 +18,8 @@ class UndoDeliveryAction
             $delivery = SewingDelivery::query()->lockForUpdate()->findOrFail($delivery->id);
 
             $reason = match (true) {
-                $delivery->slipLine()->exists() => 'Setoran ini sudah masuk slip gaji. Hitung ulang atau hapus draft gaji dulu.',
+                $delivery->slipLine()->exists() => 'Setoran ini sudah masuk slip gaji. Kalau gajinya belum dibayar, hapus draft gaji itu dulu.',
+                $delivery->makloonPaymentLine()->exists() => 'Setoran ini sudah dibayar lewat Pembayaran Maklun. Hapus pembayaran itu dulu.',
                 $delivery->isShipped() => 'Setoran ini sudah dikirim ke QC.',
                 $delivery->revisions()->exists() => 'Setoran ini sudah punya catatan revisi.',
                 default => null,

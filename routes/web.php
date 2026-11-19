@@ -8,6 +8,7 @@ use App\Http\Controllers\Sewing\HancaanReceiptController;
 use App\Http\Controllers\Sewing\MakloonPaymentController;
 use App\Http\Controllers\Sewing\ManagedUserController;
 use App\Http\Controllers\Sewing\OverviewController;
+use App\Http\Controllers\Sewing\PackingWorkOrderPullController;
 use App\Http\Controllers\Sewing\PayoutController;
 use App\Http\Controllers\Sewing\PickupController;
 use App\Http\Controllers\Sewing\ProductionReportController;
@@ -51,6 +52,7 @@ Route::middleware('auth')->group(function () use ($owner, $warehouse) {
 
         Route::get('/wo', [WorkOrderController::class, 'index'])->name('work-orders.index');
         Route::get('/wo/baru', [WorkOrderController::class, 'create'])->name('work-orders.create');
+        Route::post('/wo/tarik-packing', PackingWorkOrderPullController::class)->name('work-orders.pull-packing');
         Route::post('/wo', [WorkOrderController::class, 'store'])->name('work-orders.store');
         Route::get('/wo/{workOrder}', [WorkOrderController::class, 'show'])->name('work-orders.show');
         Route::patch('/wo/{workOrder}', [WorkOrderController::class, 'update'])->name('work-orders.update');

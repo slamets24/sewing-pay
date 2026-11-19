@@ -12,6 +12,9 @@ export function FlashToaster() {
 
     // Every Inertia visit yields a fresh flash object, so repeated identical messages still toast.
     useEffect(() => {
+        // Failures that are not tied to a form field (e.g. a packingv2 / HR connection error).
+        if (flash.error) toast.error(flash.error);
+
         if (!flash.status) return;
 
         const undo = flash.undo;

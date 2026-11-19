@@ -1,6 +1,6 @@
 import { EmptyState } from '@/components/empty-state';
 import { DeliveryList } from '@/components/sewing/production/delivery-list';
-import { HoldingCard, holdingGridClass } from '@/components/sewing/production/holding-card';
+import { ToneBadge } from '@/components/sewing/tone-badge';
 import { Section } from '@/components/sewing/section';
 import { StatTile } from '@/components/sewing/stat-tile';
 import { WorkflowStepper } from '@/components/sewing/workflow-stepper';
@@ -10,22 +10,7 @@ import AppLayout from '@/layouts/app-layout';
 import type { SharedData } from '@/types';
 import type { BoardRow, DeliveryRecord, WorkOrderSummary } from '@/types/sewing';
 import { Link, usePage } from '@inertiajs/react';
-import {
-    AlarmClock,
-    BarChart3,
-    ClipboardList,
-    Factory,
-    HandPlatter,
-    History,
-    PackageCheck,
-    Plus,
-    Scissors,
-    Truck,
-    Users,
-    Warehouse,
-    Wrench,
-    type LucideIcon,
-} from 'lucide-react';
+import { AlarmClock, BarChart3, ClipboardList, History, Plus, Users } from 'lucide-react';
 
 type OverviewProps = {
     stats: {
@@ -70,11 +55,17 @@ export default function Overview({ stats, board, dueSoon, recentDeliveries }: Ov
                                 Hari ini ada <strong className="font-bold underline decoration-white/50">{board.length} penjahit aktif</strong> memegang kain. Sebanyak <strong>{stats.available_qty} pcs</strong> potongan siap diambil di gudang.
                             </p>
                         </div>
-                        <div className="flex shrink-0 items-center gap-2.5 self-start sm:self-center">
+                        <div className="flex shrink-0 flex-wrap items-center gap-2.5 self-start sm:self-center">
                             <Button asChild size="default" variant="outline" className="rounded-xl border-white/40 bg-white/10 text-white font-bold hover:bg-white/20 shadow-xs">
                                 <Link href={route('production-reports.index')}>
                                     <BarChart3 className="size-4 mr-1.5" />
                                     Rekap Produksi
+                                </Link>
+                            </Button>
+                            <Button asChild size="default" variant="outline" className="rounded-xl border-white/40 bg-white/10 text-white font-bold hover:bg-white/20 shadow-xs">
+                                <Link href={route('work-orders.create')}>
+                                    <Plus className="size-4 mr-1.5" />
+                                    WO baru
                                 </Link>
                             </Button>
                             <Button asChild size="default" className="rounded-xl bg-white text-primary font-bold hover:bg-white/90 shadow-xs border-0">
@@ -90,19 +81,8 @@ export default function Overview({ stats, board, dueSoon, recentDeliveries }: Ov
                 {/* Visual Workflow Stepper */}
                 <WorkflowStepper stats={stats} />
 
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-                    <QuickAction href={route('work-orders.create')} icon={Plus} label="WO baru" />
-                    <QuickAction href={route('pickups.create')} icon={HandPlatter} label="Ambil barang" />
-                    <QuickAction href={route('deliveries.index')} icon={PackageCheck} label="Setor jahitan" />
-                    <QuickAction href={route('qc-shipments.index')} icon={Truck} label="Kirim ke QC" />
-                    <QuickAction href={route('revisions.index')} icon={Wrench} label="Catat revisi" />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                    <StatTile label="Di divisi lain" value={`${stats.pending_qty} pcs`} icon={Factory} tone="other" hint="Masih di print / cutting" href={route('work-orders.index')} />
-                    <StatTile label="Siap diambil" value={`${stats.available_qty} pcs`} icon={Warehouse} tone="ready" hint="Ada di gudang jahit" href={route('pickups.create')} />
-                    <StatTile label="Sedang dijahit" value={`${stats.sewing_qty} pcs`} icon={Scissors} tone="sewing" hint={`${board.length} penjahit memegang`} href={route('deliveries.index')} />
-                    <StatTile label="Setor hari ini" value={`${stats.delivered_today_qty} pcs`} icon={PackageCheck} tone="done" href={route('deliveries.index')} />
+                {/* The stepper above already shows each stage; only the WO counts are extra. */}
+                <div className="grid grid-cols-2 gap-3">
                     <StatTile label="WO berjalan" value={stats.work_orders_open} icon={ClipboardList} tone="primary" href={route('work-orders.index')} />
                     <StatTile
                         label="Lewat deadline"
@@ -112,19 +92,32 @@ export default function Overview({ stats, board, dueSoon, recentDeliveries }: Ov
                         hint="WO belum selesai"
                         href={route('work-orders.index')}
                     />
-                    <StatTile label="Belum dikirim QC" value={`${stats.unshipped_qty} pcs`} icon={Truck} tone="qc" hint="Siap kirim ke QC" href={route('qc-shipments.index')} />
-                    <StatTile label="Revisi terbuka" value={stats.revisions_open} icon={Wrench} tone="revision" hint={stats.hold_qty > 0 ? `${stats.hold_qty} pcs ditahan di gudang` : undefined} href={route('revisions.index')} />
                 </div>
 
                 <Section title="Siapa mengerjakan apa" icon={Users} actions={<SeeAll href={route('deliveries.index')} label="Buka setor" />}>
                     {board.length === 0 ? (
                         <EmptyState>Belum ada penjahit yang memegang barang.</EmptyState>
                     ) : (
-                        <div className={holdingGridClass()}>
+                        <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                             {board.map((row) => (
-                                <HoldingCard key={row.tailor.id} row={row} />
+                                <li key={row.tailor.id}>
+                                    <Link
+                                        href={route('desk.index', { tailor: row.tailor.id })}
+                                        className="flex items-center gap-3 rounded-lg border bg-card px-3 py-2.5 transition-colors hover:border-foreground/30"
+                                    >
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate font-bold">{row.tailor.name}</p>
+                                            <p className="truncate text-sm text-muted-foreground">{[...new Set(row.items.map((item) => item.article_name))].join(', ')}</p>
+                                        </div>
+                                        {row.tailor.type === 'makloon' && <ToneBadge tone="qc">Makloon</ToneBadge>}
+                                        <span className="shrink-0 text-right">
+                                            <span className="block font-display text-xl leading-none font-bold text-stage-sewing tabular">{row.remaining_qty}</span>
+                                            <span className="text-xs text-muted-foreground">pcs</span>
+                                        </span>
+                                    </Link>
+                                </li>
                             ))}
-                        </div>
+                        </ul>
                     )}
                 </Section>
 
@@ -141,26 +134,12 @@ export default function Overview({ stats, board, dueSoon, recentDeliveries }: Ov
                         )}
                     </Section>
 
-                    <Section title="Setoran terakhir" icon={History}>
+                    <Section title="Setoran terakhir" icon={History} actions={<SeeAll href={route('deliveries.index')} label="Semua setoran" />}>
                         <DeliveryList deliveries={recentDeliveries} />
                     </Section>
                 </div>
             </div>
         </AppLayout>
-    );
-}
-
-function QuickAction({ href, icon: Icon, label }: { href: string; icon: LucideIcon; label: string }) {
-    return (
-        <Link
-            href={href}
-            className="surface-card flex min-h-[4.5rem] flex-col items-center justify-center gap-2 px-3 py-3.5 text-center text-sm font-semibold text-foreground transition-colors hover:border-foreground/30 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-        >
-            <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Icon className="size-5" strokeWidth={2} />
-            </span>
-            {label}
-        </Link>
     );
 }
 

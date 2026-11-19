@@ -119,6 +119,7 @@ class GeneratePayoutAction
             ->where('meal_allowance', '>', 0)
             ->where('date', '<=', $cutoff->toDateString())
             ->whereDoesntHave('slipLine')
+            ->whereHas('tailor', fn ($q) => $q->where('type', TailorType::Internal->value))
             ->orderBy('date')
             ->get();
     }

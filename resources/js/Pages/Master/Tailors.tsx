@@ -12,29 +12,45 @@ import { SheetState } from '@/domain/master/sheet-state';
 import { TailorDirectory, TailorForm, type TailorFormData } from '@/domain/master/tailor-directory';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
-import type { TailorRecord } from '@/types/sewing';
+import type { TailorRecord, TailorType } from '@/types/sewing';
 import { router, useForm } from '@inertiajs/react';
-import { Pencil, Phone, RefreshCw, UserPlus, Users, type LucideIcon } from 'lucide-react';
+import { Building2, Pencil, Phone, RefreshCw, UserPlus, Users, type LucideIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 type TailorsProps = {
     tailors: TailorRecord[];
     nextCode: string;
+    nextMakloonCode: string;
 };
+
+type TypeFilter = 'all' | TailorType;
+
+/** What the add/edit drawer opens for: an existing record, or a new one of a given type. */
+type SheetTarget = TailorRecord | { newOfType: TailorType };
+
+const TYPE_FILTERS: { value: TypeFilter; label: string }[] = [
+    { value: 'all', label: 'Semua' },
+    { value: 'internal', label: 'Internal' },
+    { value: 'makloon', label: 'Makloon' },
+];
 
 /** Name · type · contact · button, as one table-like row from lg up. */
 const ROW_GRID = 'lg:grid lg:grid-cols-[minmax(0,1.4fr)_7rem_minmax(0,2fr)_6rem] lg:items-center lg:gap-4';
 
-export default function Tailors({ tailors, nextCode }: TailorsProps) {
+export default function Tailors({ tailors, nextCode, nextMakloonCode }: TailorsProps) {
     const directory = useMemo(() => new TailorDirectory(tailors), [tailors]);
     const [query, setQuery] = useState('');
-    const [sheet, setSheet] = useState(() => SheetState.closed<TailorRecord>());
-    const visible = useMemo(() => directory.search(query), [directory, query]);
+    const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
+    const [sheet, setSheet] = useState(() => SheetState.closed<SheetTarget>());
+    const visible = useMemo(
+        () => directory.search(query).filter((tailor) => typeFilter === 'all' || tailor.type === typeFilter),
+        [directory, query, typeFilter],
+    );
 
-    const openFor = (tailor: TailorRecord | null) => setSheet((current) => current.openFor(tailor));
+    const openFor = (target: SheetTarget) => setSheet((current) => current.openFor(target));
 
     return (
-        <AppLayout title="Penjahit">
+        <AppLayout title="Penjahit & Makloon">
             <PageIntro
                 actions={
                     <div className="flex flex-wrap items-center gap-2">
@@ -45,7 +61,11 @@ export default function Tailors({ tailors, nextCode }: TailorsProps) {
                             <RefreshCw />
                             Tarik dari HR
                         </Button>
-                        <Button onClick={() => openFor(null)}>
+                        <Button variant="outline" onClick={() => openFor({ newOfType: 'makloon' })}>
+                            <Building2 />
+                            Tambah makloon
+                        </Button>
+                        <Button onClick={() => openFor({ newOfType: 'internal' })}>
                             <UserPlus />
                             Tambah penjahit
                         </Button>
@@ -53,19 +73,39 @@ export default function Tailors({ tailors, nextCode }: TailorsProps) {
                 }
             />
 
-            <Section title="Daftar penjahit" icon={Users} description={<TailorCounts directory={directory} />}>
-                <SearchBox value={query} onChange={setQuery} placeholder="Cari nama atau kode…" label="Cari penjahit" className="mb-4 md:max-w-md" />
+            <Section title="Daftar penjahit & makloon" icon={Users} description={<TailorCounts directory={directory} />}>
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                    <div className="flex gap-1 rounded-xl border bg-card p-1" role="group" aria-label="Saring jenis">
+                        {TYPE_FILTERS.map((option) => (
+                            <Button
+                                key={option.value}
+                                size="sm"
+                                variant={typeFilter === option.value ? 'default' : 'ghost'}
+                                onClick={() => setTypeFilter(option.value)}
+                                className="rounded-lg font-semibold"
+                            >
+                                {option.label}
+                                <span className="tabular opacity-70">{option.value === 'all' ? tailors.length : tailors.filter((t) => t.type === option.value).length}</span>
+                            </Button>
+                        ))}
+                    </div>
+                    <SearchBox value={query} onChange={setQuery} placeholder="Cari nama atau kode…" label="Cari penjahit" className="min-w-56 flex-1 md:max-w-md" />
+                </div>
 
                 {visible.length === 0 ? (
                     <EmptyState className="text-base">
-                        {tailors.length === 0 ? 'Belum ada penjahit. Tekan "Tambah penjahit" untuk mulai.' : `Tidak ada penjahit dengan nama atau kode "${query}".`}
+                        {typeFilter === 'makloon' && !query
+                            ? 'Belum ada makloon. Tekan "Tambah makloon" untuk mencatat konveksi / penjahit luar.'
+                            : tailors.length === 0
+                              ? 'Belum ada penjahit. Tekan "Tambah penjahit" untuk mulai.'
+                              : 'Tidak ada yang cocok dengan pencarian ini.'}
                     </EmptyState>
                 ) : (
-                    <TailorList tailors={visible} onEdit={openFor} />
+                    <TailorList tailors={visible} onEdit={(tailor) => openFor(tailor)} />
                 )}
             </Section>
 
-            <TailorSheet key={sheet.session} state={sheet} nextCode={nextCode} onOpenChange={(open) => setSheet((current) => current.withOpen(open))} />
+            <TailorSheet key={sheet.session} state={sheet} nextCode={nextCode} nextMakloonCode={nextMakloonCode} onOpenChange={(open) => setSheet((current) => current.withOpen(open))} />
         </AppLayout>
     );
 }
@@ -155,15 +195,21 @@ function InfoCell({ icon: Icon, label, value, empty }: { icon: LucideIcon; label
 }
 
 type TailorSheetProps = {
-    state: SheetState<TailorRecord>;
+    state: SheetState<SheetTarget>;
     nextCode: string;
+    nextMakloonCode: string;
     onOpenChange: (open: boolean) => void;
 };
 
 /** Add or edit one tailor. Remounted for every opening (keyed by session), so it always starts from fresh values. */
-function TailorSheet({ state, nextCode, onOpenChange }: TailorSheetProps) {
-    const tailor = state.target;
-    const form = useForm<TailorFormData>(tailor ? TailorForm.fromRecord(tailor) : TailorForm.blank(nextCode));
+function TailorSheet({ state, nextCode, nextMakloonCode, onOpenChange }: TailorSheetProps) {
+    const target = state.target;
+    const tailor = target && 'id' in target ? target : null;
+    const newType: TailorType = target && 'newOfType' in target ? target.newOfType : 'internal';
+    const form = useForm<TailorFormData>(
+        tailor ? TailorForm.fromRecord(tailor) : TailorForm.blank(newType === 'makloon' ? nextMakloonCode : nextCode, newType),
+    );
+    const isMakloon = form.data.type === 'makloon';
     form.transform(TailorForm.payload);
 
     const submit = () => {
@@ -180,7 +226,7 @@ function TailorSheet({ state, nextCode, onOpenChange }: TailorSheetProps) {
         <FormSheet
             open={state.open}
             onOpenChange={onOpenChange}
-            title={tailor ? 'Ubah penjahit' : 'Tambah penjahit'}
+            title={tailor ? (isMakloon ? 'Ubah makloon' : 'Ubah penjahit') : isMakloon ? 'Tambah makloon' : 'Tambah penjahit'}
             description={tailor?.name}
             processing={form.processing}
             onSubmit={submit}
@@ -195,7 +241,7 @@ function TailorSheet({ state, nextCode, onOpenChange }: TailorSheetProps) {
                         className="font-semibold tabular"
                     />
                 </FormField>
-                <FormField label="Nama penjahit" htmlFor="tailor-name" error={form.errors.name}>
+                <FormField label={isMakloon ? 'Nama makloon / konveksi' : 'Nama penjahit'} htmlFor="tailor-name" error={form.errors.name}>
                     <Input
                         id="tailor-name"
                         value={form.data.name}
@@ -206,8 +252,11 @@ function TailorSheet({ state, nextCode, onOpenChange }: TailorSheetProps) {
                 </FormField>
             </div>
 
-            <FormField label="Jenis penjahit" error={form.errors.type}>
-                <ChoiceButtons label="Jenis penjahit" value={form.data.type} options={TailorDirectory.typeOptions} onChange={(type) => form.setData('type', type)} />
+            <FormField label="Jenis" error={form.errors.type}>
+                <ChoiceButtons label="Jenis" value={form.data.type} options={TailorDirectory.typeOptions} onChange={(type) => form.setData('type', type)} />
+                {isMakloon && (
+                    <p className="text-sm text-muted-foreground">Makloon dibayar lewat menu Pembayaran Maklun (tarif maklun artikel), tidak ikut gaji & absensi penjahit internal.</p>
+                )}
             </FormField>
 
             <FormField label="Nomor WhatsApp" htmlFor="tailor-wa" error={form.errors.whatsapp_number}>
@@ -226,7 +275,7 @@ function TailorSheet({ state, nextCode, onOpenChange }: TailorSheetProps) {
                 <Textarea id="tailor-address" rows={2} className="text-base md:text-base" value={form.data.address} onChange={(event) => form.setData('address', event.target.value)} />
             </FormField>
 
-            <FormField label="Catatan" htmlFor="tailor-notes" error={form.errors.notes}>
+            <FormField label={isMakloon ? 'Catatan (nama pemilik, rekening, dll.)' : 'Catatan'} htmlFor="tailor-notes" error={form.errors.notes}>
                 <Textarea id="tailor-notes" rows={2} className="text-base md:text-base" value={form.data.notes} onChange={(event) => form.setData('notes', event.target.value)} />
             </FormField>
 

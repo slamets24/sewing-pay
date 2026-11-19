@@ -30,7 +30,14 @@ class PickupController extends Controller
 
     public function store(StorePickupRequest $request, CreatePickupAction $createPickup): RedirectResponse
     {
-        $pickup = $createPickup->execute($request->validated(), $request->user()->id);
+        $data = $request->validated();
+
+        // Rates are owner-only master data; an admin's pickup always uses the article rate.
+        if (! $request->user()->isSuperadmin()) {
+            $data['items'] = array_map(fn (array $item) => array_diff_key($item, ['sewing_rate' => true]), $data['items']);
+        }
+
+        $pickup = $createPickup->execute($data, $request->user()->id);
         $qty = $pickup->items->sum('qty');
 
         if ($request->boolean('from_desk')) {

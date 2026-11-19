@@ -33,7 +33,7 @@ class FloorQuery
      */
     public function availableItems(): Collection
     {
-        return WorkOrderItem::query()
+        return WorkOrderItem::withQcShippedQty(WorkOrderItem::query())
             ->with(['article', 'workOrder', 'variant'])
             ->whereRaw('received_qty > assigned_qty + revision_hold_qty')
             ->get()

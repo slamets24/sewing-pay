@@ -205,7 +205,12 @@ function GroupCard({ index, group, draft, articles, onChange }: GroupCardProps) 
                         articles={articles}
                         value={group.articleId}
                         suggestedName={group.alias}
-                        onChange={(articleId) => onChange(draft.withGroup(group.key, { articleId }))}
+                        onChange={(articleId) => {
+                            // Jenis kain dari packing (polos / print) jadi bawaan; masih bisa diganti manual.
+                            const fabric = articles.find((article) => article.id === articleId)?.fabric_type;
+                            const itemType = fabric === 'polos' ? 'polosan' : fabric === 'print' ? 'print' : group.itemType;
+                            onChange(draft.withGroup(group.key, { articleId, itemType }));
+                        }}
                         className="sm:max-w-md"
                     />
                 </div>

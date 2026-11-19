@@ -48,6 +48,7 @@ export default function Articles({ articles, tailors, benchmarkHourlyRate, packi
 
     const options = useMemo(() => ArticleFilter.options(articles), [articles]);
     const visible = useMemo(() => filter.apply(articles), [filter, articles]);
+    const missingRateCount = useMemo(() => articles.filter((article) => article.is_active && ArticleFilter.needsRate(article)).length, [articles]);
 
     const changeFilter = (next: ArticleFilter) => {
         setFilter(next);
@@ -70,6 +71,19 @@ export default function Articles({ articles, tailors, benchmarkHourlyRate, packi
             <div className="flex flex-col gap-5">
                 <PackingSyncPanel configured={packingConfigured} lastSyncedAt={lastSyncedAt} canSync={isOwner} />
 
+                {missingRateCount > 0 && filter.key !== 'no_rate' && (
+                    <Alert className="border-stage-revision/40 bg-stage-revision/8">
+                        <TriangleAlert className="text-stage-revision" />
+                        <AlertTitle>{missingRateCount} artikel aktif belum punya tarif</AlertTitle>
+                        <AlertDescription className="flex flex-wrap items-center gap-3">
+                            <span>Setoran artikel ini dihitung Rp0 sampai tarifnya diisi. Begitu diisi, pekerjaan yang belum dibayar ikut tarif baru.</span>
+                            <Button size="sm" variant="outline" onClick={() => changeFilter(filter.withKey('no_rate'))}>
+                                Tampilkan
+                            </Button>
+                        </AlertDescription>
+                    </Alert>
+                )}
+
                 <Section title="Daftar artikel" icon={Shirt} description={`${articles.length} artikel tercatat`}>
                     <div className="mb-4 flex flex-col gap-3">
                         <SearchBox
@@ -90,7 +104,7 @@ export default function Articles({ articles, tailors, benchmarkHourlyRate, packi
                         <>
                             <ul className="grid gap-3 md:grid-cols-2">
                                 {visible.slice(0, limit).map((article) => (
-                                    <ArticleCard key={article.id} article={article} isOwner={isOwner} onEdit={() => openFor(article)} onBenchmark={() => setBenchmarkId(article.id)} />
+                                    <ArticleCard key={article.id} article={article} isOwner={isOwner} packingConfigured={packingConfigured} onEdit={() => openFor(article)} onBenchmark={() => setBenchmarkId(article.id)} />
                                 ))}
                             </ul>
                             {visible.length > limit && (
@@ -156,8 +170,12 @@ function PackingSyncPanel({ configured, lastSyncedAt, canSync }: { configured: b
     );
 }
 
-function ArticleCard({ article, isOwner, onEdit, onBenchmark }: { article: ArticleRecord; isOwner: boolean; onEdit: () => void; onBenchmark: () => void }) {
+type ArticleCardProps = { article: ArticleRecord; isOwner: boolean; packingConfigured: boolean; onEdit: () => void; onBenchmark: () => void };
+
+function ArticleCard({ article, isOwner, packingConfigured, onEdit, onBenchmark }: ArticleCardProps) {
     const needsRate = ArticleFilter.needsRate(article);
+    // Variants without an official packingv2 barcode can be requested from packingv2 (owner only).
+    const canProvision = isOwner && packingConfigured && article.variants_count > 0 && article.barcode_count < article.variants_count;
 
     return (
         <li
@@ -174,39 +192,23 @@ function ArticleCard({ article, isOwner, onEdit, onBenchmark }: { article: Artic
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                     <ToneBadge tone={SOURCE_TONE[article.source]}>{article.source_label}</ToneBadge>
+                    {article.fabric_type && <ToneBadge tone="neutral">{article.fabric_type === 'polos' ? 'Polos' : 'Print'}</ToneBadge>}
                     {!article.is_active && <ToneBadge tone="neutral">Nonaktif</ToneBadge>}
                 </div>
             </div>
 
-            <p className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-muted-foreground">
                 <Barcode className="size-4 shrink-0" aria-hidden />
                 {ArticleForm.variantSummary(article)}
-            </p>
-
-            <div className="rounded-md border bg-muted/40 p-3">
-                <div className="grid grid-cols-2 gap-2 mb-2">
-                    <div>
-                        <p className="text-[11px] font-semibold text-muted-foreground">Tarif Internal</p>
-                        {article.sewing_rate > 0 ? (
-                            <p className="font-display text-xl leading-tight font-bold tabular">{formatIdr(article.sewing_rate)}</p>
-                        ) : (
-                            <ToneBadge tone="revision" className="mt-1">Belum diisi</ToneBadge>
-                        )}
-                    </div>
-                    <div>
-                        <p className="text-[11px] font-semibold text-muted-foreground">Tarif Maklun</p>
-                        {article.makloon_sewing_rate ? (
-                            <p className="font-display text-xl leading-tight font-bold tabular text-primary">{formatIdr(article.makloon_sewing_rate)}</p>
-                        ) : article.sewing_rate > 0 ? (
-                            <p className="font-display text-xl leading-tight font-bold tabular text-muted-foreground" title="Sama dengan tarif internal">{formatIdr(article.sewing_rate)}</p>
-                        ) : (
-                            <ToneBadge tone="revision" className="mt-1">Belum diisi</ToneBadge>
-                        )}
-                    </div>
-                </div>
-                {isOwner && <RateEditor key={`${article.id}-${article.sewing_rate}-${article.makloon_sewing_rate}`} article={article} />}
-                <BenchmarkLine article={article} isOwner={isOwner} onOpen={onBenchmark} />
+                {canProvision && <ProvisionBarcodeButton article={article} />}
             </div>
+
+            {isOwner ? (
+                <RateEditor key={`${article.id}-${article.sewing_rate}-${article.makloon_sewing_rate}`} article={article} />
+            ) : (
+                <RateSummary article={article} />
+            )}
+            <BenchmarkLine article={article} isOwner={isOwner} onOpen={onBenchmark} />
 
             {article.notes && (
                 <p className="flex items-start gap-2 text-base wrap-anywhere">
@@ -217,7 +219,7 @@ function ArticleCard({ article, isOwner, onEdit, onBenchmark }: { article: Artic
 
             {isOwner && (
                 <div className="mt-auto flex flex-wrap gap-2">
-                    <Button variant="outline" onClick={onEdit} className="flex-1">
+                    <Button variant="outline" size="sm" onClick={onEdit} className="flex-1">
                         <Pencil />
                         {ArticleForm.canRename(article) ? 'Ubah nama & catatan' : 'Ubah catatan'}
                     </Button>
@@ -239,18 +241,52 @@ function BenchmarkLine({ article, isOwner, onOpen }: { article: ArticleRecord; i
     const matches = ready && article.sewing_rate === benchmark?.suggested_rate;
 
     return (
-        <div className="mt-3 flex flex-col gap-2 border-t pt-3">
-            <p className="text-sm text-muted-foreground">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+            <span>
                 {ready
-                    ? `Patokan sample ${formatIdr(benchmark?.suggested_rate ?? 0)}${matches ? ' · sama dengan tarif resmi' : ''}`
+                    ? `Patokan sample ${formatIdr(benchmark?.suggested_rate ?? 0)}${matches ? ' · sama dengan tarif' : ''}`
                     : benchmark
                       ? `Sample ${benchmark.color_count} dari ${benchmark.needed} warna`
                       : 'Belum ada sample waktu'}
-            </p>
-            <Button type="button" variant="outline" onClick={onOpen}>
+            </span>
+            <Button type="button" variant="ghost" size="sm" onClick={onOpen} className="h-8">
                 Lihat hitungan
             </Button>
         </div>
+    );
+}
+
+/** Read-only rates for admins. */
+function RateSummary({ article }: { article: ArticleRecord }) {
+    if (article.sewing_rate <= 0) {
+        return <ToneBadge tone="revision" className="self-start">Tarif belum diisi</ToneBadge>;
+    }
+
+    return (
+        <p className="text-sm text-muted-foreground">
+            Internal <span className="font-display text-lg font-bold text-foreground tabular">{formatIdr(article.sewing_rate)}</span>
+            {' · '}Maklun <span className="font-display text-lg font-bold text-foreground tabular">{formatIdr(article.makloon_sewing_rate || article.sewing_rate)}</span>
+        </p>
+    );
+}
+
+function ProvisionBarcodeButton({ article }: { article: ArticleRecord }) {
+    const [busy, setBusy] = useState(false);
+
+    return (
+        <ConfirmButton
+            size="sm"
+            variant="ghost"
+            className="h-8"
+            disabled={busy}
+            confirmLabel={`Ya, minta ${article.variants_count - article.barcode_count} barcode`}
+            onConfirm={() =>
+                floorActions.send('post', route('articles.provision-packing', article.id), {}, { onStart: () => setBusy(true), onFinish: () => setBusy(false) })
+            }
+        >
+            {busy ? <LoaderCircle className="animate-spin" /> : <CloudDownload />}
+            Minta barcode packing
+        </ConfirmButton>
     );
 }
 
@@ -258,7 +294,8 @@ function BenchmarkLine({ article, isOwner, onOpen }: { article: ArticleRecord; i
 function RateEditor({ article }: { article: ArticleRecord }) {
     const form = useForm({
         sewing_rate: article.sewing_rate,
-        makloon_sewing_rate: article.makloon_sewing_rate ?? article.sewing_rate,
+        // 0 = same as the internal rate (follows it when the internal rate changes later).
+        makloon_sewing_rate: article.makloon_sewing_rate ?? 0,
     });
 
     const submit = (event: FormEvent) => {
@@ -267,37 +304,40 @@ function RateEditor({ article }: { article: ArticleRecord }) {
     };
 
     return (
-        <form onSubmit={submit} className="mt-3 flex flex-col gap-2">
-            <div className="grid grid-cols-2 gap-2">
+        <form onSubmit={submit} className="flex flex-col gap-1.5">
+            <div className="grid grid-cols-[1fr_1fr_auto] items-end gap-2">
                 <div>
-                    <label className="text-[11px] font-semibold text-muted-foreground block mb-1">Tarif Internal</label>
+                    <label htmlFor={`rate-${article.id}`} className="mb-1 block text-xs font-semibold text-muted-foreground">
+                        Tarif internal
+                    </label>
                     <MoneyField
                         id={`rate-${article.id}`}
                         value={form.data.sewing_rate}
                         onChange={(value) => form.setData('sewing_rate', value)}
-                        invalid={!!form.errors.sewing_rate}
+                        invalid={!!form.errors.sewing_rate || article.sewing_rate <= 0}
                         aria-label={`Tarif internal ${article.display_name}`}
-                        className="w-full text-xs"
+                        className="w-full"
                     />
                 </div>
                 <div>
-                    <label className="text-[11px] font-semibold text-muted-foreground block mb-1">Tarif Maklun</label>
+                    <label htmlFor={`makloon-rate-${article.id}`} className="mb-1 block text-xs font-semibold text-muted-foreground">
+                        Maklun <span className="font-normal">(0 = sama)</span>
+                    </label>
                     <MoneyField
                         id={`makloon-rate-${article.id}`}
                         value={form.data.makloon_sewing_rate}
                         onChange={(value) => form.setData('makloon_sewing_rate', value)}
                         invalid={!!form.errors.makloon_sewing_rate}
                         aria-label={`Tarif maklun ${article.display_name}`}
-                        className="w-full text-xs"
+                        className="w-full"
                     />
                 </div>
-            </div>
-            <div className="flex justify-end">
-                <Button type="submit" size="sm" disabled={form.processing || !form.isDirty}>
-                    {form.processing ? <LoaderCircle className="animate-spin" /> : <Save className="size-3.5" />}
-                    Simpan Tarif
+                <Button type="submit" disabled={form.processing || !form.isDirty} aria-label="Simpan tarif" title="Simpan tarif">
+                    {form.processing ? <LoaderCircle className="animate-spin" /> : <Save />}
+                    <span className="hidden sm:inline">Simpan</span>
                 </Button>
             </div>
+            {article.sewing_rate <= 0 && !form.isDirty && <p className="text-xs font-semibold text-stage-revision">Tarif belum diisi, setoran artikel ini dihitung Rp0.</p>}
             {form.errors.sewing_rate && <InputError message={form.errors.sewing_rate} />}
             {form.errors.makloon_sewing_rate && <InputError message={form.errors.makloon_sewing_rate} />}
         </form>
@@ -312,7 +352,7 @@ function ActiveToggle({ article }: { article: ArticleRecord }) {
 
     if (!article.is_active) {
         return (
-            <Button variant="outline" disabled={busy} onClick={() => setActive(true)} className="flex-1">
+            <Button variant="outline" size="sm" disabled={busy} onClick={() => setActive(true)} className="flex-1">
                 <Power />
                 Aktifkan lagi
             </Button>
@@ -320,7 +360,7 @@ function ActiveToggle({ article }: { article: ArticleRecord }) {
     }
 
     return (
-        <ConfirmButton disabled={busy} confirmLabel="Yakin? Tekan lagi" onConfirm={() => setActive(false)} className="flex-1">
+        <ConfirmButton size="sm" disabled={busy} confirmLabel="Yakin? Tekan lagi" onConfirm={() => setActive(false)} className="flex-1">
             <PowerOff />
             Nonaktifkan
         </ConfirmButton>

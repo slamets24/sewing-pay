@@ -10,8 +10,10 @@ use App\Http\Requests\Sewing\UpdateWorkOrderRequest;
 use App\Models\CuttingReceipt;
 use App\Models\HancaanReceipt;
 use App\Models\WorkOrder;
+use App\Models\WorkOrderItem;
 use App\Presenters\WorkOrderPresenter;
 use App\Services\Sewing\ArticleCatalog;
+use App\Services\Sewing\PackingWorkOrderClient;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
@@ -22,13 +24,13 @@ class WorkOrderController extends Controller
 {
     public function __construct(private readonly WorkOrderPresenter $presenter) {}
 
-    public function index(Request $request): Response
+    public function index(Request $request, PackingWorkOrderClient $packing): Response
     {
         $status = in_array($request->query('status'), ['open', 'done', 'all'], true) ? $request->query('status') : 'open';
         $search = trim((string) $request->query('search'));
 
         $workOrders = WorkOrder::query()
-            ->with(['items.article', 'items.pickupItems.tailor'])
+            ->with(['items' => fn ($query) => WorkOrderItem::withQcShippedQty($query), 'items.article', 'items.pickupItems.tailor'])
             ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
                 ->where('number', 'like', "%{$search}%")
                 ->orWhereHas('items.article', fn ($query) => $query->where('name', 'like', "%{$search}%"))))
@@ -45,6 +47,7 @@ class WorkOrderController extends Controller
 
         return Inertia::render('WorkOrders/Index', [
             'filters' => ['status' => $status, 'search' => $search],
+            'packingConfigured' => $packing->isConfigured(),
             'workOrders' => $workOrders->map(fn (WorkOrder $workOrder) => $this->presenter->summary($workOrder)),
         ]);
     }
@@ -64,7 +67,7 @@ class WorkOrderController extends Controller
 
     public function show(WorkOrder $workOrder, ArticleCatalog $catalog): Response
     {
-        $workOrder->load(['items.article', 'items.variant', 'items.pickupItems.tailor']);
+        $workOrder->load(['items' => fn ($query) => WorkOrderItem::withQcShippedQty($query), 'items.article', 'items.variant', 'items.pickupItems.tailor']);
 
         $receipts = HancaanReceipt::query()
             ->with(['item.article', 'creator'])

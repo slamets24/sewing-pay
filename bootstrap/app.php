@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureUserRole;
 use App\Http\Middleware\EnsureValidInternalApiKey;
+use App\Http\Middleware\EnsureValidPackingApiKey;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -27,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => EnsureUserRole::class,
             'internal.key' => EnsureValidInternalApiKey::class,
+            'packing.key' => EnsureValidPackingApiKey::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
