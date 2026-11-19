@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { LoaderCircle, Save, X } from 'lucide-react';
+import { LoaderCircle, Save, Trash2, X } from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
 
 type FormSheetProps = {
@@ -10,15 +10,19 @@ type FormSheetProps = {
     description?: ReactNode;
     submitLabel?: string;
     processing: boolean;
+    /** Submit off without the "Menyimpan…" label (e.g. confirmation not typed yet). */
+    disabled?: boolean;
+    /** Red submit with a trash icon for irreversible actions. */
+    destructive?: boolean;
     onSubmit: () => void;
     children: ReactNode;
 };
 
 /** Drawer holding one form. Save and Batal stay pinned at the bottom so they are always in reach. */
-export function FormSheet({ open, onOpenChange, title, description, submitLabel = 'Simpan', processing, onSubmit, children }: FormSheetProps) {
+export function FormSheet({ open, onOpenChange, title, description, submitLabel = 'Simpan', processing, disabled = false, destructive = false, onSubmit, children }: FormSheetProps) {
     const submit = (event: FormEvent) => {
         event.preventDefault();
-        onSubmit();
+        if (!disabled) onSubmit();
     };
 
     return (
@@ -37,8 +41,8 @@ export function FormSheet({ open, onOpenChange, title, description, submitLabel 
                             <X />
                             Batal
                         </Button>
-                        <Button type="submit" disabled={processing}>
-                            {processing ? <LoaderCircle className="animate-spin" /> : <Save />}
+                        <Button type="submit" variant={destructive ? 'destructive' : 'default'} disabled={processing || disabled}>
+                            {processing ? <LoaderCircle className="animate-spin" /> : destructive ? <Trash2 /> : <Save />}
                             {processing ? 'Menyimpan…' : submitLabel}
                         </Button>
                     </SheetFooter>

@@ -111,6 +111,7 @@ Route::middleware('auth')->group(function () use ($owner, $warehouse) {
     });
 
     Route::middleware($owner)->group(function () {
+        Route::delete('/wo/{workOrder}/hapus-total', [WorkOrderController::class, 'purge'])->name('work-orders.purge');
         Route::patch('/artikel/{article}', [ArticleController::class, 'update'])->name('articles.update');
         Route::post('/artikel/{article}/sample', [ArticleController::class, 'storeSample'])->name('articles.samples.store');
         Route::delete('/artikel/{article}/sample/{sample}', [ArticleController::class, 'destroySample'])->name('articles.samples.destroy');

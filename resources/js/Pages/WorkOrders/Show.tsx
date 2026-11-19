@@ -11,6 +11,7 @@ import {
     ReceiveHancaanSheet,
     TransferCuttingSheet,
 } from '@/components/sewing/work-order/item-sheets';
+import { PurgeWorkOrderButton, type PurgePreview } from '@/components/sewing/work-order/purge-sheet';
 import { QtyBar } from '@/components/sewing/qty-bar';
 import { PageIntro, Section } from '@/components/sewing/section';
 import { StickyBar } from '@/components/sewing/sticky-bar';
@@ -32,9 +33,10 @@ type ShowProps = {
     receipts: HancaanReceiptRecord[];
     cuttingReceipts?: CuttingReceiptRecord[];
     articles: CatalogArticle[];
+    purge?: PurgePreview | null;
 };
 
-export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [], articles }: ShowProps) {
+export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [], articles, purge = null }: ShowProps) {
     const due = dueLabel(workOrder.due_at);
     const hasPrint = workOrder.items.some((item) => !item.is_polosan);
 
@@ -136,6 +138,9 @@ export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [
                                 <Trash2 />
                                 Hapus WO
                             </ConfirmButton>
+                        )}
+                        {!workOrder.can_delete && purge && (
+                            <PurgeWorkOrderButton workOrderId={workOrder.id} number={workOrder.number} fromPacking={Boolean(workOrder.from_packing)} preview={purge} />
                         )}
                     </div>
                 </div>

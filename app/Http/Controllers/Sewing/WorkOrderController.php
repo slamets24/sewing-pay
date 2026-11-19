@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Sewing;
 
 use App\Actions\Sewing\CreateWorkOrderAction;
 use App\Actions\Sewing\DeleteWorkOrderAction;
+use App\Actions\Sewing\PurgeWorkOrderAction;
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Sewing\StoreWorkOrderRequest;
 use App\Http\Requests\Sewing\UpdateWorkOrderRequest;
@@ -65,7 +67,7 @@ class WorkOrderController extends Controller
             ->with('status', "WO {$workOrder->number} disimpan ({$workOrder->plannedQty()} pcs).");
     }
 
-    public function show(WorkOrder $workOrder, ArticleCatalog $catalog): Response
+    public function show(Request $request, WorkOrder $workOrder, ArticleCatalog $catalog, PurgeWorkOrderAction $purge): Response
     {
         $workOrder->load(['items' => fn ($query) => WorkOrderItem::withQcShippedQty($query), 'items.article', 'items.variant', 'items.pickupItems.tailor']);
 
@@ -89,6 +91,10 @@ class WorkOrderController extends Controller
             'workOrder' => $this->presenter->detail($workOrder),
             'receipts' => $receipts->map(fn (HancaanReceipt $receipt) => $this->presenter->receipt($receipt)),
             'cuttingReceipts' => $cuttingReceipts->map(fn (CuttingReceipt $receipt) => $this->presenter->cuttingReceipt($receipt)),
+            // Hanya Owner yang boleh "hapus total" WO yang sudah berjalan.
+            'purge' => $request->user()?->role === UserRole::Superadmin && $workOrder->hasReceivedAnything()
+                ? $purge->preview($workOrder)
+                : null,
             ...$catalog->forPicker(),
         ]);
     }
@@ -105,5 +111,19 @@ class WorkOrderController extends Controller
         $deleteWorkOrder->execute($workOrder);
 
         return Redirect::route('work-orders.index')->with('status', "WO {$workOrder->number} dihapus.");
+    }
+
+    public function purge(Request $request, WorkOrder $workOrder, PurgeWorkOrderAction $purge): RedirectResponse
+    {
+        $confirm = (string) $request->validate(['confirm_number' => ['required', 'string']])['confirm_number'];
+
+        $purge->execute($workOrder, $confirm);
+
+        $message = "WO {$workOrder->number} dihapus total beserta semua riwayatnya.";
+        if ($workOrder->packing_production_order_id !== null) {
+            $message .= ' WO ini dari Packing: klik "Tarik dari Packing" kalau ingin memasukkannya lagi dari awal.';
+        }
+
+        return Redirect::route('work-orders.index')->with('status', $message);
     }
 }
