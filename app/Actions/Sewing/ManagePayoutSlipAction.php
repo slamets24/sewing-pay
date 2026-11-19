@@ -6,6 +6,7 @@ use App\Enums\PayoutStatus;
 use App\Models\Payout;
 use App\Models\PayoutSlip;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 /** Bonus/deduction edits and paying slips; the pay run closes when its last slip is paid. */
@@ -81,6 +82,36 @@ class ManagePayoutSlipAction
                 throw ValidationException::withMessages(['payout' => 'Pencairan yang sudah ada slip dibayar tidak bisa dihapus.']);
             }
 
+            $payout->delete();
+        });
+    }
+
+    /**
+     * Hapus total pencairan (khusus Owner), termasuk slip yang sudah dibayar, untuk mengulang dari awal.
+     * Setoran, revisi bahan, dan uang makan di dalamnya kembali berstatus "belum dibayar"
+     * sehingga bisa dihitung lagi di pencairan baru. Dicatat di log sebagai jejak audit.
+     */
+    public function forceDelete(Payout $payout, string $confirmCode, ?int $userId = null): void
+    {
+        if (trim($confirmCode) !== $payout->code) {
+            throw ValidationException::withMessages(['confirm_code' => "Ketik kode \"{$payout->code}\" persis untuk konfirmasi."]);
+        }
+
+        DB::transaction(function () use ($payout, $userId) {
+            $payout = Payout::query()->lockForUpdate()->findOrFail($payout->id);
+            $paidSlips = $payout->slips()->where('status', PayoutStatus::Paid->value)->count();
+
+            Log::warning('Pencairan gaji dihapus total', [
+                'payout_id' => $payout->id,
+                'code' => $payout->code,
+                'cutoff_date' => $payout->cutoff_date?->toDateString(),
+                'total_amount' => $payout->total_amount,
+                'slips' => $payout->slips()->count(),
+                'paid_slips' => $paidSlips,
+                'user_id' => $userId,
+            ]);
+
+            // Slip & baris slip ikut terhapus lewat cascade.
             $payout->delete();
         });
     }

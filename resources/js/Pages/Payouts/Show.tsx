@@ -1,5 +1,6 @@
 import { ConfirmButton } from '@/components/confirm-button';
 import { EmptyState } from '@/components/empty-state';
+import { ResetPayoutButton } from '@/components/sewing/payout/reset-payout-button';
 import { SlipCard } from '@/components/sewing/payout/slip-card';
 import { PageIntro, Section } from '@/components/sewing/section';
 import { StatTile } from '@/components/sewing/stat-tile';
@@ -73,6 +74,9 @@ export default function PayoutShow({ payout, slips }: PayoutShowProps) {
                         <CircleCheck />
                         <AlertTitle className="line-clamp-none text-base font-bold">Pencairan ini sudah dibayar semua.</AlertTitle>
                         {payout.paid_at && <AlertDescription className="text-base text-foreground">Selesai {formatDateTime(payout.paid_at)}.</AlertDescription>}
+                        <div className="col-start-2 mt-3">
+                            <ResetPayoutButton payoutId={payout.id} code={payout.code} paidCount={set.paidCount} slipCount={set.count} paidAmount={payout.total_amount - set.unpaidNet} />
+                        </div>
                     </Alert>
                 )}
 
@@ -136,7 +140,12 @@ function DraftActions({ payout, set }: { payout: PayoutSummary; set: PayoutSlipS
                     </ConfirmButton>
                 </div>
                 {hasPaidSlips && (
-                    <p className="text-sm text-muted-foreground">Sebagian slip sudah dibayar. Draft tidak dapat dihitung ulang atau dihapus.</p>
+                    <div className="flex flex-col gap-2 rounded-lg border border-dashed p-3 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-sm text-muted-foreground">
+                            Sebagian slip sudah dibayar, jadi draft tidak bisa dihitung ulang atau dihapus biasa. Owner bisa menghapus total lalu mengulang dari awal.
+                        </p>
+                        <ResetPayoutButton payoutId={payout.id} code={payout.code} paidCount={set.paidCount} slipCount={set.count} paidAmount={payout.total_amount - set.unpaidNet} />
+                    </div>
                 )}
             </div>
         </Section>

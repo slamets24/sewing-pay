@@ -134,6 +134,7 @@ Route::middleware('auth')->group(function () use ($owner, $warehouse) {
         Route::post('/gaji/{payout}/hitung-ulang', [PayoutController::class, 'regenerate'])->name('payouts.regenerate');
         Route::post('/gaji/{payout}/bayar-semua', [PayoutController::class, 'markAllPaid'])->name('payouts.paid');
         Route::delete('/gaji/{payout}', [PayoutController::class, 'destroy'])->name('payouts.destroy');
+        Route::delete('/gaji/{payout}/hapus-total', [PayoutController::class, 'forceDestroy'])->name('payouts.force-destroy');
         Route::patch('/slip/{slip}', [PayoutController::class, 'updateSlip'])->name('payout-slips.update');
         Route::post('/slip/{slip}/bayar', [PayoutController::class, 'markSlipPaid'])->name('payout-slips.paid');
 

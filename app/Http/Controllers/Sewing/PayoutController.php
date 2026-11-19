@@ -93,6 +93,15 @@ class PayoutController extends Controller
         return Redirect::route('payouts.index')->with('status', 'Draft pencairan dihapus.');
     }
 
+    public function forceDestroy(Request $request, Payout $payout, ManagePayoutSlipAction $slips): RedirectResponse
+    {
+        $confirm = (string) $request->validate(['confirm_code' => ['required', 'string']])['confirm_code'];
+
+        $slips->forceDelete($payout, $confirm, $request->user()?->id);
+
+        return Redirect::route('payouts.index')->with('status', "Pencairan {$payout->code} dihapus total. Setoran di dalamnya kembali belum dibayar dan bisa dihitung di pencairan baru.");
+    }
+
     public function updateSlip(UpdatePayoutSlipRequest $request, PayoutSlip $slip, ManagePayoutSlipAction $slips): RedirectResponse
     {
         $slips->adjust($slip, $request->validated());
