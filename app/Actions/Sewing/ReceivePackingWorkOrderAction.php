@@ -6,6 +6,7 @@ use App\Enums\ArticleSource;
 use App\Models\Article;
 use App\Models\ArticleVariant;
 use App\Models\WorkOrder;
+use App\Models\WorkOrderItem;
 use App\Services\Sewing\ArticleVariantResolver;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -83,27 +84,37 @@ class ReceivePackingWorkOrderAction
             ]);
 
             foreach ($data['items'] as $line) {
-                $article = $this->resolveArticle($line);
-                $variant = $this->resolveVariant($article, $line);
-
-                $itemType = Article::itemTypeForFabric($line['fabric_type'] ?? $article->fabric_type) ?? 'print';
-
-                $workOrder->items()->create([
-                    'packing_production_order_item_id' => (int) $line['packing_item_id'],
-                    'article_id' => $variant->article_id,
-                    'article_variant_id' => $variant->id,
-                    'color' => $variant->color,
-                    'size' => $variant->size,
-                    'item_type' => $itemType,
-                    'planned_qty' => (int) $line['quantity'],
-                    // Kain polos tidak lewat printing: langsung masuk tahap cutting (sama seperti WO manual).
-                    'cutting_qty' => $itemType === 'polosan' ? (int) $line['quantity'] : 0,
-                    'received_qty' => 0,
-                ]);
+                $this->createItem($workOrder, $line);
             }
 
             return ['work_order' => $workOrder->load('items'), 'created' => true];
         });
+    }
+
+    /**
+     * Satu baris WO dari packingv2 (artikel × warna × size), juga dipakai saat packingv2 menambah baris ke WO yang sudah ada.
+     *
+     * @param  array<string, mixed>  $line
+     */
+    public function createItem(WorkOrder $workOrder, array $line): WorkOrderItem
+    {
+        $article = $this->resolveArticle($line);
+        $variant = $this->resolveVariant($article, $line);
+
+        $itemType = Article::itemTypeForFabric($line['fabric_type'] ?? $article->fabric_type) ?? 'print';
+
+        return $workOrder->items()->create([
+            'packing_production_order_item_id' => (int) $line['packing_item_id'],
+            'article_id' => $variant->article_id,
+            'article_variant_id' => $variant->id,
+            'color' => $variant->color,
+            'size' => $variant->size,
+            'item_type' => $itemType,
+            'planned_qty' => (int) $line['quantity'],
+            // Kain polos tidak lewat printing: langsung masuk tahap cutting (sama seperti WO manual).
+            'cutting_qty' => $itemType === 'polosan' ? (int) $line['quantity'] : 0,
+            'received_qty' => 0,
+        ]);
     }
 
     /**

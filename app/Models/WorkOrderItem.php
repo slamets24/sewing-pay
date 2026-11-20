@@ -178,6 +178,14 @@ class WorkOrderItem extends Model
             ->sum(fn (PickupItem $pi) => $pi->remainingQty());
     }
 
+    /** Sudah mulai diproses: keluar dari printing ke cutting, masuk gudang, atau diambil penjahit. */
+    public function hasStarted(): bool
+    {
+        return $this->received_qty > 0
+            || $this->assigned_qty > 0
+            || (! $this->isPolosan() && $this->cutting_qty > 0);
+    }
+
     public function isDone(): bool
     {
         return $this->received_qty > 0 && $this->pendingQty() === 0 && $this->availableQty() === 0 && $this->sewingQty() === 0 && $this->holdQty() === 0;
