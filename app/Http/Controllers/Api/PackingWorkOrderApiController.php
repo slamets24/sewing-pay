@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Actions\Sewing\ReceivePackingWorkOrderAction;
+use App\Enums\PickupItemStatus;
 use App\Http\Controllers\Controller;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderItem;
@@ -99,6 +100,8 @@ class PackingWorkOrderApiController extends Controller
     {
         return WorkOrder::query()->with([
             'items' => fn ($query) => WorkOrderItem::withQcShippedQty($query)->orderBy('id'),
+            // Ambilan yang belum disetor, untuk tahu barang ada di penjahit internal atau vendor makloon.
+            'items.pickupItems' => fn ($query) => $query->where('status', PickupItemStatus::Open->value)->with('tailor:id,name,type'),
         ]);
     }
 }

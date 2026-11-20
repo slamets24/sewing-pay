@@ -2,9 +2,12 @@
 
 namespace App\Presenters;
 
+use App\Enums\TailorType;
 use App\Enums\WorkOrderItemStage;
+use App\Models\PickupItem;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderItem;
+use Illuminate\Support\Collection;
 
 /** Bentuk data progres produksi yang dibaca packingv2 untuk WO Produksi. */
 class PackingWorkOrderProgressPresenter
@@ -15,6 +18,7 @@ class PackingWorkOrderProgressPresenter
     public function summary(WorkOrder $workOrder): array
     {
         $items = $workOrder->items;
+        $locations = $this->sewingLocations($items);
 
         $totals = [
             'planned' => (int) $items->sum('planned_qty'),
@@ -26,6 +30,8 @@ class PackingWorkOrderProgressPresenter
             'delivered' => (int) $items->sum('delivered_qty'),
             'qc_shipped' => (int) $items->sum(fn (WorkOrderItem $item) => $item->qcShippedQty()),
         ];
+        $totals['sewing_makloon'] = min($totals['sewing'], array_sum($locations));
+        $totals['sewing_internal'] = $totals['sewing'] - $totals['sewing_makloon'];
 
         $stage = $this->overallStage($workOrder, $totals);
 
@@ -37,7 +43,8 @@ class PackingWorkOrderProgressPresenter
             'is_overdue' => $workOrder->isOverdue(),
             'is_done' => $workOrder->isDone(),
             'stage' => $stage->value,
-            'stage_label' => $stage->label(),
+            'stage_label' => $this->stageLabel($stage, $locations),
+            'sewing_locations' => $this->locationRows($totals['sewing_internal'], $locations),
             'progress_percent' => $totals['planned'] > 0
                 ? (int) min(100, round($totals['delivered'] / $totals['planned'] * 100))
                 : 0,
@@ -65,7 +72,15 @@ class PackingWorkOrderProgressPresenter
      */
     private function item(WorkOrderItem $item): array
     {
+        $locations = $this->sewingLocations(collect([$item]));
+        $sewing = $item->sewingQty();
+        $sewingMakloon = min($sewing, array_sum($locations));
+        $sewingInternal = $sewing - $sewingMakloon;
         $stage = $item->stage();
+
+        if ($stage === WorkOrderItemStage::Sewing) {
+            $stage = $sewingMakloon > $sewingInternal ? WorkOrderItemStage::MakloonSewing : WorkOrderItemStage::InternalSewing;
+        }
 
         return [
             'packing_item_id' => $item->packing_production_order_item_id,
@@ -77,12 +92,15 @@ class PackingWorkOrderProgressPresenter
             'printing' => $item->printingQty(),
             'cutting' => $item->cuttingPendingQty(),
             'ready' => $item->availableQty(),
-            'sewing' => $item->sewingQty(),
+            'sewing' => $sewing,
+            'sewing_internal' => $sewingInternal,
+            'sewing_makloon' => $sewingMakloon,
+            'sewing_locations' => $this->locationRows($sewingInternal, $locations),
             'waiting_revision' => $item->holdQty(),
             'delivered' => $item->delivered_qty,
             'qc_shipped' => $item->qcShippedQty(),
             'stage' => $stage->value,
-            'stage_label' => $stage->label(),
+            'stage_label' => $this->stageLabel($stage, $locations),
         ];
     }
 
@@ -101,7 +119,8 @@ class PackingWorkOrderProgressPresenter
             WorkOrderItemStage::Printing->value => $totals['printing'],
             WorkOrderItemStage::Cutting->value => $totals['cutting'],
             WorkOrderItemStage::Ready->value => $totals['ready'],
-            WorkOrderItemStage::Sewing->value => $totals['sewing'],
+            WorkOrderItemStage::InternalSewing->value => $totals['sewing_internal'],
+            WorkOrderItemStage::MakloonSewing->value => $totals['sewing_makloon'],
             WorkOrderItemStage::WaitingRevision->value => $totals['waiting_revision'],
         ];
 
@@ -109,5 +128,74 @@ class PackingWorkOrderProgressPresenter
         $top = array_key_first($buckets);
 
         return $buckets[$top] > 0 ? WorkOrderItemStage::from($top) : WorkOrderItemStage::Printing;
+    }
+
+    /**
+     * Qty yang sedang dijahit vendor makloon (ambilan belum disetor), per nama vendor.
+     *
+     * @param  Collection<int, WorkOrderItem>  $items
+     * @return array<string, int>
+     */
+    private function sewingLocations(Collection $items): array
+    {
+        $makloon = [];
+
+        foreach ($items as $item) {
+            if (! $item->relationLoaded('pickupItems')) {
+                $item->load('pickupItems.tailor');
+            }
+
+            $item->pickupItems
+                ->filter(fn (PickupItem $pickupItem) => $pickupItem->isOpen() && $pickupItem->tailor?->type === TailorType::Makloon)
+                ->each(function (PickupItem $pickupItem) use (&$makloon): void {
+                    $name = $pickupItem->tailor->name;
+                    $makloon[$name] = ($makloon[$name] ?? 0) + $pickupItem->remainingQty();
+                });
+        }
+
+        arsort($makloon);
+
+        return array_filter($makloon);
+    }
+
+    /**
+     * @param  array<string, int>  $makloon
+     * @return list<array{type: string, name: string, qty: int}>
+     */
+    private function locationRows(int $internalQty, array $makloon): array
+    {
+        $rows = [];
+
+        if ($internalQty > 0) {
+            $rows[] = ['type' => 'internal', 'name' => 'Penjahit internal', 'qty' => $internalQty];
+        }
+
+        foreach ($makloon as $name => $qty) {
+            $rows[] = ['type' => 'makloon', 'name' => (string) $name, 'qty' => $qty];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @param  array<string, int>  $makloon
+     */
+    private function stageLabel(WorkOrderItemStage $stage, array $makloon): string
+    {
+        return match ($stage) {
+            WorkOrderItemStage::InternalSewing => 'Di penjahit internal',
+            WorkOrderItemStage::MakloonSewing => 'Di makloon jahit'.($makloon === [] ? '' : ': '.$this->vendorNames(array_keys($makloon))),
+            default => $stage->label(),
+        };
+    }
+
+    /**
+     * @param  list<string>  $names
+     */
+    private function vendorNames(array $names): string
+    {
+        return count($names) <= 2
+            ? implode(', ', $names)
+            : $names[0].' +'.(count($names) - 1).' vendor';
     }
 }

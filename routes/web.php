@@ -60,6 +60,7 @@ Route::middleware('auth')->group(function () use ($owner, $warehouse) {
         Route::post('/wo/{workOrder}/items', [WorkOrderItemController::class, 'store'])->name('work-order-items.store');
         Route::patch('/wo-items/{item}', [WorkOrderItemController::class, 'update'])->name('work-order-items.update');
         Route::delete('/wo-items/{item}', [WorkOrderItemController::class, 'destroy'])->name('work-order-items.destroy');
+        Route::post('/wo-items/{item}/mundur', [WorkOrderItemController::class, 'stepBack'])->name('work-order-items.step-back');
 
         Route::post('/wo-items/{item}/cutting', [CuttingReceiptController::class, 'store'])->name('cutting-receipts.store');
         Route::patch('/cutting/{receipt}', [CuttingReceiptController::class, 'update'])->name('cutting-receipts.update');

@@ -102,6 +102,7 @@ export type WorkOrderItemRecord = {
     stage: Stage;
     stage_label: string;
     can_delete: boolean;
+    pickups?: { id: number; tailor_name: string | null; qty: number; delivered_qty: number; can_cancel: boolean }[];
 };
 
 export type CuttingReceiptRecord = {

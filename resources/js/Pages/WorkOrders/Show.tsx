@@ -12,6 +12,7 @@ import {
     TransferCuttingSheet,
 } from '@/components/sewing/work-order/item-sheets';
 import { PurgeWorkOrderButton, type PurgePreview } from '@/components/sewing/work-order/purge-sheet';
+import { canStepBack, StepBackSheet } from '@/components/sewing/work-order/step-back-sheet';
 import { QtyBar } from '@/components/sewing/qty-bar';
 import { PageIntro, Section } from '@/components/sewing/section';
 import { StickyBar } from '@/components/sewing/sticky-bar';
@@ -25,7 +26,7 @@ import { cn } from '@/lib/utils';
 import { floorActions } from '@/services/floor-actions';
 import type { CatalogArticle, CuttingReceiptRecord, HancaanReceiptRecord, WorkOrderDetail, WorkOrderItemRecord } from '@/types/sewing';
 import { Link } from '@inertiajs/react';
-import { ArrowLeft, Building2, CheckCircle2, CheckSquare, ClipboardList, History, HandPlatter, PackagePlus, Pencil, Plus, Printer, Scissors, Shirt, Trash2, Truck, Warehouse, Wrench, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, Building2, CheckCircle2, CheckSquare, ClipboardList, History, HandPlatter, PackagePlus, Pencil, Plus, Printer, Scissors, Shirt, Trash2, Truck, Undo2, Warehouse, Wrench, type LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 
 type ShowProps = {
@@ -431,6 +432,16 @@ function ItemRow({
                             <span className="rounded-full bg-foreground/10 px-1.5 text-[11px] font-bold">{item.available_qty}</span>
                         </Link>
                     </Button>
+                )}
+                {canStepBack(item) && (
+                    <StepBackSheet
+                        item={item}
+                        trigger={
+                            <Button variant="ghost" size="icon" className="size-9 rounded-lg border text-muted-foreground hover:text-foreground" aria-label="Mundurkan tahap" title="Mundurkan tahap">
+                                <Undo2 className="size-4" />
+                            </Button>
+                        }
+                    />
                 )}
                 <PlannedQtySheet
                     item={item}

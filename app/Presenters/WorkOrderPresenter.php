@@ -4,6 +4,7 @@ namespace App\Presenters;
 
 use App\Models\CuttingReceipt;
 use App\Models\HancaanReceipt;
+use App\Models\PickupItem;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderItem;
 
@@ -99,6 +100,19 @@ class WorkOrderPresenter
             'stage' => $stage->value,
             'stage_label' => $stage->label(),
             'can_delete' => $item->received_qty === 0 && ($item->isPolosan() || $item->cutting_qty === 0),
+            // Ambilan yang masih di penjahit, untuk "Mundurkan" (penjahit → gudang).
+            'pickups' => $item->relationLoaded('pickupItems')
+                ? $item->pickupItems
+                    ->filter(fn (PickupItem $pickup) => $pickup->isOpen())
+                    ->map(fn (PickupItem $pickup) => [
+                        'id' => $pickup->id,
+                        'tailor_name' => $pickup->tailor?->name,
+                        'qty' => $pickup->qty,
+                        'delivered_qty' => $pickup->delivered_qty,
+                        'can_cancel' => $pickup->isCancellable(),
+                    ])
+                    ->values()
+                : [],
         ];
     }
 

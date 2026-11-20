@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers\Sewing;
 
+use App\Enums\PickupItemStatus;
 use App\Http\Controllers\Controller;
+use App\Models\PickupItem;
 use App\Models\Revision;
 use App\Models\SewingDelivery;
+use BackedEnum;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -188,11 +191,70 @@ class ProductionReportController extends Controller
             'topArticles' => $topArticles,
             'topTailors' => $topTailors,
             'deliveryLogs' => $deliveryLogs,
+            'distribution' => $this->distribution($startDate, $endDate),
             'filters' => [
                 'preset' => $preset,
                 'from' => $startDate->toDateString(),
                 'to' => $endDate->toDateString(),
             ],
         ]);
+    }
+
+    /** Brand terbanyak yang dapat warna sendiri; sisanya digabung jadi "Lainnya". */
+    private const DISTRIBUTION_BRANDS = 7;
+
+    /**
+     * Pemerataan pembagian hancaan: berapa pcs (dan nilai upah) tiap penjahit ambil per brand dalam periode.
+     * Dasarnya ambilan (pickup) yang tidak dibatalkan, bukan setoran, karena yang dinilai adalah pembagiannya.
+     *
+     * @return array{brands: list<array{key: string, name: string, qty: int}>, tailors: list<array<string, mixed>>}
+     */
+    private function distribution(Carbon $startDate, Carbon $endDate): array
+    {
+        $rows = PickupItem::query()
+            ->join('pickups', 'pickups.id', '=', 'pickup_items.pickup_id')
+            ->join('tailors', 'tailors.id', '=', 'pickup_items.tailor_id')
+            ->join('work_order_items', 'work_order_items.id', '=', 'pickup_items.work_order_item_id')
+            ->join('articles', 'articles.id', '=', 'work_order_items.article_id')
+            ->whereBetween('pickups.picked_at', [$startDate, $endDate])
+            ->where('pickup_items.status', '!=', PickupItemStatus::Cancelled->value)
+            ->groupBy('pickup_items.tailor_id', 'tailors.name', 'tailors.type', 'articles.brand_name')
+            ->selectRaw('pickup_items.tailor_id, tailors.name as tailor_name, tailors.type as tailor_type, articles.brand_name')
+            ->selectRaw('SUM(pickup_items.qty) as qty, SUM(pickup_items.qty * pickup_items.sewing_rate) as amount')
+            ->get();
+
+        $brandName = fn ($row): string => trim((string) $row->brand_name) !== '' ? trim((string) $row->brand_name) : 'Tanpa brand';
+
+        // Urutan brand tetap (terbanyak dulu) supaya warna tiap brand tidak berubah saat filter diganti.
+        $brandTotals = $rows->groupBy($brandName)->map(fn ($group) => (int) $group->sum('qty'))->sortDesc();
+        $named = $brandTotals->keys()->take(self::DISTRIBUTION_BRANDS)->values();
+        $keyOf = fn (string $name): string => $named->contains($name) ? 'b'.$named->search($name) : 'other';
+
+        $brands = $named->map(fn (string $name, int $index) => ['key' => 'b'.$index, 'name' => $name, 'qty' => $brandTotals[$name]])->all();
+        if ($brandTotals->count() > self::DISTRIBUTION_BRANDS) {
+            $brands[] = ['key' => 'other', 'name' => 'Lainnya', 'qty' => (int) $brandTotals->skip(self::DISTRIBUTION_BRANDS)->sum()];
+        }
+
+        $tailors = $rows->groupBy('tailor_id')->map(function ($group) use ($brandName, $keyOf) {
+            $segments = [];
+            foreach ($group as $row) {
+                $key = $keyOf($brandName($row));
+                $segments[$key]['qty'] = ($segments[$key]['qty'] ?? 0) + (int) $row->qty;
+                $segments[$key]['amount'] = ($segments[$key]['amount'] ?? 0) + (int) $row->amount;
+            }
+
+            $first = $group->first();
+
+            return [
+                'id' => (int) $first->tailor_id,
+                'name' => $first->tailor_name,
+                'type' => $first->tailor_type instanceof BackedEnum ? $first->tailor_type->value : (string) $first->tailor_type,
+                'qty' => (int) $group->sum('qty'),
+                'amount' => (int) $group->sum('amount'),
+                'segments' => $segments,
+            ];
+        })->sortByDesc('qty')->values()->all();
+
+        return ['brands' => $brands, 'tailors' => $tailors];
     }
 }

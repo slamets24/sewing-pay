@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { DetailTables } from '@/components/sewing/reports/detail-tables';
+import { DistributionCharts } from '@/components/sewing/reports/distribution-charts';
+import type { Distribution } from '@/domain/report/distribution';
 import { Leaderboards } from '@/components/sewing/reports/leaderboards';
 import { TrendChart } from '@/components/sewing/reports/trend-chart';
 import type { DeliveryLog, TopArticle, TopTailor, TrendDay } from '@/components/sewing/reports/types';
@@ -46,6 +48,7 @@ type ProductionReportProps = {
     topArticles: TopArticle[];
     topTailors: TopTailor[];
     deliveryLogs: DeliveryLog[];
+    distribution: Distribution;
     filters: ReportFilters;
 };
 
@@ -55,6 +58,7 @@ export default function ProductionReport({
     topArticles,
     topTailors,
     deliveryLogs,
+    distribution,
     filters,
 }: ProductionReportProps) {
     const [selectedPreset, setSelectedPreset] = useState(filters.preset);
@@ -251,6 +255,8 @@ export default function ProductionReport({
                 </div>
 
                 <TrendChart trend={trend} />
+
+                <DistributionCharts distribution={distribution} />
 
                 <Leaderboards topArticles={topArticles} topTailors={topTailors} />
 
