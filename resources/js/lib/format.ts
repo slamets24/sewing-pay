@@ -58,4 +58,12 @@ export const todayIso = () => {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 };
 
+/** Current local time as a datetime-local value (YYYY-MM-DDTHH:mm), in the browser's own timezone. */
+export const nowLocalInput = () => {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+
+    return `${todayIso()}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+};
+
 export const variantLabel = (color: string | null, size: string | null) => [color, size].filter(Boolean).join(' · ');

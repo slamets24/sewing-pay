@@ -7,6 +7,7 @@ import { ToneBadge } from '@/components/sewing/tone-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PickupCart } from '@/domain/production/pickup-cart';
+import { NowDateTimeInput } from '@/components/sewing/now-datetime-input';
 import AppLayout from '@/layouts/app-layout';
 import { dueLabel, variantLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -163,8 +164,8 @@ export default function PickupCreate({ tailors, availableItems, presetTailorId }
 
                 <Section title="3. Keterangan (opsional)" icon={ClipboardList}>
                     <div className="grid gap-4 sm:grid-cols-2">
-                        <FormField label="Tanggal ambil — isi kalau mencatat mundur" htmlFor="picked-at">
-                            <Input id="picked-at" type="datetime-local" value={cart.pickedAt} onChange={(event) => setCart(cart.withPickedAt(event.target.value))} />
+                        <FormField label="Tanggal ambil" htmlFor="picked-at">
+                            <NowDateTimeInput id="picked-at" value={cart.pickedAt} onChange={(value) => setCart(cart.withPickedAt(value))} />
                         </FormField>
                         <FormField label="Catatan" htmlFor="pickup-notes">
                             <Input id="pickup-notes" value={cart.notes} onChange={(event) => setCart(cart.withNotes(event.target.value))} />
