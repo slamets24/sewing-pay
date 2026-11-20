@@ -17,7 +17,10 @@ type PriceBenchmarkSheetProps = {
     article: ArticleRecord | null;
     tailors: TailorChoice[];
     hourlyRate: number;
-    isOwner: boolean;
+    /** articles.update — may set the official rate from the benchmark. */
+    canAdoptRate: boolean;
+    /** articles.samples — may record and delete sample times. */
+    canManageSamples: boolean;
     onOpenChange: (open: boolean) => void;
 };
 
@@ -37,7 +40,7 @@ const SHIFT_RATES: Record<number, number> = {
 const SHIFT_OPTIONS = [9, 10, 11, 12];
 
 /** Sample times and the benchmark they produce. Adopting the number is a separate step from recording a sample. */
-export function PriceBenchmarkSheet({ article, tailors, isOwner, onOpenChange }: PriceBenchmarkSheetProps) {
+export function PriceBenchmarkSheet({ article, tailors, canAdoptRate, canManageSamples, onOpenChange }: PriceBenchmarkSheetProps) {
     const benchmark = article?.benchmark ?? null;
     const [adopting, setAdopting] = useState(false);
 
@@ -117,7 +120,7 @@ export function PriceBenchmarkSheet({ article, tailors, isOwner, onOpenChange }:
 
                 {article && (
                     <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-4">
-                        <BenchmarkMath article={article} adopting={adopting} isOwner={isOwner} onAdopt={adopt} />
+                        <BenchmarkMath article={article} adopting={adopting} canAdopt={canAdoptRate} onAdopt={adopt} />
 
                         {benchmark && benchmark.samples.length > 0 && (
                             <div className="flex flex-col gap-2">
@@ -136,14 +139,14 @@ export function PriceBenchmarkSheet({ article, tailors, isOwner, onOpenChange }:
                                                     {sample.tailor_name} {sample.working_hours ? `(${sample.working_hours}j)` : ''} · Durasi: {sample.minutes_label}
                                                 </p>
                                             </div>
-                                            {isOwner && <DeleteSample articleId={article.id} sampleId={sample.id} />}
+                                            {canManageSamples && <DeleteSample articleId={article.id} sampleId={sample.id} />}
                                         </li>
                                     ))}
                                 </ul>
                             </div>
                         )}
 
-                        {isOwner && (
+                        {canManageSamples && (
                             <form onSubmit={submit} className="flex flex-col gap-4 border-t pt-4" noValidate>
                                 <div className="flex items-center justify-between">
                                     <p className="flex items-center gap-2 font-semibold">
@@ -287,7 +290,7 @@ export function PriceBenchmarkSheet({ article, tailors, isOwner, onOpenChange }:
     );
 }
 
-function BenchmarkMath({ article, adopting, isOwner, onAdopt }: { article: ArticleRecord; adopting: boolean; isOwner: boolean; onAdopt: () => void }) {
+function BenchmarkMath({ article, adopting, canAdopt, onAdopt }: { article: ArticleRecord; adopting: boolean; canAdopt: boolean; onAdopt: () => void }) {
     const benchmark = article.benchmark;
 
     if (!benchmark || !benchmark.ready || benchmark.suggested_rate == null || benchmark.raw_average == null) {
@@ -344,7 +347,7 @@ function BenchmarkMath({ article, adopting, isOwner, onAdopt }: { article: Artic
                 </p>
             )}
 
-            {isOwner && !matches && (
+            {canAdopt && !matches && (
                 <Button type="button" onClick={onAdopt} disabled={adopting} className="mt-1 font-bold">
                     {adopting ? <LoaderCircle className="animate-spin" /> : null}
                     Pakai Patokan {formatIdr(benchmark.suggested_rate)}

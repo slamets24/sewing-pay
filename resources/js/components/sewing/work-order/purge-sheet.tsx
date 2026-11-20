@@ -1,20 +1,28 @@
 import { FormField } from '@/components/form-field';
 import { FormSheet } from '@/components/sewing/master/form-sheet';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { floorActions } from '@/services/floor-actions';
 import { useForm } from '@inertiajs/react';
-import { Trash2, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
+import { TriangleAlert } from 'lucide-react';
 
 export type PurgePreview = {
     counts: { items: number; hancaan: number; cutting: number; pickup_qty: number; deliveries: number; delivered_qty: number; revisions: number };
     blockers: string[];
 };
 
-/** "Hapus total" WO yang sudah berjalan (Owner saja): butuh ketik nomor WO sebagai konfirmasi. */
-export function PurgeWorkOrderButton({ workOrderId, number, fromPacking, preview }: { workOrderId: number; number: string; fromPacking: boolean; preview: PurgePreview }) {
-    const [open, setOpen] = useState(false);
+type PurgeSheetProps = {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    workOrderId: number;
+    number: string;
+    fromPacking: boolean;
+    preview: PurgePreview;
+};
+
+/** "Hapus total" WO yang sudah berjalan (Owner saja): butuh ketik nomor WO sebagai konfirmasi. Dibuka dari menu ⋯ di detail WO. */
+export function PurgeWorkOrderSheet({ open, onOpenChange: setOpen, workOrderId, number, fromPacking, preview }: PurgeSheetProps) {
     const form = useForm({ confirm_number: '' });
     const blocked = preview.blockers.length > 0;
     const { counts } = preview;
@@ -36,11 +44,6 @@ export function PurgeWorkOrderButton({ workOrderId, number, fromPacking, preview
 
     return (
         <>
-            <Button variant="outline" className="rounded-xl text-destructive hover:text-destructive" onClick={() => setOpen(true)}>
-                <Trash2 />
-                Hapus total
-            </Button>
-
             <FormSheet
                 open={open}
                 onOpenChange={(next) => {
@@ -97,5 +100,27 @@ export function PurgeWorkOrderButton({ workOrderId, number, fromPacking, preview
                 )}
             </FormSheet>
         </>
+    );
+}
+
+/** Hapus WO yang belum berjalan (belum ada barang masuk gudang). */
+export function DeleteWorkOrderSheet({ open, onOpenChange, workOrderId, number }: { open: boolean; onOpenChange: (open: boolean) => void; workOrderId: number; number: string }) {
+    const [processing, setProcessing] = useState(false);
+
+    return (
+        <FormSheet
+            open={open}
+            onOpenChange={onOpenChange}
+            title={`Hapus ${number}`}
+            description="WO ini belum berjalan (belum ada barang masuk gudang), jadi aman dihapus."
+            submitLabel="Hapus WO"
+            destructive
+            processing={processing}
+            onSubmit={() =>
+                floorActions.send('delete', route('work-orders.destroy', workOrderId), {}, { onStart: () => setProcessing(true), onFinish: () => setProcessing(false) })
+            }
+        >
+            <p className="text-sm text-muted-foreground">Semua baris artikel di WO ini ikut terhapus.</p>
+        </FormSheet>
     );
 }

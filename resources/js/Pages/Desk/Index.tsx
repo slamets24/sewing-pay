@@ -5,6 +5,7 @@ import { DeskRecentDeliveries, OtherTailorRevisions, TailorMetrics } from '@/com
 import { PageIntro } from '@/components/sewing/section';
 import { ToneBadge } from '@/components/sewing/tone-badge';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { PickupCart } from '@/domain/production/pickup-cart';
 import AppLayout from '@/layouts/app-layout';
@@ -19,6 +20,7 @@ import {
     BarChart3,
     Check,
     ClipboardList,
+    Ellipsis,
     HandPlatter,
     Package,
     PackageCheck,
@@ -228,36 +230,68 @@ export default function DeskIndex({
     }, [tailorRecentDeliveries]);
 
     return (
-        <AppLayout title="Loket Cepat (Setor & Ambil)">
+        <AppLayout title="Loket Cepat (Setor & Ambil)" shortTitle="Loket cepat">
             <PageIntro
+                hideTextOnPhone
                 actions={
-                    <div className="flex flex-wrap gap-2">
-                        <Button asChild variant="outline" size="sm" className="rounded-xl shadow-xs transition-all hover:shadow-sm">
-                            <Link href={route('production-reports.index')}>
-                                <BarChart3 className="size-4" />
-                                Rekap Produksi
-                            </Link>
-                        </Button>
-                        <Button asChild variant="outline" size="sm" className="rounded-xl shadow-xs transition-all hover:shadow-sm">
-                            <Link href={route('deliveries.index')}>
-                                <PackageCheck className="size-4" />
-                                Halaman Setor
-                            </Link>
-                        </Button>
-                        <Button asChild variant="outline" size="sm" className="rounded-xl shadow-xs transition-all hover:shadow-sm">
-                            <Link href={route('pickups.create')}>
-                                <HandPlatter className="size-4" />
-                                Halaman Ambil
-                            </Link>
-                        </Button>
-                    </div>
+                    <>
+                        <div className="hidden flex-wrap gap-2 sm:flex">
+                            <Button asChild variant="outline" size="sm" className="rounded-xl shadow-xs transition-all hover:shadow-sm">
+                                <Link href={route('production-reports.index')}>
+                                    <BarChart3 className="size-4" />
+                                    Rekap Produksi
+                                </Link>
+                            </Button>
+                            <Button asChild variant="outline" size="sm" className="rounded-xl shadow-xs transition-all hover:shadow-sm">
+                                <Link href={route('deliveries.index')}>
+                                    <PackageCheck className="size-4" />
+                                    Halaman Setor
+                                </Link>
+                            </Button>
+                            <Button asChild variant="outline" size="sm" className="rounded-xl shadow-xs transition-all hover:shadow-sm">
+                                <Link href={route('pickups.create')}>
+                                    <HandPlatter className="size-4" />
+                                    Halaman Ambil
+                                </Link>
+                            </Button>
+                        </div>
+                        {/* HP: tiga tautan di atas dilipat ke satu tombol supaya daftar penjahit langsung terlihat. */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm" className="rounded-xl sm:hidden">
+                                    <Ellipsis className="size-4" />
+                                    Halaman lain
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                                <DropdownMenuItem asChild>
+                                    <Link href={route('production-reports.index')}>
+                                        <BarChart3 />
+                                        Rekap Produksi
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link href={route('deliveries.index')}>
+                                        <PackageCheck />
+                                        Halaman Setor
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link href={route('pickups.create')}>
+                                        <HandPlatter />
+                                        Halaman Ambil
+                                    </Link>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </>
                 }
             >
                 Layanan 1 Meja terpadu: Cek tanggungan, lapor/tindak revisi, setor 1-klik, dan ambil potongan kain baru langsung dalam satu layar
                 kilat.
             </PageIntro>
 
-            <div className="flex flex-col gap-6 pb-40">
+            <div className="flex flex-col gap-6">
                 {/* 1. TAILOR SELECTOR OR ACTIVE TAILOR PROFILE */}
                 {!selectedTailor ? (
                     <div className="surface-card rounded-xl border border-border bg-card p-4 sm:p-5 shadow-xs">

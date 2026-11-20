@@ -1,5 +1,5 @@
 import type { Tone } from '@/lib/tone';
-import type { SelectOption, UserRole } from '@/types';
+import type { UserRole } from '@/types';
 import type { ManagedUserRecord } from '@/types/sewing';
 
 export type NewUserFormData = {
@@ -21,38 +21,38 @@ export type PasswordFormData = {
 
 export type RoleOption = { value: UserRole; label: string; description: string };
 
-const ROLE_INFO: Record<UserRole, { description: string; tone: Tone }> = {
-    superadmin: { description: 'Akses penuh sistem', tone: 'primary' },
-    admin: { description: 'Operasional harian jahit', tone: 'ready' },
-    qc: { description: 'Non-aktif', tone: 'neutral' },
-    penjahit: { description: 'Portal penjahit', tone: 'sewing' },
+/** A role the signed-in user may hand out, as sent by ManagedUserController (master data, so it can be custom). */
+export type AssignableRole = { value: string; label: string; description: string | null };
+
+const BUILT_IN_TONE: Record<string, Tone> = {
+    superadmin: 'primary',
+    admin: 'ready',
+    qc: 'neutral',
+    penjahit: 'sewing',
 };
 
-/** The four roles with plain-language descriptions; labels come from the server so they stay in sync. */
+/** Roles offered in the account forms; names and descriptions come from Master Data › Role & Akses. */
 export class RoleCatalog {
-    constructor(private readonly roles: SelectOption[]) {}
+    constructor(private readonly roles: AssignableRole[]) {}
 
     options(): RoleOption[] {
-        return this.roles.filter((role) => RoleCatalog.isRole(role.value)).map((role) => ({
-            value: role.value as UserRole,
+        return this.roles.map((role) => ({
+            value: role.value,
             label: role.label,
-            description: ROLE_INFO[role.value as UserRole].description,
+            description: role.description ?? '',
         }));
     }
 
+    /** Built-in roles keep their colour; custom roles share one. */
     static tone(role: UserRole): Tone {
-        return ROLE_INFO[role].tone;
-    }
-
-    private static isRole(value: string): value is UserRole {
-        return value in ROLE_INFO;
+        return BUILT_IN_TONE[role] ?? 'other';
     }
 }
 
 /** Shapes the account forms to what ManagedUserRequest / ResetPasswordRequest expect. */
 export class ManagedUserForm {
-    static blank(): NewUserFormData {
-        return { name: '', email: '', password: '', password_confirmation: '', role: 'admin' };
+    static blank(defaultRole: UserRole = 'admin'): NewUserFormData {
+        return { name: '', email: '', password: '', password_confirmation: '', role: defaultRole };
     }
 
     static createPayload(data: NewUserFormData) {

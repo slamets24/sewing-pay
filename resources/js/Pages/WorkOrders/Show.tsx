@@ -11,8 +11,11 @@ import {
     ReceiveHancaanSheet,
     TransferCuttingSheet,
 } from '@/components/sewing/work-order/item-sheets';
-import { PurgeWorkOrderButton, type PurgePreview } from '@/components/sewing/work-order/purge-sheet';
+import { DeleteWorkOrderSheet, PurgeWorkOrderSheet, type PurgePreview } from '@/components/sewing/work-order/purge-sheet';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { canStepBack, StepBackSheet } from '@/components/sewing/work-order/step-back-sheet';
+import { WaReportButton } from '@/components/sewing/work-order/wa-report-button';
+import { workOrderWaText } from '@/domain/work-order/wa-report';
 import { QtyBar } from '@/components/sewing/qty-bar';
 import { PageIntro, Section } from '@/components/sewing/section';
 import { StickyBar } from '@/components/sewing/sticky-bar';
@@ -26,7 +29,7 @@ import { cn } from '@/lib/utils';
 import { floorActions } from '@/services/floor-actions';
 import type { CatalogArticle, CuttingReceiptRecord, HancaanReceiptRecord, WorkOrderDetail, WorkOrderItemRecord } from '@/types/sewing';
 import { Link } from '@inertiajs/react';
-import { ArrowLeft, Building2, CheckCircle2, CheckSquare, ClipboardList, History, HandPlatter, PackagePlus, Pencil, Plus, Printer, Scissors, Shirt, Trash2, Truck, Undo2, Warehouse, Wrench, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, Building2, Ellipsis, CheckCircle2, CheckSquare, ClipboardList, History, HandPlatter, PackagePlus, Pencil, Plus, Printer, Scissors, Shirt, Trash2, Truck, Undo2, Warehouse, Wrench, type LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 
 type ShowProps = {
@@ -38,6 +41,7 @@ type ShowProps = {
 };
 
 export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [], articles, purge = null }: ShowProps) {
+    const [dangerSheet, setDangerSheet] = useState<'delete' | 'purge' | null>(null);
     const due = dueLabel(workOrder.due_at);
     const hasPrint = workOrder.items.some((item) => !item.is_polosan);
 
@@ -87,6 +91,22 @@ export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [
                                 </Button>
                             }
                         />
+                        <WaReportButton text={workOrderWaText(workOrder)} publicUrl={workOrder.public_url} />
+                        {(workOrder.can_delete || purge) && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="icon" aria-label="Aksi lain">
+                                        <Ellipsis />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem variant="destructive" onSelect={() => setDangerSheet(workOrder.can_delete ? 'delete' : 'purge')}>
+                                        <Trash2 />
+                                        {workOrder.can_delete ? 'Hapus WO' : 'Hapus total'}
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
                     </>
                 }
             >
@@ -134,16 +154,18 @@ export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [
                                 </Link>
                             </Button>
                         )}
-                        {workOrder.can_delete && (
-                            <ConfirmButton confirmLabel="Ya, hapus WO" idleClassName="text-destructive rounded-xl" onConfirm={() => floorActions.send('delete', route('work-orders.destroy', workOrder.id))}>
-                                <Trash2 />
-                                Hapus WO
-                            </ConfirmButton>
-                        )}
-                        {!workOrder.can_delete && purge && (
-                            <PurgeWorkOrderButton workOrderId={workOrder.id} number={workOrder.number} fromPacking={Boolean(workOrder.from_packing)} preview={purge} />
-                        )}
                     </div>
+                    <DeleteWorkOrderSheet open={dangerSheet === 'delete'} onOpenChange={(open) => !open && setDangerSheet(null)} workOrderId={workOrder.id} number={workOrder.number} />
+                    {purge && (
+                        <PurgeWorkOrderSheet
+                            open={dangerSheet === 'purge'}
+                            onOpenChange={(open) => !open && setDangerSheet(null)}
+                            workOrderId={workOrder.id}
+                            number={workOrder.number}
+                            fromPacking={Boolean(workOrder.from_packing)}
+                            preview={purge}
+                        />
+                    )}
                 </div>
 
                 <Section
@@ -191,6 +213,7 @@ export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [
 
                 {selectedIds.length > 0 && (
                     <StickyBar
+                        stackOnPhone
                         title={`${selectedIds.length} artikel terpilih`}
                         subtitle={
                             [

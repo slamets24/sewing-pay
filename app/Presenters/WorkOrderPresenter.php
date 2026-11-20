@@ -7,6 +7,7 @@ use App\Models\HancaanReceipt;
 use App\Models\PickupItem;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderItem;
+use Illuminate\Support\Facades\URL;
 
 /** Shapes work orders and their lines for the Inertia pages. Expects `items.article` / `items.variant` loaded. */
 class WorkOrderPresenter
@@ -32,6 +33,14 @@ class WorkOrderPresenter
             'notes' => $workOrder->notes,
             'items_count' => $items->count(),
             'article_names' => $items->map(fn (WorkOrderItem $item) => $item->article?->name)->filter()->unique()->values(),
+            // Untuk laporan WA: nama artikel + total pcs (tanpa rincian warna/ukuran).
+            'article_lines' => $items
+                ->groupBy('article_id')
+                ->map(fn ($group) => ['name' => $group->first()->article?->name ?? '-', 'qty' => (int) $group->sum('planned_qty')])
+                ->values(),
+            // Tanda tangan relatif (tetap sah di belakang proxy). Alamat dasar dari APP_URL, bukan dari alamat
+            // yang sedang dipakai admin, supaya tautan di grup WA tidak mengarah ke localhost / IP lokal.
+            'public_url' => rtrim((string) config('app.url'), '/').URL::signedRoute('work-orders.public', $workOrder, absolute: false),
             'planned_qty' => (int) $items->sum('planned_qty'),
             'printing_qty' => (int) $items->sum(fn (WorkOrderItem $item) => $item->printingQty()),
             'cutting_qty' => (int) $items->sum(fn (WorkOrderItem $item) => $item->cuttingPendingQty()),

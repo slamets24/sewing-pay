@@ -51,6 +51,10 @@ export type WorkOrderSummary = {
     is_opening_stock: boolean;
     from_packing?: boolean;
     is_overdue: boolean;
+    /** Nama artikel + total pcs, untuk laporan WA. */
+    article_lines?: { name: string; qty: number }[];
+    /** Tautan WO tanpa login untuk dibagikan. */
+    public_url?: string;
     is_done: boolean;
     notes: string | null;
     items_count: number;
@@ -354,9 +358,11 @@ export type ManagedUserRecord = {
     id: number;
     name: string;
     email: string;
-    role: 'superadmin' | 'admin' | 'qc' | 'penjahit';
+    role: string;
     role_label: string;
     is_current_user: boolean;
+    can_manage: boolean;
+    can_change_role: boolean;
 };
 
 export type SelectOption = { value: string; label: string };

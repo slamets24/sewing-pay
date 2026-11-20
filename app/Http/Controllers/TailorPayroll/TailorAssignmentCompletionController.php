@@ -42,7 +42,7 @@ class TailorAssignmentCompletionController extends Controller
 
         $undoCompletion->execute($completion);
 
-        return Redirect::back(fallback: route($request->user()->role->homeRoute()))
+        return Redirect::back(fallback: route($request->user()->homeRoute() ?? 'login'))
             ->with('status', 'Input selesai dibatalkan.');
     }
 }

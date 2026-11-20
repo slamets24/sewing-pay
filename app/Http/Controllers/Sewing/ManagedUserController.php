@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Sewing;
 
-use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Sewing\ManagedUserRequest;
 use App\Http\Requests\Sewing\ResetPasswordRequest;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,19 +19,25 @@ class ManagedUserController extends Controller
 {
     public function index(Request $request): Response
     {
+        $actor = $request->user();
+
         return Inertia::render('Master/Users', [
-            'users' => User::query()->orderBy('name')->get()->map(fn (User $user) => [
+            'users' => User::query()->with('assignedRole')->orderBy('name')->get()->map(fn (User $user) => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'role' => $user->role->value,
-                'role_label' => $user->role->label(),
-                'is_current_user' => $user->is($request->user()),
+                'role' => $user->role,
+                'role_label' => $user->roleLabel(),
+                'is_current_user' => $user->is($actor),
+                'can_manage' => $actor->canManageAccount($user),
+                // Owner may reset a no-login account (e.g. Penjahit) but not move it into a staff role.
+                'can_change_role' => $actor->canManageAccount($user) && (bool) $user->assignedRole?->can_login && ! $user->isSuperadmin(),
             ]),
-            'roles' => collect(UserRole::cases())
-                ->filter(fn (UserRole $role) => $role === UserRole::Admin)
-                ->map(fn (UserRole $role) => ['value' => $role->value, 'label' => $role->label()])
-                ->values(),
+            'roles' => $actor->assignableRoles()->map(fn (Role $role) => [
+                'value' => $role->slug,
+                'label' => $role->name,
+                'description' => $role->description,
+            ]),
         ]);
     }
 
@@ -52,10 +58,11 @@ class ManagedUserController extends Controller
 
     public function update(ManagedUserRequest $request, User $user): RedirectResponse
     {
-        abort_if(! $user->isAdmin(), 403);
         if ($request->user()->is($user)) {
             throw ValidationException::withMessages(['role' => 'Peran akun sendiri tidak bisa diubah dari sini.']);
         }
+
+        abort_unless($request->user()->canManageAccount($user) && ! $user->isSuperadmin() && $user->assignedRole?->can_login, 403);
 
         $user->update(['role' => $request->validated('role')]);
 
@@ -64,7 +71,7 @@ class ManagedUserController extends Controller
 
     public function resetPassword(ResetPasswordRequest $request, User $user): RedirectResponse
     {
-        abort_if($request->user()->is($user) || ($request->user()->isAdmin() && ! $user->isAdmin()), 403);
+        abort_unless($request->user()->canManageAccount($user), 403);
         $user->update(['password' => Hash::make($request->validated('password'))]);
 
         return Redirect::back()->with('status', 'Password direset.');

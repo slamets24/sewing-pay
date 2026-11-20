@@ -37,10 +37,10 @@ export default function Overview({ stats, board, dueSoon, recentDeliveries }: Ov
         <AppLayout title="Beranda">
             <div className="flex flex-col gap-6">
                 {/* Hero Greeting Banner with AZFLOW Gradient (Hireism style) */}
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#4F57F5] via-[#5D53FA] to-[#7A4DF7] p-6 text-white shadow-sm">
-                    <div className="relative z-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#4F57F5] via-[#5D53FA] to-[#7A4DF7] p-4 text-white shadow-sm sm:p-6">
+                    <div className="relative z-10 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                         <div className="flex flex-col gap-1.5">
-                            <div className="flex items-center gap-2">
+                            <div className="hidden items-center gap-2 sm:flex">
                                 <span className="rounded-md bg-white/20 px-2 py-0.5 text-[11px] font-bold tracking-wider uppercase text-white backdrop-blur-xs">
                                     OPSEW · Divisi Jahit & Gudang
                                 </span>
@@ -48,27 +48,27 @@ export default function Overview({ stats, board, dueSoon, recentDeliveries }: Ov
                                     powered by AZFLOW
                                 </span>
                             </div>
-                            <h2 className="text-2xl font-black tracking-tight sm:text-3xl">
+                            <h2 className="text-xl font-black tracking-tight sm:text-3xl">
                                 Halo, {firstName} 👋
                             </h2>
                             <p className="max-w-xl text-sm leading-relaxed text-white/90">
                                 Hari ini ada <strong className="font-bold underline decoration-white/50">{board.length} penjahit aktif</strong> memegang kain. Sebanyak <strong>{stats.available_qty} pcs</strong> potongan siap diambil di gudang.
                             </p>
                         </div>
-                        <div className="flex shrink-0 flex-wrap items-center gap-2.5 self-start sm:self-center">
-                            <Button asChild size="default" variant="outline" className="rounded-xl border-white/40 bg-white/10 text-white font-bold hover:bg-white/20 shadow-xs">
+                        <div className="grid shrink-0 grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-2.5 lg:self-center">
+                            <Button asChild size="default" variant="outline" className="rounded-xl border-white/40 bg-white/10 px-2 font-bold text-white shadow-xs hover:bg-white/20 sm:px-4">
                                 <Link href={route('production-reports.index')}>
-                                    <BarChart3 className="size-4 mr-1.5" />
-                                    Rekap Produksi
+                                    <BarChart3 className="size-4 sm:mr-1.5" />
+                                    Rekap<span className="hidden sm:inline"> Produksi</span>
                                 </Link>
                             </Button>
-                            <Button asChild size="default" variant="outline" className="rounded-xl border-white/40 bg-white/10 text-white font-bold hover:bg-white/20 shadow-xs">
+                            <Button asChild size="default" variant="outline" className="rounded-xl border-white/40 bg-white/10 px-2 font-bold text-white shadow-xs hover:bg-white/20 sm:px-4">
                                 <Link href={route('work-orders.create')}>
-                                    <Plus className="size-4 mr-1.5" />
+                                    <Plus className="size-4 sm:mr-1.5" />
                                     WO baru
                                 </Link>
                             </Button>
-                            <Button asChild size="default" className="rounded-xl bg-white text-primary font-bold hover:bg-white/90 shadow-xs border-0">
+                            <Button asChild size="default" className="order-first col-span-2 rounded-xl border-0 bg-white font-bold text-primary shadow-xs hover:bg-white/90 sm:order-none">
                                 <Link href={route('desk.index')}>
                                     Buka Meja Loket
                                 </Link>
@@ -78,10 +78,7 @@ export default function Overview({ stats, board, dueSoon, recentDeliveries }: Ov
                     <div className="pointer-events-none absolute -right-6 -bottom-10 size-44 rounded-full bg-white/10 blur-2xl" />
                 </div>
 
-                {/* Visual Workflow Stepper */}
-                <WorkflowStepper stats={stats} />
-
-                {/* The stepper above already shows each stage; only the WO counts are extra. */}
+                {/* Angka WO di atas (paling sering dicek); tahap-tahapnya ada di alur kerja di bawah. */}
                 <div className="grid grid-cols-2 gap-3">
                     <StatTile label="WO berjalan" value={stats.work_orders_open} icon={ClipboardList} tone="primary" href={route('work-orders.index')} />
                     <StatTile
@@ -93,6 +90,9 @@ export default function Overview({ stats, board, dueSoon, recentDeliveries }: Ov
                         href={route('work-orders.index')}
                     />
                 </div>
+
+                {/* Visual Workflow Stepper */}
+                <WorkflowStepper stats={stats} />
 
                 <Section title="Siapa mengerjakan apa" icon={Users} actions={<SeeAll href={route('deliveries.index')} label="Buka setor" />}>
                     {board.length === 0 ? (

@@ -23,7 +23,7 @@ class DatabaseSeederTest extends TestCase
         $this->seed(DatabaseSeeder::class);
 
         $this->assertTrue(Hash::check('private-password', $owner->refresh()->password));
-        $this->assertSame(UserRole::Superadmin, $owner->role);
+        $this->assertSame(UserRole::Superadmin->value, $owner->role);
     }
 
     public function test_default_seeder_only_creates_user_data(): void

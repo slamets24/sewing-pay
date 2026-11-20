@@ -73,11 +73,11 @@ export default function MakloonPaymentIndex({ payments, tailors, summary }: Inde
     };
 
     return (
-        <AppLayout title="Pembayaran Maklun">
+        <AppLayout title="Pembayaran Maklun" shortTitle="Bayar maklun">
             <Head title="Pembayaran Maklun" />
 
             {/* Top Stat Tiles */}
-            <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-3">
                 <StatTile
                     label="Belum dibayar (Maklun)"
                     value={formatIdr(summary.total_unpaid_amount)}

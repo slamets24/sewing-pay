@@ -32,7 +32,7 @@ class ProductionArticleController extends Controller
     {
         $articles = $createArticles->execute($request->validated(), $request->user()?->id);
 
-        return Redirect::back(fallback: route($request->user()->role->homeRoute()))
+        return Redirect::back(fallback: route($request->user()->homeRoute() ?? 'login'))
             ->with('status', "{$articles->count()} hancaan ({$articles->sum('planned_qty')} pcs) siap diambil.");
     }
 

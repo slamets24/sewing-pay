@@ -28,7 +28,7 @@ export default function PayoutShow({ payout, slips }: PayoutShowProps) {
     const set = new PayoutSlipSet(slips);
 
     return (
-        <AppLayout title={`Pencairan ${payout.code}`}>
+        <AppLayout title={`Pencairan ${payout.code}`} shortTitle={`Gaji ${payout.code}`}>
             <PageIntro
                 actions={
                     <Button asChild variant="outline">
@@ -44,7 +44,7 @@ export default function PayoutShow({ payout, slips }: PayoutShowProps) {
             </PageIntro>
 
             <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-5">
-                <div className="col-span-2">
+                <div className="lg:col-span-2">
                     <StatTile
                         label="Total diterima"
                         value={formatIdr(payout.total_amount)}
@@ -55,7 +55,7 @@ export default function PayoutShow({ payout, slips }: PayoutShowProps) {
                 </div>
                 <StatTile label="Penjahit" value={payout.total_tailors} icon={Users} tone="ready" />
                 <StatTile label="Pcs" value={payout.total_qty} icon={Shirt} tone="sewing" />
-                <div className="col-span-2 lg:col-span-1">
+                <div>
                     <StatTile label="Status" value={payout.status_label} hint={set.paidLabel} icon={payout.is_draft ? Clock : CircleCheck} tone={PayoutTone.forStatus(payout.status)} />
                 </div>
             </div>

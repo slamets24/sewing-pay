@@ -31,7 +31,7 @@ class ManagedUserTest extends TestCase
 
         $user = User::where('email', 'admin-lapangan@example.com')->firstOrFail();
 
-        $this->assertSame(UserRole::Admin, $user->role);
+        $this->assertSame(UserRole::Admin->value, $user->role);
         $this->assertNotNull($user->email_verified_at);
         $this->assertTrue(Hash::check('password', $user->password));
     }
@@ -50,7 +50,7 @@ class ManagedUserTest extends TestCase
             ->assertSessionHasNoErrors()
             ->assertRedirect(route('dashboard'));
 
-        $this->assertSame(UserRole::Superadmin, $admin->refresh()->role);
+        $this->assertSame(UserRole::Superadmin->value, $admin->refresh()->role);
     }
 
     public function test_superadmin_cannot_change_their_own_role(): void
@@ -66,7 +66,7 @@ class ManagedUserTest extends TestCase
             ->assertSessionHasErrors('role')
             ->assertRedirect(route('dashboard'));
 
-        $this->assertSame(UserRole::Superadmin, $superadmin->refresh()->role);
+        $this->assertSame(UserRole::Superadmin->value, $superadmin->refresh()->role);
     }
 
     public function test_superadmin_can_reset_user_password(): void
@@ -130,7 +130,7 @@ class ManagedUserTest extends TestCase
             ->assertForbidden();
 
         $targetUser->refresh();
-        $this->assertSame(UserRole::Admin, $targetUser->role);
+        $this->assertSame(UserRole::Admin->value, $targetUser->role);
         $this->assertFalse(Hash::check('new-password', $targetUser->password));
     }
 

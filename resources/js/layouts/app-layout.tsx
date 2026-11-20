@@ -13,6 +13,8 @@ import { useLayoutEffect, useMemo, useRef, type ReactNode } from 'react';
 
 type AppLayoutProps = {
     title: string;
+    /** Judul pendek untuk layar HP; bawaannya sama dengan title. */
+    shortTitle?: string;
     children: ReactNode;
 };
 
@@ -20,10 +22,10 @@ let memorySidebarScrollTop = 0;
 const STORAGE_KEY = 'sweing-pay:sidebar-scroll';
 
 /** Shell for every signed-in page: gradient sidebar on desktop, top bar + bottom tab bar on phones. */
-export default function AppLayout({ title, children }: AppLayoutProps) {
+export default function AppLayout({ title, shortTitle, children }: AppLayoutProps) {
     const page = usePage<SharedData>();
     const user = page.props.auth.user!;
-    const navigation = useMemo(() => Navigation.forRole(user.role), [user.role]);
+    const navigation = useMemo(() => Navigation.forAbilities(user.abilities ?? []), [user.abilities]);
     const logout = () => router.post(route('logout'));
 
     const navRef = useRef<HTMLElement>(null);
@@ -98,7 +100,16 @@ export default function AppLayout({ title, children }: AppLayoutProps) {
                         <Link href={route(user.home_route)} className="lg:hidden" aria-label="Ke beranda">
                             <AppLogoMark />
                         </Link>
-                        <h1 className="min-w-0 flex-1 truncate text-xl font-bold tracking-tight lg:text-2xl">{title}</h1>
+                        <h1 className="min-w-0 flex-1 truncate text-xl font-bold tracking-tight lg:text-2xl">
+                            {shortTitle ? (
+                                <>
+                                    <span className="sm:hidden">{shortTitle}</span>
+                                    <span className="hidden sm:inline">{title}</span>
+                                </>
+                            ) : (
+                                title
+                            )}
+                        </h1>
                         <DisplaySettings />
                         <MobileMenu navigation={navigation} name={user.name} roleLabel={user.role_label} onLogout={logout} />
                     </div>
@@ -107,7 +118,7 @@ export default function AppLayout({ title, children }: AppLayoutProps) {
                 <main
                     className={cn(
                         'mx-auto w-full max-w-6xl flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-8',
-                        navigation.bottomBar.length > 0 ? 'pb-36 lg:pb-10' : 'pb-10',
+                        navigation.bottomBar.length > 0 ? 'pb-28 lg:pb-10' : 'pb-10',
                     )}
                 >
                     {children}

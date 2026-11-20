@@ -15,15 +15,15 @@ type StatTileProps = {
 /** Dashboard metric tile with clean industrial card and tinted icon. */
 export function StatTile({ label, value, icon: Icon, tone, hint, href }: StatTileProps) {
     const body = (
-        <div className="surface-card flex h-full flex-col gap-2.5 p-4 transition-colors group-hover:border-foreground/25">
+        <div className="surface-card flex h-full flex-col gap-1.5 p-3 transition-colors group-hover:border-foreground/25 sm:gap-2.5 sm:p-4">
             <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-muted-foreground">{label}</span>
-                <span className={cn('flex size-9 items-center justify-center rounded-lg', ToneStyle.soft(tone))}>
-                    <Icon className="size-4.5" strokeWidth={1.75} />
+                <span className="text-xs font-medium text-muted-foreground sm:text-sm">{label}</span>
+                <span className={cn('flex size-7 shrink-0 items-center justify-center rounded-lg sm:size-9', ToneStyle.soft(tone))}>
+                    <Icon className="size-4 sm:size-4.5" strokeWidth={1.75} />
                 </span>
             </div>
-            <span className="text-3xl leading-none font-bold tracking-tight tabular lg:text-4xl">{value}</span>
-            {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
+            <span className="text-xl leading-none font-bold tracking-tight tabular sm:text-3xl lg:text-4xl">{value}</span>
+            {hint && <span className="line-clamp-2 text-[11px] text-muted-foreground sm:text-xs">{hint}</span>}
         </div>
     );
 

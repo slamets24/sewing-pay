@@ -1,4 +1,7 @@
-export type UserRole = 'superadmin' | 'admin' | 'qc' | 'penjahit';
+import type { Ability } from '@/lib/abilities';
+
+/** Built-in role slugs; roles made in Master Data › Role & Akses have their own slug. */
+export type UserRole = 'superadmin' | 'admin' | 'qc' | 'penjahit' | (string & {});
 
 export interface AuthUser {
     id: number;
@@ -7,6 +10,8 @@ export interface AuthUser {
     role: UserRole;
     role_label: string;
     home_route: string;
+    /** Abilities of the user's role (Owner: all). Only hides UI; the server checks every route itself. */
+    abilities: Ability[];
 }
 
 export interface SharedData {

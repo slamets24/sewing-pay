@@ -38,9 +38,11 @@ class HandleInertiaRequests extends Middleware
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'role' => $user->role->value,
-                    'role_label' => $user->role->label(),
-                    'home_route' => $user->role->homeRoute(),
+                    'role' => $user->role,
+                    'role_label' => $user->roleLabel(),
+                    'home_route' => $user->homeRoute() ?? 'login',
+                    // Drives the menu and buttons; the server still checks every route with `can:`.
+                    'abilities' => $user->abilities(),
                 ] : null,
             ],
             'flash' => [

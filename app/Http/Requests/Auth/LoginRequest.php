@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Auth;
 
-use App\Enums\UserRole;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -53,21 +52,33 @@ class LoginRequest extends FormRequest
 
         RateLimiter::clear($this->throttleKey());
 
-        if ($this->user()?->role === UserRole::Tailor) {
-            Auth::logout();
+        $user = $this->user();
 
-            throw ValidationException::withMessages([
-                'email' => 'Penjahit masuk lewat tautan portal, bukan email.',
-            ]);
+        if ($user?->isTailor()) {
+            $this->rejectLogin('Penjahit masuk lewat tautan portal, bukan email.');
         }
 
-        if ($this->user()?->role === UserRole::Qc) {
-            Auth::logout();
-
-            throw ValidationException::withMessages([
-                'email' => 'Aplikasi ini hanya untuk internal divisi jahit. Divisi QC tidak memiliki akses login.',
-            ]);
+        if ($user?->isQc()) {
+            $this->rejectLogin('Aplikasi ini hanya untuk internal divisi jahit. Divisi QC tidak memiliki akses login.');
         }
+
+        if ($user && ! $user->canLogin()) {
+            $this->rejectLogin('Peran akun ini tidak memiliki akses login.');
+        }
+
+        if ($user && $user->homeRoute() === null) {
+            $this->rejectLogin('Peran akun ini belum diberi akses menu apa pun. Hubungi Owner.');
+        }
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    private function rejectLogin(string $message): never
+    {
+        Auth::logout();
+
+        throw ValidationException::withMessages(['email' => $message]);
     }
 
     /**

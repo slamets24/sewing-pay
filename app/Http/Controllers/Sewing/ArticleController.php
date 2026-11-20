@@ -7,6 +7,7 @@ use App\Actions\Sewing\DeleteArticleSampleAction;
 use App\Actions\Sewing\RecordArticleSampleAction;
 use App\Actions\Sewing\SaveArticleAction;
 use App\Actions\Sewing\SyncPackingArticlesAction;
+use App\Enums\Ability;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Sewing\ArticleRequest;
 use App\Http\Requests\Sewing\StoreArticleSampleRequest;
@@ -62,7 +63,7 @@ class ArticleController extends Controller
                 'colors' => $colors->get($article->id, collect())->pluck('color')->unique()->sort()->values(),
                 'benchmark' => $article->priceSuggestion?->payload,
             ]),
-            'tailors' => $request->user()->isSuperadmin()
+            'tailors' => $request->user()->hasAbility(Ability::ArticlesSamples)
                 ? Tailor::query()->where('is_active', true)->orderBy('name')->get()->map(fn (Tailor $tailor) => [
                     'id' => $tailor->id,
                     'name' => $tailor->name,
@@ -96,7 +97,7 @@ class ArticleController extends Controller
     {
         $data = $request->validated();
 
-        if (! $request->user()->isSuperadmin()) {
+        if (! $request->user()->hasAbility(Ability::ArticlesUpdate)) {
             unset($data['sewing_rate'], $data['makloon_sewing_rate']);
         }
 

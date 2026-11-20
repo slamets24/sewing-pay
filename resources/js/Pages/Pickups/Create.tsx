@@ -72,7 +72,7 @@ export default function PickupCreate({ tailors, availableItems, presetTailorId }
                 }
             />
 
-            <div className="flex flex-col gap-5 pb-40 lg:pb-28">
+            <div className="flex flex-col gap-5 pb-20 lg:pb-28">
                 <Section title="1. Pilih penjahit" icon={UserRound}>
                     {tailors.length === 0 ? (
                         <EmptyState>Belum ada penjahit aktif. Owner bisa menambahkannya di menu Penjahit.</EmptyState>
@@ -178,14 +178,14 @@ export default function PickupCreate({ tailors, availableItems, presetTailorId }
                 subtitle={`${cart.lines.length} barang${cart.tailor ? (cart.isMakloon ? ' · makloon' : '') : ''}`}
             >
                 {cart.lines.length > 0 && (
-                    <Button variant="outline" onClick={() => setCart(PickupCart.start(cart.tailor))}>
+                    <Button variant="outline" onClick={() => setCart(PickupCart.start(cart.tailor))} aria-label="Kosongkan">
                         <X />
-                        Kosongkan
+                        <span className="hidden sm:inline">Kosongkan</span>
                     </Button>
                 )}
                 <Button size="lg" onClick={submit} disabled={!cart.isReady || processing}>
                     <HandPlatter />
-                    Simpan ambil
+                    Simpan<span className="hidden sm:inline"> ambil</span>
                 </Button>
             </StickyBar>
         </AppLayout>

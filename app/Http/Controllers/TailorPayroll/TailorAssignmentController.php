@@ -35,7 +35,7 @@ class TailorAssignmentController extends Controller
 
         $cancelAssignment->execute($assignment, $request->user()->id);
 
-        return Redirect::back(fallback: route($request->user()->role->homeRoute()))
+        return Redirect::back(fallback: route($request->user()->homeRoute() ?? 'login'))
             ->with('status', 'Pengambilan dibatalkan, qty kembali ke stok hancaan.');
     }
 }

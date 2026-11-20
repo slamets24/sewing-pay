@@ -19,10 +19,10 @@ import { formatDateTime, formatIdr, joinMeta } from '@/lib/format';
 import type { Tone } from '@/lib/tone';
 import { cn } from '@/lib/utils';
 import { PriceBenchmarkSheet } from '@/components/sewing/master/price-benchmark-sheet';
+import { useCan } from '@/lib/abilities';
 import { floorActions } from '@/services/floor-actions';
-import type { SharedData } from '@/types';
 import type { ArticleRecord, TailorRecord } from '@/types/sewing';
-import { useForm, usePage } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import { Barcode, CloudDownload, Info, LoaderCircle, Pencil, Plus, Power, PowerOff, Save, Shirt, StickyNote, TriangleAlert } from 'lucide-react';
 import { useMemo, useState, type FormEvent } from 'react';
 
@@ -39,7 +39,12 @@ const PAGE_SIZE = 40;
 const SOURCE_TONE: Record<ArticleRecord['source'], Tone> = { packingv2: 'ready', manual: 'other' };
 
 export default function Articles({ articles, tailors, benchmarkHourlyRate, packingConfigured, lastSyncedAt }: ArticlesProps) {
-    const isOwner = usePage<SharedData>().props.auth.user?.role === 'superadmin';
+    const can = useCan();
+    // Each part of the page follows its own ability (Master Data › Role & Akses).
+    const canEdit = can('articles.update');
+    const canCreate = can('articles.create');
+    const canSync = can('articles.sync');
+    const canSamples = can('articles.samples');
     const [filter, setFilter] = useState(() => ArticleFilter.initial());
     const [limit, setLimit] = useState(PAGE_SIZE);
     const [sheet, setSheet] = useState(() => SheetState.closed<ArticleRecord>());
@@ -61,15 +66,17 @@ export default function Articles({ articles, tailors, benchmarkHourlyRate, packi
         <AppLayout title="Artikel & tarif">
             <PageIntro
                 actions={
-                    <Button variant={isOwner ? 'outline' : 'default'} onClick={() => openFor(null)}>
-                        <Plus />
-                        Tambah artikel manual
-                    </Button>
+                    canCreate && (
+                        <Button variant={canEdit ? 'outline' : 'default'} onClick={() => openFor(null)}>
+                            <Plus />
+                            Tambah artikel manual
+                        </Button>
+                    )
                 }
             />
 
             <div className="flex flex-col gap-5">
-                <PackingSyncPanel configured={packingConfigured} lastSyncedAt={lastSyncedAt} canSync={isOwner} />
+                <PackingSyncPanel configured={packingConfigured} lastSyncedAt={lastSyncedAt} canSync={canSync} />
 
                 {missingRateCount > 0 && filter.key !== 'no_rate' && (
                     <Alert className="border-stage-revision/40 bg-stage-revision/8">
@@ -104,7 +111,7 @@ export default function Articles({ articles, tailors, benchmarkHourlyRate, packi
                         <>
                             <ul className="grid gap-3 md:grid-cols-2">
                                 {visible.slice(0, limit).map((article) => (
-                                    <ArticleCard key={article.id} article={article} isOwner={isOwner} packingConfigured={packingConfigured} onEdit={() => openFor(article)} onBenchmark={() => setBenchmarkId(article.id)} />
+                                    <ArticleCard key={article.id} article={article} canEdit={canEdit} canSync={canSync} canSamples={canSamples} packingConfigured={packingConfigured} onEdit={() => openFor(article)} onBenchmark={() => setBenchmarkId(article.id)} />
                                 ))}
                             </ul>
                             {visible.length > limit && (
@@ -123,13 +130,14 @@ export default function Articles({ articles, tailors, benchmarkHourlyRate, packi
                 </Section>
             </div>
 
-            <ArticleSheet key={sheet.session} state={sheet} isOwner={isOwner} onOpenChange={(open) => setSheet((current) => current.withOpen(open))} />
+            <ArticleSheet key={sheet.session} state={sheet} canEdit={canEdit} onOpenChange={(open) => setSheet((current) => current.withOpen(open))} />
             <PriceBenchmarkSheet
                 key={benchmarkArticle?.id ?? 'none'}
                 article={benchmarkArticle}
                 tailors={tailors}
                 hourlyRate={benchmarkHourlyRate}
-                isOwner={isOwner}
+                canAdoptRate={canEdit}
+                canManageSamples={canSamples}
                 onOpenChange={(open) => {
                     if (!open) setBenchmarkId(null);
                 }}
@@ -158,7 +166,7 @@ function PackingSyncPanel({ configured, lastSyncedAt, canSync }: { configured: b
                         Isi PACKINGV2_API_URL dan PACKINGV2_API_KEY di server dulu.
                     </p>
                 )}
-                {!canSync && <p className="text-sm text-muted-foreground">Hanya owner yang bisa menarik artikel baru.</p>}
+                {!canSync && <p className="text-sm text-muted-foreground">Role Anda tidak punya akses menarik artikel baru.</p>}
             </div>
             {canSync && (
                 <Button onClick={sync} disabled={!configured || syncing} className="w-full sm:w-auto">
@@ -170,12 +178,13 @@ function PackingSyncPanel({ configured, lastSyncedAt, canSync }: { configured: b
     );
 }
 
-type ArticleCardProps = { article: ArticleRecord; isOwner: boolean; packingConfigured: boolean; onEdit: () => void; onBenchmark: () => void };
+/** canEdit = may edit the article and its rates (ability articles.update). */
+type ArticleCardProps = { article: ArticleRecord; canEdit: boolean; canSync: boolean; canSamples: boolean; packingConfigured: boolean; onEdit: () => void; onBenchmark: () => void };
 
-function ArticleCard({ article, isOwner, packingConfigured, onEdit, onBenchmark }: ArticleCardProps) {
+function ArticleCard({ article, canEdit, canSync, canSamples, packingConfigured, onEdit, onBenchmark }: ArticleCardProps) {
     const needsRate = ArticleFilter.needsRate(article);
     // Variants without an official packingv2 barcode can be requested from packingv2 (owner only).
-    const canProvision = isOwner && packingConfigured && article.variants_count > 0 && article.barcode_count < article.variants_count;
+    const canProvision = canSync && packingConfigured && article.variants_count > 0 && article.barcode_count < article.variants_count;
 
     return (
         <li
@@ -203,12 +212,12 @@ function ArticleCard({ article, isOwner, packingConfigured, onEdit, onBenchmark 
                 {canProvision && <ProvisionBarcodeButton article={article} />}
             </div>
 
-            {isOwner ? (
+            {canEdit ? (
                 <RateEditor key={`${article.id}-${article.sewing_rate}-${article.makloon_sewing_rate}`} article={article} />
             ) : (
                 <RateSummary article={article} />
             )}
-            <BenchmarkLine article={article} isOwner={isOwner} onOpen={onBenchmark} />
+            <BenchmarkLine article={article} canEdit={canEdit || canSamples} onOpen={onBenchmark} />
 
             {article.notes && (
                 <p className="flex items-start gap-2 text-base wrap-anywhere">
@@ -217,7 +226,7 @@ function ArticleCard({ article, isOwner, packingConfigured, onEdit, onBenchmark 
                 </p>
             )}
 
-            {isOwner && (
+            {canEdit && (
                 <div className="mt-auto flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" onClick={onEdit} className="flex-1">
                         <Pencil />
@@ -230,10 +239,10 @@ function ArticleCard({ article, isOwner, packingConfigured, onEdit, onBenchmark 
     );
 }
 
-function BenchmarkLine({ article, isOwner, onOpen }: { article: ArticleRecord; isOwner: boolean; onOpen: () => void }) {
+function BenchmarkLine({ article, canEdit, onOpen }: { article: ArticleRecord; canEdit: boolean; onOpen: () => void }) {
     const benchmark = article.benchmark;
 
-    if (!isOwner && !benchmark) {
+    if (!canEdit && !benchmark) {
         return null;
     }
 
@@ -369,16 +378,16 @@ function ActiveToggle({ article }: { article: ArticleRecord }) {
 
 type ArticleSheetProps = {
     state: SheetState<ArticleRecord>;
-    isOwner: boolean;
+    canEdit: boolean;
     onOpenChange: (open: boolean) => void;
 };
 
 /** Add a manual article (owner and admin), or let the owner fix the name and notes of one. */
-function ArticleSheet({ state, isOwner, onOpenChange }: ArticleSheetProps) {
+function ArticleSheet({ state, canEdit, onOpenChange }: ArticleSheetProps) {
     const article = state.target;
     const canRename = article === null || ArticleForm.canRename(article);
     const form = useForm<ArticleFormData>(article ? ArticleForm.fromRecord(article) : ArticleForm.blank());
-    form.transform((data) => (article ? ArticleForm.updatePayload(data, article) : ArticleForm.createPayload(data, isOwner)));
+    form.transform((data) => (article ? ArticleForm.updatePayload(data, article) : ArticleForm.createPayload(data, canEdit)));
 
     const submit = () => {
         const options = { preserveScroll: true, onSuccess: () => onOpenChange(false) };
@@ -433,7 +442,7 @@ function ArticleSheet({ state, isOwner, onOpenChange }: ArticleSheetProps) {
                 </Alert>
             )}
 
-            {!article && isOwner && (
+            {!article && canEdit && (
                 <div className="grid grid-cols-2 gap-3">
                     <FormField label="Tarif Jahit Internal" htmlFor="article-rate" error={form.errors.sewing_rate}>
                         <MoneyField id="article-rate" value={form.data.sewing_rate} onChange={(value) => form.setData('sewing_rate', value)} invalid={!!form.errors.sewing_rate} />

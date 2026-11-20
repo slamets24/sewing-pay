@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Sewing;
 
 use App\Actions\Sewing\CancelPickupItemAction;
 use App\Actions\Sewing\CreatePickupAction;
+use App\Enums\Ability;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Sewing\StorePickupRequest;
 use App\Models\PickupItem;
@@ -32,8 +33,8 @@ class PickupController extends Controller
     {
         $data = $request->validated();
 
-        // Rates are owner-only master data; an admin's pickup always uses the article rate.
-        if (! $request->user()->isSuperadmin()) {
+        // Rates are master data; without articles.update a pickup always uses the article rate.
+        if (! $request->user()->hasAbility(Ability::ArticlesUpdate)) {
             $data['items'] = array_map(fn (array $item) => array_diff_key($item, ['sewing_rate' => true]), $data['items']);
         }
 

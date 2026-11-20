@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests\Sewing;
 
-use App\Enums\UserRole;
+use App\Models\Role;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
-/** Create a staff account, or change its role. Tailors use a portal link, not an email login. */
+/**
+ * Create a staff account, or change its role. The role must be one the signed-in user may hand out
+ * (see User::assignableRoles): never Owner, never a no-login role, and for non-owners never broader than their own.
+ */
 class ManagedUserRequest extends FormRequest
 {
     public function authorize(): bool
@@ -27,7 +30,7 @@ class ManagedUserRequest extends FormRequest
             'name' => [$isCreate ? 'required' : 'prohibited', 'string', 'max:255'],
             'email' => [$isCreate ? 'required' : 'prohibited', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'password' => [$isCreate ? 'required' : 'prohibited', 'confirmed', Password::defaults()],
-            'role' => ['required', Rule::in([UserRole::Admin->value])],
+            'role' => ['required', 'string', Rule::in($this->user()->assignableRoles()->map(fn (Role $role) => $role->slug)->all())],
         ];
     }
 
@@ -37,7 +40,7 @@ class ManagedUserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'role.not_in' => 'Hanya akun Owner dan Admin internal divisi jahit yang dapat dibuat. Divisi lain dan penjahit tidak memiliki akses akun.',
+            'role.in' => 'Peran ini tidak bisa Anda berikan. Owner tidak bisa dibuat lagi, dan peran tidak boleh punya akses melebihi akses Anda sendiri.',
         ];
     }
 }

@@ -85,10 +85,11 @@ export default function ProductionReport({
     };
 
     return (
-        <AppLayout title="Rekap & Analitik Produksi">
+        <AppLayout title="Rekap & Analitik Produksi" shortTitle="Rekap produksi">
             <div className="flex flex-col gap-6">
                 {/* Page Intro with Date Range Controls */}
                 <PageIntro
+                    hideTextOnPhone
                     actions={
                         <div className="flex items-center gap-2">
                             <Button asChild variant="outline" size="sm" className="rounded-xl shadow-xs">
@@ -106,13 +107,13 @@ export default function ProductionReport({
                 <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
                     {/* Preset Pills */}
                     <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="mr-1 text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                        <span className="mr-1 hidden items-center gap-1 text-xs font-bold tracking-wider text-muted-foreground uppercase sm:flex">
                             <Filter className="size-3.5" />
                             Periode:
                         </span>
                         {[
                             { id: '7_days', label: '7 Hari' },
-                            { id: '14_days', label: '2 Minggu (14 Hari)' },
+                            { id: '14_days', label: '14 Hari' },
                             { id: '30_days', label: '30 Hari' },
                             { id: 'this_month', label: 'Bulan Ini' },
                             { id: 'custom', label: 'Kustom' },

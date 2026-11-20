@@ -24,7 +24,7 @@ export default function PayoutIndex({ payouts, hasDraft, unpaid }: PayoutIndexPr
         <AppLayout title="Gaji penjahit">
             
 
-            <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-3">
                 <StatTile label="Belum dibayar (jahit)" value={formatIdr(work.deliveryAmount)} hint={`${work.deliveryQty} pcs sudah disetor`} icon={Shirt} tone="sewing" />
                 <StatTile label="Revisi bahan belum dibayar" value={formatIdr(work.revisionAmount)} hint="Revisi bahan yang sudah selesai" icon={Wrench} tone="revision" />
                 <div className="sm:col-span-2 xl:col-span-1">

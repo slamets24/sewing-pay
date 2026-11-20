@@ -95,32 +95,32 @@ export default function AttendanceIndex({ date, rows, summary, mealAllowanceRule
     };
 
     return (
-        <AppLayout title="Absensi Penjahit">
+        <AppLayout title="Absensi Penjahit" shortTitle="Absensi">
             <Head title="Absensi Penjahit" />
 
             <PageIntro
                 actions={
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Button type="button" variant="outline" size="sm" onClick={prevDay}>
+                    <div className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:flex sm:w-auto sm:flex-wrap">
+                        <Button type="button" variant="outline" size="sm" onClick={prevDay} aria-label="Kemarin">
                             <ChevronLeft className="size-4" />
-                            Kemarin
+                            <span className="hidden sm:inline">Kemarin</span>
                         </Button>
                         <Input
                             type="date"
                             value={date}
                             onChange={(e) => e.target.value && changeDate(e.target.value)}
-                            className="w-auto h-9 font-medium"
+                            className="h-9 w-full font-medium sm:w-auto"
                         />
-                        <Button type="button" variant="outline" size="sm" onClick={nextDay}>
-                            Besok
+                        <Button type="button" variant="outline" size="sm" onClick={nextDay} aria-label="Besok">
+                            <span className="hidden sm:inline">Besok</span>
                             <ChevronRight className="size-4" />
                         </Button>
                         {!isToday && (
-                            <Button type="button" variant="secondary" size="sm" onClick={() => changeDate(todayStr)}>
+                            <Button type="button" variant="secondary" size="sm" onClick={() => changeDate(todayStr)} className="col-span-3 sm:col-span-1">
                                 Hari Ini
                             </Button>
                         )}
-                        <Button type="button" size="sm" onClick={handleBatchPresent}>
+                        <Button type="button" size="sm" onClick={handleBatchPresent} className="col-span-3 sm:col-span-1">
                             <Sparkles className="size-4" />
                             Hadirkan Semua (9j)
                         </Button>
@@ -129,7 +129,7 @@ export default function AttendanceIndex({ date, rows, summary, mealAllowanceRule
             />
 
             <div className="flex flex-col gap-5">
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid grid-cols-2 gap-3">
                     <StatTile
                         label="Penjahit hadir"
                         value={`${summary.present_count} / ${summary.total_internal}`}

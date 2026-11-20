@@ -39,15 +39,16 @@ function SheetForm({ trigger, title, description, submitLabel, processing, onSub
                     <SheetTitle className="text-2xl">{title}</SheetTitle>
                     {description && <SheetDescription className="text-base">{description}</SheetDescription>}
                 </SheetHeader>
+                {/* min-h-0: tanpa ini isi form memanjang melebihi layar dan tidak bisa di-scroll. */}
                 <form
-                    className="flex flex-1 flex-col"
+                    className="flex min-h-0 flex-1 flex-col"
                     onSubmit={(event) => {
                         event.preventDefault();
                         onSubmit(() => setOpen(false));
                     }}
                 >
-                    <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4">{children}</div>
-                    <SheetFooter>
+                    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-4 pb-4">{children}</div>
+                    <SheetFooter className="border-t bg-background pb-[calc(1rem+env(safe-area-inset-bottom))]">
                         <Button type="submit" size="lg" disabled={processing}>
                             {submitLabel}
                         </Button>

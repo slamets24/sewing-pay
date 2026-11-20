@@ -33,12 +33,12 @@ export function Section({ title, description, icon: Icon, actions, children, cla
 }
 
 /** Short explanation under the page title, with the page's main buttons on the right. */
-export function PageIntro({ children, actions }: { children?: ReactNode; actions?: ReactNode }) {
+export function PageIntro({ children, actions, hideTextOnPhone = false }: { children?: ReactNode; actions?: ReactNode; hideTextOnPhone?: boolean }) {
     if (!children && !actions) return null;
     return (
         <div className="mb-5 flex flex-wrap items-center gap-3">
-            {children && <p className="min-w-64 flex-1 text-base text-muted-foreground">{children}</p>}
-            {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+            {children && <p className={cn('min-w-64 flex-1 text-sm text-muted-foreground sm:text-base', hideTextOnPhone && 'hidden sm:block')}>{children}</p>}
+            {actions && <div className="flex flex-wrap items-center gap-2 max-sm:w-full">{actions}</div>}
         </div>
     );
 }

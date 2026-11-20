@@ -106,7 +106,7 @@ export default function MakloonPaymentCreate({ tailors, selectedTailorId, unpaid
     };
 
     return (
-        <AppLayout title="Bayar Tagihan Maklun">
+        <AppLayout title="Bayar Tagihan Maklun" shortTitle="Bayar maklun">
             <Head title="Bayar Tagihan Maklun" />
 
             <div className="mb-4">
@@ -118,7 +118,7 @@ export default function MakloonPaymentCreate({ tailors, selectedTailorId, unpaid
                 </Button>
             </div>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-6 pb-28">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-6 pb-20 lg:pb-28">
                 {/* 1. Pilih Vendor Maklun */}
                 <Section title="1. Vendor maklun" icon={Building2}>
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">

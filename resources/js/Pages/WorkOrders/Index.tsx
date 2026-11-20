@@ -1,10 +1,13 @@
 import { EmptyState } from '@/components/empty-state';
 import { QtyBar } from '@/components/sewing/qty-bar';
 import { PageIntro } from '@/components/sewing/section';
+import { WaReportButton } from '@/components/sewing/work-order/wa-report-button';
 import { WorkOrderCard } from '@/components/sewing/work-order/work-order-card';
+import { workOrdersWaText } from '@/domain/work-order/wa-report';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
+import { useCan } from '@/lib/abilities';
 import { cn } from '@/lib/utils';
 import type { WorkOrderSummary } from '@/types/sewing';
 import { Link, router } from '@inertiajs/react';
@@ -26,6 +29,7 @@ const STATUS_FILTERS = [
 export default function WorkOrderIndex({ filters, workOrders, packingConfigured }: IndexProps) {
     const [search, setSearch] = useState(filters.search);
     const [pulling, setPulling] = useState(false);
+    const canManage = useCan()('work-orders.manage');
 
     const pullFromPacking = () =>
         router.post(
@@ -62,30 +66,40 @@ export default function WorkOrderIndex({ filters, workOrders, packingConfigured 
             <PageIntro
                 actions={
                     <div className="flex flex-wrap gap-2">
-                        {packingConfigured && (
+                        <WaReportButton
+                            size="lg"
+                            label={`Laporan WA (${workOrders.length})`}
+                            disabled={workOrders.length === 0}
+                            text={workOrdersWaText(workOrders, filters.status === 'done' ? 'Laporan WO selesai jahit' : filters.status === 'all' ? 'Laporan WO' : 'Laporan WO berjalan')}
+                        />
+                        {canManage && packingConfigured && (
                             <Button size="lg" variant="outline" onClick={pullFromPacking} disabled={pulling}>
                                 <RefreshCw className={cn(pulling && 'animate-spin')} />
                                 {pulling ? 'Menarik WO…' : 'Tarik dari Packing'}
                             </Button>
                         )}
-                        <Button asChild size="lg">
-                            <Link href={route('work-orders.create')}>
-                                <Plus />
-                                WO baru
-                            </Link>
-                        </Button>
+                        {canManage && (
+                            <Button asChild size="lg">
+                                <Link href={route('work-orders.create')}>
+                                    <Plus />
+                                    WO baru
+                                </Link>
+                            </Button>
+                        )}
                     </div>
                 }
             />
 
             <div className="mb-6 flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:p-5 shadow-xs">
-                <div className="flex flex-wrap gap-2" role="group" aria-label="Saring status">
+                {/* HP: satu baris tiga tombol sama lebar; laptop: tombol biasa. */}
+                <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap" role="group" aria-label="Saring status">
                     {STATUS_FILTERS.map((option) => (
                         <Button
                             key={option.value}
                             variant={filters.status === option.value ? 'default' : 'outline'}
                             onClick={() => visit({ status: option.value })}
-                            className="rounded-xl font-semibold shadow-2xs transition-all active:scale-95"
+                            aria-pressed={filters.status === option.value}
+                            className="rounded-xl px-2 font-semibold shadow-2xs transition-all active:scale-95 sm:px-4"
                         >
                             {option.label}
                         </Button>
@@ -111,12 +125,14 @@ export default function WorkOrderIndex({ filters, workOrders, packingConfigured 
             {workOrders.length === 0 ? (
                 <EmptyState className="bg-card py-10 text-base">
                     Belum ada WO {filters.status === 'open' ? 'yang berjalan' : ''}.
-                    <Button asChild>
-                        <Link href={route('work-orders.create')}>
-                            <Plus />
-                            Buat WO
-                        </Link>
-                    </Button>
+                    {canManage && (
+                        <Button asChild>
+                            <Link href={route('work-orders.create')}>
+                                <Plus />
+                                Buat WO
+                            </Link>
+                        </Button>
+                    )}
                 </EmptyState>
             ) : (
                 <div className={cn('grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3')}>

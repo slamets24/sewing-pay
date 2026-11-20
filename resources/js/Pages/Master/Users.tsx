@@ -7,18 +7,18 @@ import { PageIntro, Section } from '@/components/sewing/section';
 import { ToneBadge } from '@/components/sewing/tone-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ManagedUserForm, RoleCatalog, type NewUserFormData, type PasswordFormData, type RoleFormData, type RoleOption } from '@/domain/master/managed-user-form';
+import { ManagedUserForm, RoleCatalog, type AssignableRole, type NewUserFormData, type PasswordFormData, type RoleFormData, type RoleOption } from '@/domain/master/managed-user-form';
 import { SheetState } from '@/domain/master/sheet-state';
 import AppLayout from '@/layouts/app-layout';
-import type { SelectOption, SharedData, UserRole } from '@/types';
+import type { UserRole } from '@/types';
 import type { ManagedUserRecord } from '@/types/sewing';
-import { useForm, usePage } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import { KeyRound, ShieldCheck, UserCog, UserPlus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 type UsersProps = {
     users: ManagedUserRecord[];
-    roles: SelectOption[];
+    roles: AssignableRole[];
 };
 
 /** null target = "Tambah akun"; otherwise one of the per-user drawers. */
@@ -60,8 +60,7 @@ export default function Users({ users, roles }: UsersProps) {
 }
 
 function UserRow({ user, onAction }: { user: ManagedUserRecord; onAction: (kind: UserAction['kind']) => void }) {
-    const currentUser = usePage<SharedData>().props.auth.user;
-    const canManage = !user.is_current_user && (currentUser?.role === 'superadmin' || user.role === 'admin');
+    const canManage = user.can_manage;
     return (
         <li className="flex flex-col gap-3 rounded-lg border bg-card p-4 lg:flex-row lg:items-center lg:gap-4 lg:rounded-none lg:border-0 lg:px-4 lg:py-3">
             <div className="flex min-w-0 flex-1 flex-col gap-2">
@@ -79,10 +78,12 @@ function UserRow({ user, onAction }: { user: ManagedUserRecord; onAction: (kind:
                 <p className="text-sm text-muted-foreground lg:max-w-56 lg:text-right">Akun ini tidak dapat diubah dari sini.</p>
             ) : (
                 <div className="grid grid-cols-1 gap-2 min-[400px]:grid-cols-2 lg:flex lg:shrink-0">
-                    <Button variant="outline" onClick={() => onAction('role')} aria-label={`Ubah peran ${user.name}`}>
-                        <UserCog />
-                        Ubah peran
-                    </Button>
+                    {user.can_change_role && (
+                        <Button variant="outline" onClick={() => onAction('role')} aria-label={`Ubah peran ${user.name}`}>
+                            <UserCog />
+                            Ubah peran
+                        </Button>
+                    )}
                     <Button variant="outline" onClick={() => onAction('password')} aria-label={`Reset password ${user.name}`}>
                         <KeyRound />
                         Reset password
@@ -117,7 +118,7 @@ function UserSheet({ state, roleOptions, onOpenChange }: UserSheetProps) {
 type SheetProps = { open: boolean; onOpenChange: (open: boolean) => void };
 
 function CreateUserSheet({ open, onOpenChange, roleOptions }: SheetProps & { roleOptions: RoleOption[] }) {
-    const form = useForm<NewUserFormData>(ManagedUserForm.blank());
+    const form = useForm<NewUserFormData>(ManagedUserForm.blank(roleOptions[0]?.value));
     form.transform(ManagedUserForm.createPayload);
 
     const submit = () => form.post(route('users.store'), { preserveScroll: true, onSuccess: () => onOpenChange(false) });

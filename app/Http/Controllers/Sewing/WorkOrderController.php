@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Sewing;
 use App\Actions\Sewing\CreateWorkOrderAction;
 use App\Actions\Sewing\DeleteWorkOrderAction;
 use App\Actions\Sewing\PurgeWorkOrderAction;
-use App\Enums\UserRole;
+use App\Enums\Ability;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Sewing\StoreWorkOrderRequest;
 use App\Http\Requests\Sewing\UpdateWorkOrderRequest;
@@ -91,8 +91,8 @@ class WorkOrderController extends Controller
             'workOrder' => $this->presenter->detail($workOrder),
             'receipts' => $receipts->map(fn (HancaanReceipt $receipt) => $this->presenter->receipt($receipt)),
             'cuttingReceipts' => $cuttingReceipts->map(fn (CuttingReceipt $receipt) => $this->presenter->cuttingReceipt($receipt)),
-            // Hanya Owner yang boleh "hapus total" WO yang sudah berjalan.
-            'purge' => $request->user()?->role === UserRole::Superadmin && $workOrder->hasReceivedAnything()
+            // Hanya role dengan ability work-orders.purge yang boleh "hapus total" WO yang sudah berjalan.
+            'purge' => $request->user()?->hasAbility(Ability::WorkOrdersPurge) && $workOrder->hasReceivedAnything()
                 ? $purge->preview($workOrder)
                 : null,
             ...$catalog->forPicker(),

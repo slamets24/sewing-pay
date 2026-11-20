@@ -73,7 +73,7 @@ export default function WorkOrderCreate({ articles, aliases }: CreateProps) {
                 }
             />
 
-            <div className="flex flex-col gap-5 pb-28">
+            <div className="flex flex-col gap-5 pb-20 lg:pb-28">
                 <Section title="1. Tempel teks WA" icon={MessageSquareText}>
                     <div className="flex flex-col gap-3">
                         <Textarea
