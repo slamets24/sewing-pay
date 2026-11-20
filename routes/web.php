@@ -13,7 +13,6 @@ use App\Http\Controllers\Sewing\PayoutController;
 use App\Http\Controllers\Sewing\PickupController;
 use App\Http\Controllers\Sewing\ProductionReportController;
 use App\Http\Controllers\Sewing\PublicPayoutSlipController;
-use App\Http\Controllers\Sewing\PublicWorkOrderController;
 use App\Http\Controllers\Sewing\QcShipmentController;
 use App\Http\Controllers\Sewing\QuickDeskController;
 use App\Http\Controllers\Sewing\RevisionController;
@@ -47,8 +46,6 @@ Route::get('/', function () {
 });
 
 Route::get('/slip-gaji/{invoiceNumber}/{token}', PublicPayoutSlipController::class)->name('payout-slips.public');
-// WO untuk dibagikan ke grup WA (tanpa login, tautan bertanda tangan).
-Route::get('/wo-publik/{workOrder}', PublicWorkOrderController::class)->middleware('signed:relative')->name('work-orders.public');
 
 // Every staff page is guarded by an Ability (app/Enums/Ability.php). Which roles hold it is set in Master Data › Role & Akses.
 Route::middleware('auth')->group(function () {

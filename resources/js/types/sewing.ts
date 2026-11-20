@@ -51,10 +51,8 @@ export type WorkOrderSummary = {
     is_opening_stock: boolean;
     from_packing?: boolean;
     is_overdue: boolean;
-    /** Nama artikel + total pcs, untuk laporan WA. */
-    article_lines?: { name: string; qty: number }[];
-    /** Tautan WO tanpa login untuk dibagikan. */
-    public_url?: string;
+    /** Per nama artikel: rencana, di gudang, dan di penjahit. Untuk laporan WA. */
+    article_lines?: { name: string; qty: number; warehouse_qty: number; sewing_qty: number }[];
     is_done: boolean;
     notes: string | null;
     items_count: number;

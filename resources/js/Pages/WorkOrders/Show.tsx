@@ -91,7 +91,7 @@ export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [
                                 </Button>
                             }
                         />
-                        <WaReportButton text={workOrderWaText(workOrder)} publicUrl={workOrder.public_url} />
+                        <WaReportButton text={workOrderWaText(workOrder)} />
                         {(workOrder.can_delete || purge) && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
