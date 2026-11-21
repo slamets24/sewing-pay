@@ -405,19 +405,19 @@ function ItemRow({
             )}
         >
             {/*
-              Always two rows. Phone & tablet: [pilih · nama · aksi] / [ikon tahap].
-              Laptop (wide 2-column cards): [pilih · nama · status] / [ikon tahap · aksi].
+              Row 1: [pilih · nama + varian · status] — the name gets the whole width so colour & size stay readable on phones.
+              Row 2: [ikon tahap · aksi]; on a narrow phone the actions drop to their own line, right-aligned.
             */}
             <Checkbox checked={selected} onCheckedChange={onToggle} aria-label={`Pilih baris ${item.article_name}`} className="order-1 size-5 shrink-0 cursor-pointer rounded-md" />
-            <p className="order-2 min-w-0 flex-1 truncate font-bold leading-tight" title={item.barcode_value ? `Barcode ${item.barcode_value}` : 'Belum ada barcode'}>
+            <p className="order-2 min-w-0 flex-1 font-bold leading-tight wrap-anywhere" title={item.barcode_value ? `Barcode ${item.barcode_value}` : 'Belum ada barcode'}>
                 {item.article_name}
                 <span className="font-medium text-muted-foreground"> · {variantLabel(item.color, item.size) || 'Tanpa varian'}</span>
                 {item.is_polosan && <span className="font-medium text-muted-foreground"> · polosan</span>}
             </p>
-            <ToneBadge tone={ToneStyle.forStage(item.stage)} className="order-3 hidden shrink-0 px-2 py-0.5 text-[11px] sm:inline-flex md:hidden xl:inline-flex">
+            <ToneBadge tone={ToneStyle.forStage(item.stage)} className="order-3 hidden shrink-0 px-2 py-0.5 text-[11px] sm:inline-flex">
                 {isDone ? 'Selesai' : item.stage_label}
             </ToneBadge>
-            <div className="order-4 flex shrink-0 items-center gap-1.5 xl:order-6 xl:ml-auto">
+            <div className="order-6 ml-auto flex shrink-0 flex-wrap items-center justify-end gap-1.5">
                 {!item.is_polosan && item.printing_qty > 0 && (
                     <TransferCuttingSheet
                         item={item}
@@ -486,8 +486,8 @@ function ItemRow({
                     </ConfirmButton>
                 )}
             </div>
-            <div className="order-5 basis-full xl:order-4" aria-hidden />
-            <div className="order-6 flex flex-wrap gap-1 sm:gap-1.5 sm:pl-7.5 xl:order-5">
+            <div className="order-4 basis-full" aria-hidden />
+            <div className="order-5 flex flex-wrap gap-1 pl-7.5 sm:gap-1.5">
                 {cells.map((cell) => {
                     const value = cell.getValue(item);
                     const isTotal = cell.key === 'wo';
