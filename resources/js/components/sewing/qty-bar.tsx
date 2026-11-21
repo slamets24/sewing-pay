@@ -5,6 +5,10 @@ export type QtyBreakdown = {
     printing_qty?: number;
     cutting_qty?: number;
     pending_qty?: number;
+    /** Di gudang, masih harus ke vendor proses (Bordir, ...). */
+    vendor_waiting_qty?: number;
+    /** Sedang di vendor proses. */
+    vendor_qty?: number;
     available_qty: number;
     sewing_internal_qty?: number;
     sewing_makloon_qty?: number;
@@ -31,6 +35,8 @@ export function QtyBar({ breakdown, showLegend = false, className }: { breakdown
         segments.push({ key: 'pending_qty', label: 'Di divisi lain', tone: 'other' });
     }
 
+    segments.push({ key: 'vendor_waiting_qty', label: 'Tunggu vendor', tone: 'neutral' });
+    segments.push({ key: 'vendor_qty', label: 'Di vendor', tone: 'other' });
     segments.push({ key: 'available_qty', label: 'Di gudang', tone: 'ready' });
 
     if (breakdown.sewing_internal_qty !== undefined || breakdown.sewing_makloon_qty !== undefined) {
@@ -45,7 +51,8 @@ export function QtyBar({ breakdown, showLegend = false, className }: { breakdown
     if (breakdown.qc_qty !== undefined) segments.push({ key: 'qc_qty', label: 'Kirim QC', tone: 'shipped' });
 
     const total = segments.reduce((sum, segment) => sum + qty(segment.key), 0);
-    const visible = segments.filter((segment) => (segment.key !== 'hold_qty' && segment.key !== 'printing_qty') || qty(segment.key) > 0);
+    const optional: (keyof QtyBreakdown)[] = ['hold_qty', 'printing_qty', 'vendor_waiting_qty', 'vendor_qty'];
+    const visible = segments.filter((segment) => !optional.includes(segment.key) || qty(segment.key) > 0);
 
     return (
         <div className={cn('flex flex-col gap-2', className)}>

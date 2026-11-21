@@ -121,6 +121,8 @@ class PackingWorkOrderApiController extends Controller
             'items' => fn ($query) => WorkOrderItem::withQcShippedQty($query)->orderBy('id'),
             // Ambilan yang belum disetor, untuk tahu barang ada di penjahit internal atau vendor makloon.
             'items.pickupItems' => fn ($query) => $query->where('status', PickupItemStatus::Open->value)->with('tailor:id,name,type'),
+            // Kiriman vendor proses (Bordir, Prisket, ...), untuk status "Di vendor".
+            'items.vendorJobs',
         ]);
     }
 }

@@ -15,7 +15,7 @@ export function AppLogo({
         <span className={cn('flex items-center gap-2.5', className)}>
             <span className="relative flex size-10 shrink-0 items-center justify-center rounded-xl bg-white p-0.5 shadow-xs border border-border/80">
                 <img
-                    src="/images/az-icon.png"
+                    src="/images/azflow-icon-192.png"
                     alt="AZFLOW"
                     className="size-full object-contain"
                 />

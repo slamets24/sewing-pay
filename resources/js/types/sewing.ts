@@ -1,6 +1,6 @@
 /** Shapes of the props sent by the Laravel presenters in app/Presenters and the Sewing controllers. */
 
-export type Stage = 'other_division' | 'printing' | 'cutting' | 'ready' | 'internal_sewing' | 'makloon_sewing' | 'sewing' | 'waiting_revision' | 'done';
+export type Stage = 'other_division' | 'printing' | 'cutting' | 'waiting_vendor' | 'at_vendor' | 'ready' | 'internal_sewing' | 'makloon_sewing' | 'sewing' | 'waiting_revision' | 'done';
 export type TailorType = 'internal' | 'makloon';
 export type RevisionType = 'sewing' | 'material';
 export type RevisionStatus = 'waiting_material' | 'material_ready' | 'in_progress' | 'done';
@@ -64,6 +64,10 @@ export type WorkOrderSummary = {
     cutting_qty: number;
     pending_qty: number;
     available_qty: number;
+    /** Di gudang, masih harus dikirim ke vendor proses (Bordir, ...). */
+    vendor_waiting_qty?: number;
+    /** Sedang di vendor proses, belum kembali ke gudang. */
+    vendor_qty?: number;
     sewing_qty: number;
     sewing_internal_qty: number;
     sewing_makloon_qty: number;
@@ -101,6 +105,12 @@ export type WorkOrderItemRecord = {
     qc_qty: number;
     pending_qty: number;
     available_qty: number;
+    /** Gudang → cutting: hancaan yang belum keluar ke vendor / penjahit. */
+    step_back_warehouse_qty?: number;
+    vendor_waiting_qty?: number;
+    vendor_qty?: number;
+    vendor_steps?: VendorStep[];
+    open_vendor_jobs?: OpenVendorJob[];
     sewing_qty: number;
     sewing_internal_qty: number;
     sewing_makloon_qty: number;
@@ -127,6 +137,29 @@ export type WorkOrderDetail = WorkOrderSummary & {
     source_text: string | null;
     items: WorkOrderItemRecord[];
     cutting_receipts?: CuttingReceiptRecord[];
+};
+
+/** Satu proses vendor pada satu baris WO: menunggu dikirim, sedang di vendor, sudah kembali. */
+export type VendorStep = { process: string; waiting_qty: number; at_vendor_qty: number; done_qty: number };
+
+export type OpenVendorJob = { id: number; process: string; vendor_name: string; qty: number; open_qty: number; sent_at: string };
+
+export type VendorJobRecord = {
+    id: number;
+    work_order_item_id: number;
+    article_name: string;
+    color: string | null;
+    size: string | null;
+    process: string;
+    vendor_name: string;
+    qty: number;
+    returned_qty: number;
+    open_qty: number;
+    sent_at: string;
+    notes: string | null;
+    created_by_name: string | null;
+    can_cancel: boolean;
+    returns: { id: number; qty: number; returned_at: string; created_by_name: string | null }[];
 };
 
 export type HancaanReceiptRecord = {

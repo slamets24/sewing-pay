@@ -11,6 +11,7 @@ use App\Http\Requests\Sewing\StoreWorkOrderRequest;
 use App\Http\Requests\Sewing\UpdateWorkOrderRequest;
 use App\Models\CuttingReceipt;
 use App\Models\HancaanReceipt;
+use App\Models\VendorJob;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderItem;
 use App\Presenters\WorkOrderPresenter;
@@ -32,7 +33,7 @@ class WorkOrderController extends Controller
         $search = trim((string) $request->query('search'));
 
         $workOrders = WorkOrder::query()
-            ->with(['items' => fn ($query) => WorkOrderItem::withQcShippedQty($query), 'items.article', 'items.pickupItems.tailor'])
+            ->with(['items' => fn ($query) => WorkOrderItem::withQcShippedQty($query), 'items.article', 'items.pickupItems.tailor', 'items.vendorJobs'])
             ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
                 ->where('number', 'like', "%{$search}%")
                 ->orWhereHas('items.article', fn ($query) => $query->where('name', 'like', "%{$search}%"))))
@@ -69,7 +70,7 @@ class WorkOrderController extends Controller
 
     public function show(Request $request, WorkOrder $workOrder, ArticleCatalog $catalog, PurgeWorkOrderAction $purge): Response
     {
-        $workOrder->load(['items' => fn ($query) => WorkOrderItem::withQcShippedQty($query), 'items.article', 'items.variant', 'items.pickupItems.tailor']);
+        $workOrder->load(['items' => fn ($query) => WorkOrderItem::withQcShippedQty($query), 'items.article', 'items.variant', 'items.pickupItems.tailor', 'items.vendorJobs']);
 
         $receipts = HancaanReceipt::query()
             ->with(['item.article', 'creator'])
@@ -87,10 +88,21 @@ class WorkOrderController extends Controller
             ->limit(50)
             ->get();
 
+        $vendorJobs = VendorJob::query()
+            ->with(['item.article', 'creator', 'returns.creator'])
+            ->whereIn('work_order_item_id', $workOrder->items->modelKeys())
+            ->latest('sent_at')
+            ->latest('id')
+            ->limit(100)
+            ->get();
+
         return Inertia::render('WorkOrders/Show', [
             'workOrder' => $this->presenter->detail($workOrder),
             'receipts' => $receipts->map(fn (HancaanReceipt $receipt) => $this->presenter->receipt($receipt)),
             'cuttingReceipts' => $cuttingReceipts->map(fn (CuttingReceipt $receipt) => $this->presenter->cuttingReceipt($receipt)),
+            'vendorJobs' => $vendorJobs->map(fn (VendorJob $job) => $this->presenter->vendorJob($job)),
+            // Nama vendor yang pernah dipakai, untuk isian cepat saat kirim ke vendor.
+            'vendorNames' => VendorJob::query()->distinct()->orderBy('vendor_name')->limit(100)->pluck('vendor_name'),
             // Hanya role dengan ability work-orders.purge yang boleh "hapus total" WO yang sudah berjalan.
             'purge' => $request->user()?->hasAbility(Ability::WorkOrdersPurge) && $workOrder->hasReceivedAnything()
                 ? $purge->preview($workOrder)

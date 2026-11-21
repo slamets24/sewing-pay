@@ -134,7 +134,7 @@ export default function AppLayout({ title, shortTitle, children }: AppLayoutProp
 function AppLogoMark() {
     return (
         <span className="flex size-9 items-center justify-center rounded-lg overflow-hidden border border-border/80 bg-white p-0.5 shadow-xs">
-            <img src="/images/az-icon.png" alt="OPSEW" className="size-full object-contain" />
+            <img src="/images/azflow-icon-192.png" alt="OPSEW" className="size-full object-contain" />
         </span>
     );
 }

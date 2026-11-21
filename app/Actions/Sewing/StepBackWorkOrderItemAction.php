@@ -22,9 +22,9 @@ class StepBackWorkOrderItemAction
     {
         return DB::transaction(function () use ($item, $qty) {
             $item = WorkOrderItem::query()->lockForUpdate()->findOrFail($item->id);
-            $max = $item->availableQty();
+            $max = max(0, $item->received_qty - $item->lockedReceivedQty());
 
-            $this->guard($qty, $max, 'Gudang', 'Barang yang sudah diambil penjahit atau ditahan revisi tidak bisa dimundurkan dari sini.');
+            $this->guard($qty, $max, 'Gudang', 'Barang yang sudah diambil penjahit, dikirim ke vendor, atau ditahan revisi tidak bisa dimundurkan dari sini.');
 
             $item->decrement('received_qty', $qty);
             $this->trimReceipts(HancaanReceipt::query()->where('work_order_item_id', $item->id), $qty);

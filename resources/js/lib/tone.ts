@@ -57,6 +57,8 @@ export class ToneStyle {
             other_division: 'other',
             printing: 'other',
             cutting: 'primary',
+            waiting_vendor: 'neutral',
+            at_vendor: 'other',
             ready: 'ready',
             internal_sewing: 'sewing',
             makloon_sewing: 'qc',

@@ -8,7 +8,9 @@ import {
     EditHancaanReceiptSheet,
     EditWorkOrderSheet,
     PlannedQtySheet,
+    ReceiveFromVendorSheet,
     ReceiveHancaanSheet,
+    SendToVendorSheet,
     TransferCuttingSheet,
 } from '@/components/sewing/work-order/item-sheets';
 import { DeleteWorkOrderSheet, PurgeWorkOrderSheet, type PurgePreview } from '@/components/sewing/work-order/purge-sheet';
@@ -24,13 +26,14 @@ import { ToneBadge } from '@/components/sewing/tone-badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import AppLayout from '@/layouts/app-layout';
+import { useCan } from '@/lib/abilities';
 import { dueLabel, formatDate, formatDateTime, variantLabel } from '@/lib/format';
 import { ToneStyle, type Tone } from '@/lib/tone';
 import { cn } from '@/lib/utils';
 import { floorActions } from '@/services/floor-actions';
-import type { CatalogArticle, CuttingReceiptRecord, HancaanReceiptRecord, WorkOrderDetail, WorkOrderItemRecord } from '@/types/sewing';
+import type { CatalogArticle, CuttingReceiptRecord, HancaanReceiptRecord, VendorJobRecord, WorkOrderDetail, WorkOrderItemRecord } from '@/types/sewing';
 import { Link } from '@inertiajs/react';
-import { ArrowLeft, Building2, Ellipsis, CheckCircle2, CheckSquare, ClipboardList, History, HandPlatter, PackagePlus, Pencil, Plus, Printer, Scissors, Shirt, Trash2, Truck, Undo2, Warehouse, Wrench, X, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, Building2, Ellipsis, Factory, Hourglass, PackageCheck, CheckCircle2, CheckSquare, ClipboardList, History, HandPlatter, PackagePlus, Pencil, Plus, Printer, Scissors, Shirt, Trash2, Truck, Undo2, Warehouse, Wrench, X, type LucideIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 type ShowProps = {
@@ -39,10 +42,14 @@ type ShowProps = {
     cuttingReceipts?: CuttingReceiptRecord[];
     articles: CatalogArticle[];
     purge?: PurgePreview | null;
+    vendorJobs?: VendorJobRecord[];
+    vendorNames?: string[];
 };
 
-export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [], articles, purge = null }: ShowProps) {
+export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [], articles, purge = null, vendorJobs = [], vendorNames = [] }: ShowProps) {
     const [dangerSheet, setDangerSheet] = useState<'delete' | 'purge' | null>(null);
+    const can = useCan();
+    const canVendor = can('vendor-process.manage');
     const due = dueLabel(workOrder.due_at);
     const hasPrint = workOrder.items.some((item) => !item.is_polosan);
 
@@ -75,6 +82,10 @@ export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [
 
     const selectedWarehouseCandidates = selectedItems.filter((i) => i.cutting_qty > 0);
     const totalWarehousePieces = selectedWarehouseCandidates.reduce((sum, i) => sum + i.cutting_qty, 0);
+    const selectedVendorSendCandidates = canVendor ? selectedItems.filter((i) => (i.vendor_waiting_qty ?? 0) > 0) : [];
+    const totalVendorSendPieces = selectedVendorSendCandidates.reduce((sum, i) => sum + (i.vendor_waiting_qty ?? 0), 0);
+    const selectedVendorReceiveCandidates = canVendor ? selectedItems.filter((i) => (i.open_vendor_jobs ?? []).length > 0) : [];
+    const totalVendorReceivePieces = selectedVendorReceiveCandidates.reduce((sum, i) => sum + (i.vendor_qty ?? 0), 0);
     const hiddenSelectedCount = selectedIds.filter((id) => !visibleItems.some((item) => item.id === id)).length;
 
     return (
@@ -249,7 +260,15 @@ export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [
                         /* Phone: one card per row. Tablet / laptop: two cards side by side. */
                         <div className="grid gap-3 md:grid-cols-2">
                             {visibleItems.map((item) => (
-                                <ItemRow key={item.id} item={item} selected={selectedIds.includes(item.id)} onToggle={() => toggleItem(item.id)} />
+                                <ItemRow
+                                    key={item.id}
+                                    item={item}
+                                    workOrderId={workOrder.id}
+                                    vendorNames={vendorNames}
+                                    canVendor={canVendor}
+                                    selected={selectedIds.includes(item.id)}
+                                    onToggle={() => toggleItem(item.id)}
+                                />
                             ))}
                         </div>
                     )}
@@ -268,7 +287,9 @@ export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [
                                     <p className="truncate text-xs text-muted-foreground">{hiddenSelectedCount} di luar pencarian</p>
                                 ) : (
                                     selectedCuttingCandidates.length === 0 &&
-                                    selectedWarehouseCandidates.length === 0 && <p className="truncate text-xs text-muted-foreground">Tidak ada yang bisa dipindah</p>
+                                    selectedWarehouseCandidates.length === 0 &&
+                                    selectedVendorSendCandidates.length === 0 &&
+                                    selectedVendorReceiveCandidates.length === 0 && <p className="truncate text-xs text-muted-foreground">Tidak ada yang bisa dipindah</p>
                                 )}
                             </div>
 
@@ -282,6 +303,37 @@ export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [
                                             <Scissors className="size-4" />
                                             Cutting
                                             <span className={cn('rounded-full px-1.5 text-xs font-bold tabular', selectedWarehouseCandidates.length > 0 ? 'bg-foreground/10' : 'bg-white/20')}>{totalCuttingPieces}</span>
+                                        </Button>
+                                    }
+                                />
+                            )}
+
+                            {selectedVendorSendCandidates.length > 0 && (
+                                <SendToVendorSheet
+                                    workOrderId={workOrder.id}
+                                    items={selectedVendorSendCandidates}
+                                    vendorNames={vendorNames}
+                                    onSuccess={() => setSelectedIds([])}
+                                    trigger={
+                                        <Button variant="outline" className="h-10 shrink-0 gap-1.5 px-3 font-semibold" aria-label={`Kirim ${totalVendorSendPieces} pcs ke vendor`}>
+                                            <Factory className="size-4" />
+                                            Vendor
+                                            <span className="rounded-full bg-foreground/10 px-1.5 text-xs font-bold tabular">{totalVendorSendPieces}</span>
+                                        </Button>
+                                    }
+                                />
+                            )}
+
+                            {selectedVendorReceiveCandidates.length > 0 && (
+                                <ReceiveFromVendorSheet
+                                    workOrderId={workOrder.id}
+                                    items={selectedVendorReceiveCandidates}
+                                    onSuccess={() => setSelectedIds([])}
+                                    trigger={
+                                        <Button variant="outline" className="h-10 shrink-0 gap-1.5 px-3 font-semibold" aria-label={`Terima ${totalVendorReceivePieces} pcs dari vendor`}>
+                                            <PackageCheck className="size-4" />
+                                            Dari vendor
+                                            <span className="rounded-full bg-foreground/10 px-1.5 text-xs font-bold tabular">{totalVendorReceivePieces}</span>
                                         </Button>
                                     }
                                 />
@@ -327,6 +379,50 @@ export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [
                                             </Button>
                                         }
                                     />
+                                </li>
+                            ))}
+                        </ul>
+                    </Section>
+                )}
+
+                {vendorJobs.length > 0 && (
+                    <Section title="Riwayat vendor" icon={Factory} description="Hancaan keluar ke vendor proses dan masuk gudang lagi">
+                        <ul className="divide-y">
+                            {vendorJobs.map((job) => (
+                                <li key={job.id} className="flex flex-wrap items-center gap-3 py-3">
+                                    <div className="min-w-0 flex-1">
+                                        <p className="font-semibold">
+                                            {job.qty} pcs · {job.article_name} {variantLabel(job.color, job.size)} → {job.process} di {job.vendor_name}
+                                        </p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {[
+                                                `Kirim ${formatDateTime(job.sent_at)}`,
+                                                job.open_qty > 0 ? `masih di vendor ${job.open_qty} pcs` : 'sudah kembali semua',
+                                                ...job.returns.map((ret) => `+${ret.qty} masuk ${formatDateTime(ret.returned_at)}`),
+                                                job.created_by_name,
+                                                job.notes,
+                                            ]
+                                                .filter(Boolean)
+                                                .join(' · ')}
+                                        </p>
+                                    </div>
+                                    {canVendor && job.can_cancel && (
+                                        <ConfirmButton size="sm" variant="outline" confirmLabel="Ya, batalkan" onConfirm={() => floorActions.send('delete', route('vendor-jobs.destroy', job.id))}>
+                                            <Undo2 className="size-4" />
+                                            Batal kirim
+                                        </ConfirmButton>
+                                    )}
+                                    {canVendor && job.returns.length > 0 && (
+                                        <ConfirmButton
+                                            size="sm"
+                                            variant="outline"
+                                            confirmLabel={`Ya, batalkan +${job.returns[0].qty}`}
+                                            onConfirm={() => floorActions.send('delete', route('vendor-job-returns.destroy', job.returns[0].id))}
+                                        >
+                                            <Undo2 className="size-4" />
+                                            Batal terima
+                                        </ConfirmButton>
+                                    )}
                                 </li>
                             ))}
                         </ul>
@@ -380,6 +476,8 @@ export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [
 const STAGE_FIGURES: { key: string; label: string; icon: LucideIcon; tone: Tone; getValue: (wo: WorkOrderDetail) => number }[] = [
     { key: 'print', label: 'Printing', icon: Printer, tone: 'other', getValue: (wo) => wo.printing_qty },
     { key: 'cut', label: 'Cutting', icon: Scissors, tone: 'primary', getValue: (wo) => wo.cutting_qty },
+    { key: 'tunggu-vendor', label: 'Tunggu vendor', icon: Hourglass, tone: 'neutral', getValue: (wo) => wo.vendor_waiting_qty ?? 0 },
+    { key: 'vendor', label: 'Di vendor', icon: Factory, tone: 'other', getValue: (wo) => wo.vendor_qty ?? 0 },
     { key: 'gudang', label: 'Di gudang', icon: Warehouse, tone: 'ready', getValue: (wo) => wo.available_qty },
     { key: 'jahit', label: 'Penjahit', icon: Shirt, tone: 'sewing', getValue: (wo) => wo.sewing_internal_qty },
     { key: 'makloon', label: 'Makloon', icon: Building2, tone: 'qc', getValue: (wo) => wo.sewing_makloon_qty },
@@ -410,6 +508,8 @@ const STAGE_CELLS: {
     { key: 'wo', label: 'WO', abbr: 'WO', icon: ClipboardList, getValue: (i) => i.planned_qty },
     { key: 'print', label: 'Printing', abbr: 'PRI', icon: Printer, tone: 'other', getValue: (i) => (i.is_polosan ? '-' : i.printing_qty) },
     { key: 'cut', label: 'Cutting', abbr: 'CUT', icon: Scissors, tone: 'primary', getValue: (i) => i.cutting_qty },
+    { key: 'tunggu-vendor', label: 'Tunggu kirim vendor', abbr: 'TV', icon: Hourglass, tone: 'neutral', getValue: (i) => i.vendor_waiting_qty ?? 0 },
+    { key: 'vendor', label: 'Di vendor', abbr: 'VEN', icon: Factory, tone: 'other', getValue: (i) => i.vendor_qty ?? 0 },
     { key: 'gudang', label: 'Gudang', abbr: 'GUD', icon: Warehouse, tone: 'ready', getValue: (i) => i.available_qty },
     { key: 'jahit', label: 'Penjahit', abbr: 'JAH', icon: Shirt, tone: 'sewing', getValue: (i) => i.sewing_internal_qty },
     { key: 'makloon', label: 'Makloon', abbr: 'MAK', icon: Building2, tone: 'qc', getValue: (i) => i.sewing_makloon_qty },
@@ -421,10 +521,16 @@ const STAGE_CELLS: {
 /** One article line in two rows: name + status on top, stage icons (only stages it is in) + actions below. */
 function ItemRow({
     item,
+    workOrderId,
+    vendorNames,
+    canVendor,
     selected,
     onToggle,
 }: {
     item: WorkOrderItemRecord;
+    workOrderId: number;
+    vendorNames: string[];
+    canVendor: boolean;
     selected: boolean;
     onToggle: () => void;
 }) {
@@ -485,6 +591,33 @@ function ItemRow({
                                 <Warehouse className="size-3.5" />
                                 <span className="hidden sm:inline md:hidden 2xl:inline">Hancaan masuk</span>
                                 <span className="rounded-full bg-primary/20 px-1.5 text-[11px] font-bold">{item.cutting_qty}</span>
+                            </Button>
+                        }
+                    />
+                )}
+                {canVendor && (item.vendor_waiting_qty ?? 0) > 0 && (
+                    <SendToVendorSheet
+                        workOrderId={workOrderId}
+                        items={[item]}
+                        vendorNames={vendorNames}
+                        trigger={
+                            <Button variant="outline" size="sm" className="h-9 gap-1.5 px-3 text-xs font-semibold" aria-label={`Kirim ${item.vendor_waiting_qty} pcs ke vendor`}>
+                                <Factory className="size-3.5" />
+                                <span className="hidden sm:inline md:hidden 2xl:inline">Kirim vendor</span>
+                                <span className="rounded-full bg-foreground/10 px-1.5 text-[11px] font-bold">{item.vendor_waiting_qty}</span>
+                            </Button>
+                        }
+                    />
+                )}
+                {canVendor && (item.open_vendor_jobs ?? []).length > 0 && (
+                    <ReceiveFromVendorSheet
+                        workOrderId={workOrderId}
+                        items={[item]}
+                        trigger={
+                            <Button size="sm" className="h-9 gap-1.5 px-3 text-xs font-semibold" aria-label={`Terima ${item.vendor_qty} pcs dari vendor`}>
+                                <PackageCheck className="size-3.5" />
+                                <span className="hidden sm:inline md:hidden 2xl:inline">Dari vendor</span>
+                                <span className="rounded-full bg-white/20 px-1.5 text-[11px] font-bold">{item.vendor_qty}</span>
                             </Button>
                         }
                     />

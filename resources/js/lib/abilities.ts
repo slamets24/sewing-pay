@@ -13,6 +13,7 @@ export type Ability =
     | 'work-orders.purge'
     | 'cutting.manage'
     | 'hancaan.manage'
+    | 'vendor-process.manage'
     | 'production-reports.view'
     | 'qc-shipments.manage'
     | 'revisions.manage'

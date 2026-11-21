@@ -1,11 +1,12 @@
 import type { WorkOrderItemRecord } from '@/types/sewing';
 
-export type ItemStageFilter = 'all' | 'print' | 'cut' | 'gudang' | 'jahit';
+export type ItemStageFilter = 'all' | 'print' | 'cut' | 'vendor' | 'gudang' | 'jahit';
 
 const STAGES: { value: ItemStageFilter; label: string; test: (item: WorkOrderItemRecord) => boolean }[] = [
     { value: 'all', label: 'Semua', test: () => true },
     { value: 'print', label: 'Printing', test: (item) => !item.is_polosan && item.printing_qty > 0 },
     { value: 'cut', label: 'Cutting', test: (item) => item.cutting_qty > 0 },
+    { value: 'vendor', label: 'Vendor', test: (item) => (item.vendor_waiting_qty ?? 0) > 0 || (item.vendor_qty ?? 0) > 0 },
     { value: 'gudang', label: 'Gudang', test: (item) => item.available_qty > 0 },
     { value: 'jahit', label: 'Penjahit', test: (item) => item.sewing_qty > 0 },
 ];

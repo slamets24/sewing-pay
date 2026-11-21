@@ -40,6 +40,37 @@ class Article extends Model
         ];
     }
 
+    /**
+     * Proses artikel berubah di packingv2: baris WO yang belum ada barang keluar gudang ikut proses baru.
+     */
+    protected static function booted(): void
+    {
+        static::saved(function (Article $article): void {
+            if ($article->wasChanged('processes')) {
+                $article->applyProcessesToOpenLines();
+            }
+        });
+    }
+
+    /**
+     * Salin proses artikel ke baris WO yang prosesnya masih boleh diganti.
+     */
+    public function applyProcessesToOpenLines(): int
+    {
+        $processes = $this->processNames() ?: null;
+        $updated = 0;
+
+        $this->workOrderItems()
+            ->get()
+            ->filter(fn (WorkOrderItem $item) => $item->processList() !== ($processes ?? []) && $item->canChangeProcesses())
+            ->each(function (WorkOrderItem $item) use ($processes, &$updated): void {
+                $item->forceFill(['processes' => $processes])->save();
+                $updated++;
+            });
+
+        return $updated;
+    }
+
     public function variants(): HasMany
     {
         return $this->hasMany(ArticleVariant::class);

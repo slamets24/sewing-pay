@@ -25,6 +25,7 @@ enum Ability: string
     case WorkOrdersPurge = 'work-orders.purge';
     case CuttingManage = 'cutting.manage';
     case HancaanManage = 'hancaan.manage';
+    case VendorProcessManage = 'vendor-process.manage';
     case ProductionReportsView = 'production-reports.view';
     case QcShipmentsManage = 'qc-shipments.manage';
     case RevisionsManage = 'revisions.manage';
@@ -63,6 +64,7 @@ enum Ability: string
             self::WorkOrdersPurge => 'Hapus total work order',
             self::CuttingManage => 'Terima cutting',
             self::HancaanManage => 'Terima hancaan',
+            self::VendorProcessManage => 'Kirim & terima vendor',
             self::ProductionReportsView => 'Rekap produksi',
             self::QcShipmentsManage => 'Kirim ke QC',
             self::RevisionsManage => 'Catat revisi',
@@ -97,6 +99,7 @@ enum Ability: string
             self::WorkOrdersPurge => 'Hapus WO yang sudah berjalan beserta seluruh riwayatnya.',
             self::CuttingManage => 'Catat, ubah, dan hapus penerimaan cutting.',
             self::HancaanManage => 'Catat, ubah, dan hapus penerimaan hancaan.',
+            self::VendorProcessManage => 'Catat hancaan keluar ke vendor proses (Bordir, Prisket, dll) dan masuk gudang lagi.',
             self::ProductionReportsView => 'Laporan & grafik hasil produksi.',
             self::QcShipmentsManage => 'Kirim barang jadi ke QC dan cetak label.',
             self::RevisionsManage => 'Catat, lanjutkan, alihkan, dan hapus revisi.',
@@ -124,7 +127,7 @@ enum Ability: string
         return match ($this) {
             self::DashboardView => 'Dashboard',
             self::DeskUse, self::PickupsManage, self::DeliveriesManage => 'Operasional Loket',
-            self::WorkOrdersView, self::WorkOrdersManage, self::WorkOrdersPurge, self::CuttingManage, self::HancaanManage,
+            self::WorkOrdersView, self::WorkOrdersManage, self::WorkOrdersPurge, self::CuttingManage, self::HancaanManage, self::VendorProcessManage,
             self::ProductionReportsView, self::QcShipmentsManage, self::RevisionsManage => 'Produksi & QC',
             self::AttendancesManage, self::TailorsManage, self::TailorsSyncHr => 'Kepegawaian',
             self::PayoutsView, self::PayoutsManage, self::PayoutsPay, self::PayoutsForceDelete, self::MakloonPaymentsManage => 'Keuangan & Gaji',
@@ -153,7 +156,7 @@ enum Ability: string
     public function requires(): ?self
     {
         return match ($this) {
-            self::WorkOrdersManage, self::WorkOrdersPurge, self::CuttingManage, self::HancaanManage => self::WorkOrdersView,
+            self::WorkOrdersManage, self::WorkOrdersPurge, self::CuttingManage, self::HancaanManage, self::VendorProcessManage => self::WorkOrdersView,
             self::PayoutsManage, self::PayoutsPay, self::PayoutsForceDelete => self::PayoutsView,
             self::ArticlesCreate, self::ArticlesUpdate, self::ArticlesSamples, self::ArticlesSync => self::ArticlesView,
             default => null,
@@ -215,6 +218,7 @@ enum Ability: string
             self::WorkOrdersManage,
             self::CuttingManage,
             self::HancaanManage,
+            self::VendorProcessManage,
             self::ProductionReportsView,
             self::QcShipmentsManage,
             self::RevisionsManage,

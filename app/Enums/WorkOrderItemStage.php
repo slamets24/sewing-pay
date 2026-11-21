@@ -8,6 +8,8 @@ enum WorkOrderItemStage: string
     case Printing = 'printing';
     case Cutting = 'cutting';
     case OtherDivision = 'other_division';
+    case WaitingVendor = 'waiting_vendor';
+    case AtVendor = 'at_vendor';
     case Ready = 'ready';
     case InternalSewing = 'internal_sewing';
     case MakloonSewing = 'makloon_sewing';
@@ -21,6 +23,8 @@ enum WorkOrderItemStage: string
             self::Printing => 'Di printing',
             self::Cutting => 'Di cutting',
             self::OtherDivision => 'Di divisi lain',
+            self::WaitingVendor => 'Tunggu kirim vendor',
+            self::AtVendor => 'Di vendor',
             self::Ready => 'Siap diambil',
             self::InternalSewing => 'Di penjahit',
             self::MakloonSewing => 'Di makloon',

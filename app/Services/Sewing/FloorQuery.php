@@ -35,8 +35,11 @@ class FloorQuery
     {
         return WorkOrderItem::withQcShippedQty(WorkOrderItem::query())
             ->with(['article', 'workOrder', 'variant'])
+            ->with('vendorJobs')
             ->whereRaw('received_qty > assigned_qty + revision_hold_qty')
             ->get()
+            // Baris dengan proses vendor (Bordir, ...) baru bisa diambil setelah kembali dari vendor.
+            ->filter(fn (WorkOrderItem $item) => $item->availableQty() > 0)
             ->sortBy([
                 fn (WorkOrderItem $a, WorkOrderItem $b) => ($a->workOrder->due_at?->timestamp ?? PHP_INT_MAX) <=> ($b->workOrder->due_at?->timestamp ?? PHP_INT_MAX),
                 fn (WorkOrderItem $a, WorkOrderItem $b) => [$a->article->name, $a->color, $a->size] <=> [$b->article->name, $b->color, $b->size],

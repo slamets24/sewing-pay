@@ -1,0 +1,13 @@
+{
+    "name": "OPSEW",
+    "short_name": "OPSEW",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#4318ff",
+    "icons": [
+        { "src": "/images/azflow-icon-192.png", "sizes": "192x192", "type": "image/png" },
+        { "src": "/images/azflow-icon-512.png", "sizes": "512x512", "type": "image/png" }
+    ]
+}

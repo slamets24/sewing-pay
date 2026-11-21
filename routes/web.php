@@ -5,6 +5,7 @@ use App\Http\Controllers\Sewing\ArticleController;
 use App\Http\Controllers\Sewing\CuttingReceiptController;
 use App\Http\Controllers\Sewing\DeliveryController;
 use App\Http\Controllers\Sewing\HancaanReceiptController;
+use App\Http\Controllers\Sewing\VendorJobController;
 use App\Http\Controllers\Sewing\MakloonPaymentController;
 use App\Http\Controllers\Sewing\ManagedUserController;
 use App\Http\Controllers\Sewing\OverviewController;
@@ -74,6 +75,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/wo/{workOrder}/hancaan-semua', [HancaanReceiptController::class, 'receiveAll'])->name('hancaan-receipts.receive-all')->middleware('can:'.Ability::HancaanManage->value);
     Route::post('/wo/{workOrder}/hancaan-batch', [HancaanReceiptController::class, 'receiveBatch'])->name('hancaan-receipts.batch')->middleware('can:'.Ability::HancaanManage->value);
     Route::delete('/hancaan/{receipt}', [HancaanReceiptController::class, 'destroy'])->name('hancaan-receipts.destroy')->middleware('can:'.Ability::HancaanManage->value);
+
+    Route::post('/wo/{workOrder}/vendor-kirim', [VendorJobController::class, 'send'])->name('vendor-jobs.send')->middleware('can:'.Ability::VendorProcessManage->value);
+    Route::post('/wo/{workOrder}/vendor-terima', [VendorJobController::class, 'receive'])->name('vendor-jobs.receive')->middleware('can:'.Ability::VendorProcessManage->value);
+    Route::delete('/vendor/{vendorJob}', [VendorJobController::class, 'destroy'])->name('vendor-jobs.destroy')->middleware('can:'.Ability::VendorProcessManage->value);
+    Route::delete('/vendor-terima/{vendorJobReturn}', [VendorJobController::class, 'undoReturn'])->name('vendor-job-returns.destroy')->middleware('can:'.Ability::VendorProcessManage->value);
 
     Route::get('/loket', [QuickDeskController::class, 'index'])->name('desk.index')->middleware('can:'.Ability::DeskUse->value);
 

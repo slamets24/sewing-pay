@@ -5,6 +5,7 @@ namespace App\Presenters;
 use App\Enums\TailorType;
 use App\Enums\WorkOrderItemStage;
 use App\Models\PickupItem;
+use App\Models\VendorJob;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderItem;
 use Illuminate\Support\Collection;
@@ -19,11 +20,14 @@ class PackingWorkOrderProgressPresenter
     {
         $items = $workOrder->items;
         $locations = $this->sewingLocations($items);
+        $vendorLocations = $this->vendorLocations($items);
 
         $totals = [
             'planned' => (int) $items->sum('planned_qty'),
             'printing' => (int) $items->sum(fn (WorkOrderItem $item) => $item->printingQty()),
             'cutting' => (int) $items->sum(fn (WorkOrderItem $item) => $item->cuttingPendingQty()),
+            'vendor_waiting' => (int) $items->sum(fn (WorkOrderItem $item) => $item->vendorWaitingQty()),
+            'vendor' => (int) $items->sum(fn (WorkOrderItem $item) => $item->vendorQty()),
             'ready' => (int) $items->sum(fn (WorkOrderItem $item) => $item->availableQty()),
             'sewing' => (int) $items->sum(fn (WorkOrderItem $item) => $item->sewingQty()),
             'waiting_revision' => (int) $items->sum(fn (WorkOrderItem $item) => $item->holdQty()),
@@ -43,8 +47,9 @@ class PackingWorkOrderProgressPresenter
             'is_overdue' => $workOrder->isOverdue(),
             'is_done' => $workOrder->isDone(),
             'stage' => $stage->value,
-            'stage_label' => $this->stageLabel($stage, $locations),
+            'stage_label' => $this->stageLabel($stage, $locations, $vendorLocations),
             'sewing_locations' => $this->locationRows($totals['sewing_internal'], $locations),
+            'vendor_locations' => $vendorLocations,
             'progress_percent' => $totals['planned'] > 0
                 ? (int) min(100, round($totals['delivered'] / $totals['planned'] * 100))
                 : 0,
@@ -73,6 +78,7 @@ class PackingWorkOrderProgressPresenter
     private function item(WorkOrderItem $item): array
     {
         $locations = $this->sewingLocations(collect([$item]));
+        $vendorLocations = $this->vendorLocations(collect([$item]));
         $sewing = $item->sewingQty();
         $sewingMakloon = min($sewing, array_sum($locations));
         $sewingInternal = $sewing - $sewingMakloon;
@@ -91,6 +97,10 @@ class PackingWorkOrderProgressPresenter
             'planned' => $item->planned_qty,
             'printing' => $item->printingQty(),
             'cutting' => $item->cuttingPendingQty(),
+            'processes' => $item->processList(),
+            'vendor_waiting' => $item->vendorWaitingQty(),
+            'vendor' => $item->vendorQty(),
+            'vendor_locations' => $vendorLocations,
             'ready' => $item->availableQty(),
             'sewing' => $sewing,
             'sewing_internal' => $sewingInternal,
@@ -100,7 +110,7 @@ class PackingWorkOrderProgressPresenter
             'delivered' => $item->delivered_qty,
             'qc_shipped' => $item->qcShippedQty(),
             'stage' => $stage->value,
-            'stage_label' => $this->stageLabel($stage, $locations),
+            'stage_label' => $this->stageLabel($stage, $locations, $vendorLocations),
         ];
     }
 
@@ -118,6 +128,8 @@ class PackingWorkOrderProgressPresenter
         $buckets = [
             WorkOrderItemStage::Printing->value => $totals['printing'],
             WorkOrderItemStage::Cutting->value => $totals['cutting'],
+            WorkOrderItemStage::WaitingVendor->value => $totals['vendor_waiting'],
+            WorkOrderItemStage::AtVendor->value => $totals['vendor'],
             WorkOrderItemStage::Ready->value => $totals['ready'],
             WorkOrderItemStage::InternalSewing->value => $totals['sewing_internal'],
             WorkOrderItemStage::MakloonSewing->value => $totals['sewing_makloon'],
@@ -159,6 +171,39 @@ class PackingWorkOrderProgressPresenter
     }
 
     /**
+     * Qty yang sedang di vendor proses (Bordir, Prisket, ...), per proses + nama vendor.
+     *
+     * @param  Collection<int, WorkOrderItem>  $items
+     * @return list<array{process: string, vendor_name: string, qty: int}>
+     */
+    private function vendorLocations(Collection $items): array
+    {
+        $rows = [];
+
+        foreach ($items as $item) {
+            if (! $item->hasProcesses()) {
+                continue;
+            }
+
+            if (! $item->relationLoaded('vendorJobs')) {
+                $item->load('vendorJobs');
+            }
+
+            $item->vendorJobs
+                ->filter(fn (VendorJob $job) => $job->isOpen())
+                ->each(function (VendorJob $job) use (&$rows): void {
+                    $key = $job->process."\0".$job->vendor_name;
+                    $rows[$key] ??= ['process' => $job->process, 'vendor_name' => $job->vendor_name, 'qty' => 0];
+                    $rows[$key]['qty'] += $job->openQty();
+                });
+        }
+
+        usort($rows, fn (array $a, array $b) => $b['qty'] <=> $a['qty']);
+
+        return $rows;
+    }
+
+    /**
      * @param  array<string, int>  $makloon
      * @return list<array{type: string, name: string, qty: int}>
      */
@@ -179,14 +224,28 @@ class PackingWorkOrderProgressPresenter
 
     /**
      * @param  array<string, int>  $makloon
+     * @param  list<array{process: string, vendor_name: string, qty: int}>  $vendors
      */
-    private function stageLabel(WorkOrderItemStage $stage, array $makloon): string
+    private function stageLabel(WorkOrderItemStage $stage, array $makloon, array $vendors = []): string
     {
         return match ($stage) {
+            WorkOrderItemStage::AtVendor => 'Di vendor'.($vendors === [] ? '' : ' · '.$this->vendorJobNames($vendors)),
             WorkOrderItemStage::InternalSewing => 'Di penjahit internal',
             WorkOrderItemStage::MakloonSewing => 'Di makloon jahit'.($makloon === [] ? '' : ': '.$this->vendorNames(array_keys($makloon))),
             default => $stage->label(),
         };
+    }
+
+    /**
+     * "Bordir (CV Maju)" atau "Bordir (CV Maju) +1 vendor".
+     *
+     * @param  list<array{process: string, vendor_name: string, qty: int}>  $vendors
+     */
+    private function vendorJobNames(array $vendors): string
+    {
+        $first = "{$vendors[0]['process']} ({$vendors[0]['vendor_name']})";
+
+        return count($vendors) === 1 ? $first : $first.' +'.(count($vendors) - 1).' vendor';
     }
 
     /**

@@ -428,3 +428,211 @@ export function EditWorkOrderSheet({ workOrder, trigger }: { workOrder: WorkOrde
         </SheetForm>
     );
 }
+
+/** Proses vendor (Bordir, Prisket, ...) yang masih punya barang menunggu dikirim di baris-baris ini. */
+export function vendorProcessesToSend(items: WorkOrderItemRecord[]): string[] {
+    const names: string[] = [];
+
+    items.forEach((item) =>
+        (item.vendor_steps ?? []).forEach((step) => {
+            if (step.waiting_qty > 0 && !names.includes(step.process)) names.push(step.process);
+        }),
+    );
+
+    return names;
+}
+
+const waitingFor = (item: WorkOrderItemRecord, process: string) => item.vendor_steps?.find((step) => step.process === process)?.waiting_qty ?? 0;
+
+/** Hancaan keluar gudang ke vendor untuk satu proses; bisa satu baris atau banyak baris sekaligus. */
+export function SendToVendorSheet({
+    workOrderId,
+    items,
+    vendorNames = [],
+    trigger,
+    onSuccess,
+}: {
+    workOrderId: number;
+    items: WorkOrderItemRecord[];
+    vendorNames?: string[];
+    trigger: ReactNode;
+    onSuccess?: () => void;
+}) {
+    const processes = vendorProcessesToSend(items);
+    const linesFor = (process: string) =>
+        items.filter((item) => waitingFor(item, process) > 0).map((item) => ({ work_order_item_id: item.id, qty: waitingFor(item, process) }));
+    const initialData = (process = processes[0] ?? '') => ({ process, vendor_name: '', items: linesFor(process), sent_at: '', notes: '' });
+
+    const form = useForm(initialData());
+    const totalQty = form.data.items.reduce((sum, line) => sum + (Number(line.qty) || 0), 0);
+
+    const chooseProcess = (process: string) => form.setData({ ...form.data, process, items: linesFor(process) });
+    const updateQty = (itemId: number, qty: number) =>
+        form.setData(
+            'items',
+            form.data.items.map((line) => (line.work_order_item_id === itemId ? { ...line, qty } : line)),
+        );
+
+    return (
+        <SheetForm
+            trigger={trigger}
+            title="Kirim ke vendor"
+            description={`Hancaan keluar gudang untuk proses ${form.data.process || '-'} (${totalQty} pcs)`}
+            submitLabel={`Simpan kirim ${totalQty} pcs`}
+            processing={form.processing}
+            onOpen={() => form.setData(initialData())}
+            onSubmit={(close) =>
+                form.post(route('vendor-jobs.send', workOrderId), {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        close();
+                        onSuccess?.();
+                    },
+                })
+            }
+        >
+            {processes.length > 1 && (
+                <FormField label="Proses" error={form.errors.process}>
+                    <div className="flex flex-wrap gap-2">
+                        {processes.map((process) => (
+                            <Button key={process} type="button" variant={form.data.process === process ? 'default' : 'outline'} onClick={() => chooseProcess(process)}>
+                                {process}
+                            </Button>
+                        ))}
+                    </div>
+                </FormField>
+            )}
+            <FormField label="Nama vendor" htmlFor={`vendor-name-${workOrderId}`} error={form.errors.vendor_name}>
+                <Input
+                    id={`vendor-name-${workOrderId}`}
+                    list={`vendor-names-${workOrderId}`}
+                    value={form.data.vendor_name}
+                    placeholder="Misal: Bordir Pak Ujang"
+                    onChange={(event) => form.setData('vendor_name', event.target.value)}
+                />
+                <datalist id={`vendor-names-${workOrderId}`}>
+                    {vendorNames.map((name) => (
+                        <option key={name} value={name} />
+                    ))}
+                </datalist>
+            </FormField>
+            {form.errors.items && <p className="text-sm font-semibold text-destructive">{form.errors.items}</p>}
+            <div className="flex flex-col gap-3 divide-y">
+                {form.data.items.map((line) => {
+                    const item = items.find((candidate) => candidate.id === line.work_order_item_id);
+                    if (!item) return null;
+                    const waiting = waitingFor(item, form.data.process);
+
+                    return (
+                        <div key={item.id} className="flex items-center justify-between gap-3 pt-3">
+                            <div className="min-w-0 flex-1">
+                                <p className="font-bold">{item.article_name}</p>
+                                <p className="text-sm text-muted-foreground">
+                                    {variantLabel(item.color, item.size)} · Siap dikirim: {waiting} pcs
+                                </p>
+                            </div>
+                            <div className="w-28 shrink-0">
+                                <Input
+                                    type="number"
+                                    min={0}
+                                    max={waiting}
+                                    value={line.qty}
+                                    aria-label={`Qty kirim ${item.article_name} ${variantLabel(item.color, item.size)}`}
+                                    onChange={(event) => updateQty(item.id, Number(event.target.value))}
+                                    className="text-center font-bold"
+                                />
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+            <FormField label="Tanggal kirim" htmlFor={`vendor-send-${workOrderId}-date`} error={form.errors.sent_at}>
+                <NowDateTimeInput id={`vendor-send-${workOrderId}-date`} value={form.data.sent_at} onChange={(value) => form.setData('sent_at', value)} />
+            </FormField>
+            <FormField label="Catatan" htmlFor={`vendor-send-${workOrderId}-notes`} error={form.errors.notes}>
+                <Input id={`vendor-send-${workOrderId}-notes`} value={form.data.notes} onChange={(event) => form.setData('notes', event.target.value)} />
+            </FormField>
+        </SheetForm>
+    );
+}
+
+/** Barang dari vendor masuk gudang lagi; satu baris atau banyak baris sekaligus. */
+export function ReceiveFromVendorSheet({
+    workOrderId,
+    items,
+    trigger,
+    onSuccess,
+}: {
+    workOrderId: number;
+    items: WorkOrderItemRecord[];
+    trigger: ReactNode;
+    onSuccess?: () => void;
+}) {
+    const jobs = items.flatMap((item) => (item.open_vendor_jobs ?? []).map((job) => ({ ...job, item })));
+    const initialData = () => ({ items: jobs.map((job) => ({ vendor_job_id: job.id, qty: job.open_qty })), returned_at: '', notes: '' });
+
+    const form = useForm(initialData());
+    const totalQty = form.data.items.reduce((sum, line) => sum + (Number(line.qty) || 0), 0);
+    const updateQty = (jobId: number, qty: number) =>
+        form.setData(
+            'items',
+            form.data.items.map((line) => (line.vendor_job_id === jobId ? { ...line, qty } : line)),
+        );
+
+    return (
+        <SheetForm
+            trigger={trigger}
+            title="Terima dari vendor"
+            description={`Barang kembali masuk gudang (${totalQty} pcs)`}
+            submitLabel={`Simpan masuk ${totalQty} pcs`}
+            processing={form.processing}
+            onOpen={() => form.setData(initialData())}
+            onSubmit={(close) =>
+                form.post(route('vendor-jobs.receive', workOrderId), {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        close();
+                        onSuccess?.();
+                    },
+                })
+            }
+        >
+            {form.errors.items && <p className="text-sm font-semibold text-destructive">{form.errors.items}</p>}
+            <div className="flex flex-col gap-3 divide-y">
+                {jobs.map((job) => {
+                    const line = form.data.items.find((candidate) => candidate.vendor_job_id === job.id);
+
+                    return (
+                        <div key={job.id} className="flex items-center justify-between gap-3 pt-3">
+                            <div className="min-w-0 flex-1">
+                                <p className="font-bold">
+                                    {job.item.article_name} · {variantLabel(job.item.color, job.item.size)}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                    {job.process} · {job.vendor_name} · masih di vendor {job.open_qty} pcs
+                                </p>
+                            </div>
+                            <div className="w-28 shrink-0">
+                                <Input
+                                    type="number"
+                                    min={0}
+                                    max={job.open_qty}
+                                    value={line?.qty ?? job.open_qty}
+                                    aria-label={`Qty terima ${job.item.article_name} ${job.process}`}
+                                    onChange={(event) => updateQty(job.id, Number(event.target.value))}
+                                    className="text-center font-bold"
+                                />
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+            <FormField label="Tanggal masuk" htmlFor={`vendor-receive-${workOrderId}-date`} error={form.errors.returned_at}>
+                <NowDateTimeInput id={`vendor-receive-${workOrderId}-date`} value={form.data.returned_at} onChange={(value) => form.setData('returned_at', value)} />
+            </FormField>
+            <FormField label="Catatan" htmlFor={`vendor-receive-${workOrderId}-notes`} error={form.errors.notes}>
+                <Input id={`vendor-receive-${workOrderId}-notes`} value={form.data.notes} onChange={(event) => form.setData('notes', event.target.value)} />
+            </FormField>
+        </SheetForm>
+    );
+}

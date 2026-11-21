@@ -12,7 +12,7 @@ import { useState, type ReactNode } from 'react';
 /** Bisa dimundurkan? Dipakai untuk menampilkan tombol hanya kalau ada yang bisa dimundurkan. */
 export function canStepBack(item: WorkOrderItemRecord): boolean {
     const cuttingBack = item.is_polosan ? 0 : Math.max(0, item.cutting_transferred_qty - item.received_qty);
-    return item.available_qty > 0 || cuttingBack > 0 || (item.pickups ?? []).some((pickup) => pickup.can_cancel);
+    return (item.step_back_warehouse_qty ?? item.available_qty) > 0 || cuttingBack > 0 || (item.pickups ?? []).some((pickup) => pickup.can_cancel);
 }
 
 /** "Mundurkan" satu baris WO: gudang → cutting, cutting → printing, penjahit → gudang. */
@@ -71,12 +71,12 @@ export function StepBackSheet({ item, trigger }: { item: WorkOrderItemRecord; tr
                         </StepCard>
                     )}
 
-                    {item.available_qty > 0 && (
+                    {(item.step_back_warehouse_qty ?? item.available_qty) > 0 && (
                         <QtyStep
                             icon={Warehouse}
                             from="Gudang"
                             to="Cutting"
-                            max={item.available_qty}
+                            max={item.step_back_warehouse_qty ?? item.available_qty}
                             hint="Hancaan yang sudah masuk gudang (belum diambil) dikembalikan ke cutting."
                             onSubmit={(qty, hooks) =>
                                 floorActions.send(

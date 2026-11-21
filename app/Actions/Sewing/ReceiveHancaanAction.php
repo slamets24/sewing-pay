@@ -100,9 +100,9 @@ class ReceiveHancaanAction
             $receipt = HancaanReceipt::query()->lockForUpdate()->findOrFail($receipt->id);
             $item = WorkOrderItem::query()->lockForUpdate()->findOrFail($receipt->work_order_item_id);
 
-            if ($item->received_qty - $receipt->qty < $item->assigned_qty + $item->revision_hold_qty) {
+            if ($item->received_qty - $receipt->qty < $item->lockedReceivedQty()) {
                 throw ValidationException::withMessages([
-                    'receipt' => 'Sebagian hancaan ini sudah diambil penjahit, jadi tidak bisa dibatalkan.',
+                    'receipt' => 'Sebagian hancaan ini sudah diambil penjahit atau dikirim ke vendor, jadi tidak bisa dibatalkan.',
                 ]);
             }
 
@@ -120,10 +120,10 @@ class ReceiveHancaanAction
             $diff = $newQty - $receipt->qty;
 
             if ($diff < 0) {
-                $minRequired = $item->assigned_qty + $item->revision_hold_qty;
+                $minRequired = $item->lockedReceivedQty();
                 if ($item->received_qty + $diff < $minRequired) {
                     throw ValidationException::withMessages([
-                        'qty' => "Tidak bisa dikurangi menjadi {$newQty} pcs karena {$minRequired} pcs sudah diambil penjahit / menunggu revisi.",
+                        'qty' => "Tidak bisa dikurangi menjadi {$newQty} pcs karena {$minRequired} pcs sudah diambil penjahit / dikirim ke vendor / menunggu revisi.",
                     ]);
                 }
             } elseif ($diff > 0) {

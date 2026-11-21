@@ -4,6 +4,8 @@ export type QtyCounters = {
     printing_qty: number;
     cutting_qty: number;
     available_qty: number;
+    vendor_waiting_qty?: number;
+    vendor_qty?: number;
     sewing_internal_qty: number;
     sewing_makloon_qty: number;
     hold_qty: number;
@@ -18,6 +20,8 @@ export function whereabouts(qty: QtyCounters): string {
     return [
         [qty.printing_qty, 'di printing'],
         [qty.cutting_qty, 'di cutting'],
+        [qty.vendor_waiting_qty ?? 0, 'tunggu vendor'],
+        [qty.vendor_qty ?? 0, 'di vendor'],
         [qty.available_qty, 'di gudang'],
         [qty.sewing_internal_qty, 'di penjahit'],
         [qty.sewing_makloon_qty, 'di makloon'],
