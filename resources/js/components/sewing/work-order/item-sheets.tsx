@@ -1,4 +1,5 @@
 import { FormField } from '@/components/form-field';
+import { NowDateTimeInput } from '@/components/sewing/now-datetime-input';
 import { QtyStepper } from '@/components/sewing/qty-stepper';
 import { ArticlePicker } from '@/components/sewing/work-order/article-picker';
 import { WorkOrderHeaderFields, type HeaderValues } from '@/components/sewing/work-order/header-fields';
@@ -79,7 +80,7 @@ export function TransferCuttingSheet({ item, trigger }: { item: WorkOrderItemRec
                 <p className="text-sm font-semibold text-stage-sewing">Maksimal sisa di printing adalah {item.printing_qty} pcs.</p>
             )}
             <FormField label="Tanggal kirim" htmlFor={`transfer-${item.id}-date`} error={form.errors.transferred_at}>
-                <Input id={`transfer-${item.id}-date`} type="datetime-local" value={form.data.transferred_at} onChange={(event) => form.setData('transferred_at', event.target.value)} />
+                <NowDateTimeInput id={`transfer-${item.id}-date`} value={form.data.transferred_at} onChange={(value) => form.setData('transferred_at', value)} />
             </FormField>
             <FormField label="Catatan" htmlFor={`transfer-${item.id}-notes`} error={form.errors.notes}>
                 <Input id={`transfer-${item.id}-notes`} value={form.data.notes} onChange={(event) => form.setData('notes', event.target.value)} />
@@ -111,7 +112,7 @@ export function ReceiveHancaanSheet({ item, trigger }: { item: WorkOrderItemReco
                 </p>
             )}
             <FormField label="Tanggal masuk" htmlFor={`receive-${item.id}-date`} error={form.errors.received_at}>
-                <Input id={`receive-${item.id}-date`} type="datetime-local" value={form.data.received_at} onChange={(event) => form.setData('received_at', event.target.value)} />
+                <NowDateTimeInput id={`receive-${item.id}-date`} value={form.data.received_at} onChange={(value) => form.setData('received_at', value)} />
             </FormField>
             <FormField label="Catatan" htmlFor={`receive-${item.id}-notes`} error={form.errors.notes}>
                 <Input id={`receive-${item.id}-notes`} value={form.data.notes} onChange={(event) => form.setData('notes', event.target.value)} />
@@ -233,7 +234,7 @@ export function BatchTransferCuttingSheet({
                 })}
             </div>
             <FormField label="Tanggal kirim" htmlFor="batch-transfer-date" error={form.errors.transferred_at}>
-                <Input id="batch-transfer-date" type="datetime-local" value={form.data.transferred_at} onChange={(e) => form.setData('transferred_at', e.target.value)} />
+                <NowDateTimeInput id="batch-transfer-date" value={form.data.transferred_at} onChange={(value) => form.setData('transferred_at', value)} />
             </FormField>
             <FormField label="Catatan" htmlFor="batch-transfer-notes" error={form.errors.notes}>
                 <Input id="batch-transfer-notes" value={form.data.notes} onChange={(e) => form.setData('notes', e.target.value)} />
@@ -315,7 +316,7 @@ export function BatchReceiveHancaanSheet({
                 })}
             </div>
             <FormField label="Tanggal masuk" htmlFor="batch-receive-date" error={form.errors.received_at}>
-                <Input id="batch-receive-date" type="datetime-local" value={form.data.received_at} onChange={(e) => form.setData('received_at', e.target.value)} />
+                <NowDateTimeInput id="batch-receive-date" value={form.data.received_at} onChange={(value) => form.setData('received_at', value)} />
             </FormField>
             <FormField label="Catatan" htmlFor="batch-receive-notes" error={form.errors.notes}>
                 <Input id="batch-receive-notes" value={form.data.notes} onChange={(e) => form.setData('notes', e.target.value)} />

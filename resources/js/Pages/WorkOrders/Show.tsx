@@ -15,10 +15,11 @@ import { DeleteWorkOrderSheet, PurgeWorkOrderSheet, type PurgePreview } from '@/
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { canStepBack, StepBackSheet } from '@/components/sewing/work-order/step-back-sheet';
 import { WaReportButton } from '@/components/sewing/work-order/wa-report-button';
+import { WorkOrderItemFilter } from '@/domain/work-order/item-filter';
 import { workOrderWaText } from '@/domain/work-order/wa-report';
 import { QtyBar } from '@/components/sewing/qty-bar';
 import { PageIntro, Section } from '@/components/sewing/section';
-import { StickyBar } from '@/components/sewing/sticky-bar';
+import { SearchBox } from '@/components/sewing/master/search-box';
 import { ToneBadge } from '@/components/sewing/tone-badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -29,8 +30,8 @@ import { cn } from '@/lib/utils';
 import { floorActions } from '@/services/floor-actions';
 import type { CatalogArticle, CuttingReceiptRecord, HancaanReceiptRecord, WorkOrderDetail, WorkOrderItemRecord } from '@/types/sewing';
 import { Link } from '@inertiajs/react';
-import { ArrowLeft, Building2, Ellipsis, CheckCircle2, CheckSquare, ClipboardList, History, HandPlatter, PackagePlus, Pencil, Plus, Printer, Scissors, Shirt, Trash2, Truck, Undo2, Warehouse, Wrench, type LucideIcon } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowLeft, Building2, Ellipsis, CheckCircle2, CheckSquare, ClipboardList, History, HandPlatter, PackagePlus, Pencil, Plus, Printer, Scissors, Shirt, Trash2, Truck, Undo2, Warehouse, Wrench, X, type LucideIcon } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 type ShowProps = {
     workOrder: WorkOrderDetail;
@@ -48,15 +49,19 @@ export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [
     // Multi-select state for fast batch transfers
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
-    const activeItems = workOrder.items.filter((i) => i.delivered_qty < i.planned_qty);
+    // Search & stage filter for long WOs (100+ lines): find the article at the bottom without scrolling.
+    const [filter, setFilter] = useState(() => new WorkOrderItemFilter());
+    const visibleItems = useMemo(() => filter.apply(workOrder.items), [filter, workOrder.items]);
+    const stageOptions = useMemo(() => filter.stageOptions(workOrder.items), [filter, workOrder.items]);
+
+    // "Pilih" works on what is on screen, so search → pilih → kirim selects exactly the lines found.
+    const activeItems = visibleItems.filter((i) => i.delivered_qty < i.planned_qty);
     const allActiveSelected = activeItems.length > 0 && activeItems.every((i) => selectedIds.includes(i.id));
 
     const toggleSelectAll = () => {
-        if (allActiveSelected) {
-            setSelectedIds([]);
-        } else {
-            setSelectedIds(activeItems.map((i) => i.id));
-        }
+        const visibleIds = activeItems.map((i) => i.id);
+
+        setSelectedIds((prev) => (allActiveSelected ? prev.filter((id) => !visibleIds.includes(id)) : [...new Set([...prev, ...visibleIds])]));
     };
 
     const toggleItem = (id: number) => {
@@ -70,6 +75,7 @@ export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [
 
     const selectedWarehouseCandidates = selectedItems.filter((i) => i.cutting_qty > 0);
     const totalWarehousePieces = selectedWarehouseCandidates.reduce((sum, i) => sum + i.cutting_qty, 0);
+    const hiddenSelectedCount = selectedIds.filter((id) => !visibleItems.some((item) => item.id === id)).length;
 
     return (
         <AppLayout title={workOrder.number}>
@@ -171,20 +177,11 @@ export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [
                 <Section
                     title="Rincian artikel"
                     icon={PackagePlus}
+                    description={filter.isActive ? `${visibleItems.length} dari ${workOrder.items.length} artikel` : `${workOrder.items.length} artikel`}
+                    // Visible overflow so the search bar below can stick under the page header while scrolling.
+                    className="overflow-visible"
                     actions={
                         <div className="flex flex-wrap items-center gap-2">
-                            {activeItems.length > 0 && (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={toggleSelectAll}
-                                    className="h-9 gap-1.5 text-xs font-semibold"
-                                >
-                                    <CheckSquare className="size-4" />
-                                    <span>{allActiveSelected ? 'Batal pilih semua' : `Pilih aktif (${activeItems.length})`}</span>
-                                </Button>
-                            )}
                             <AddItemSheet
                                 workOrderId={workOrder.id}
                                 articles={articles}
@@ -198,76 +195,114 @@ export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [
                         </div>
                     }
                 >
-                    {/* Phone: one card per row. Tablet / laptop: two cards side by side. */}
-                    <div className="grid gap-3 md:grid-cols-2">
-                        {workOrder.items.map((item) => (
-                            <ItemRow
-                                key={item.id}
-                                item={item}
-                                selected={selectedIds.includes(item.id)}
-                                onToggle={() => toggleItem(item.id)}
+                    {/* Sticks under the page header, so search and "Pilih" stay in reach deep in a long WO. */}
+                    <div className="sticky top-14 z-10 -mx-5 -mt-4 mb-3 flex flex-col gap-2 border-b border-border/60 bg-card/95 px-5 py-3 backdrop-blur lg:top-[5.25rem]">
+                        <div className="flex gap-2">
+                            <SearchBox
+                                value={filter.query}
+                                onChange={(query) => setFilter(filter.withQuery(query))}
+                                placeholder="Cari artikel, warna…"
+                                label="Cari artikel di WO ini"
+                                className="flex-1"
                             />
-                        ))}
+                            {activeItems.length > 0 && (
+                                <Button type="button" variant={allActiveSelected ? 'secondary' : 'outline'} onClick={toggleSelectAll} className="shrink-0 gap-1.5 font-semibold" aria-pressed={allActiveSelected}>
+                                    <CheckSquare className="size-4" />
+                                    <span className="hidden sm:inline">{allActiveSelected ? 'Batal pilih' : filter.isActive ? 'Pilih hasil' : 'Pilih aktif'}</span>
+                                    <span className="rounded-full bg-foreground/10 px-1.5 text-xs tabular">{activeItems.length}</span>
+                                </Button>
+                            )}
+                        </div>
+                        {stageOptions.length > 2 && (
+                            <div role="group" aria-label="Saring tahap" className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none]">
+                                {stageOptions.map((option) => {
+                                    const active = option.value === filter.stage;
+
+                                    return (
+                                        <button
+                                            key={option.value}
+                                            type="button"
+                                            aria-pressed={active}
+                                            onClick={() => setFilter(filter.withStage(option.value))}
+                                            className={cn(
+                                                'inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm font-semibold transition-colors',
+                                                active ? 'border-primary bg-primary text-primary-foreground' : 'border-input bg-card text-foreground hover:bg-accent',
+                                            )}
+                                        >
+                                            {option.label}
+                                            <span className={cn('rounded-full px-1.5 text-xs tabular', active ? 'bg-white/20' : 'bg-muted')}>{option.count}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
+
+                    {visibleItems.length === 0 ? (
+                        <EmptyState className="text-base">
+                            Tidak ada artikel yang cocok.
+                            <Button variant="outline" onClick={() => setFilter(new WorkOrderItemFilter())}>
+                                Tampilkan semua
+                            </Button>
+                        </EmptyState>
+                    ) : (
+                        /* Phone: one card per row. Tablet / laptop: two cards side by side. */
+                        <div className="grid gap-3 md:grid-cols-2">
+                            {visibleItems.map((item) => (
+                                <ItemRow key={item.id} item={item} selected={selectedIds.includes(item.id)} onToggle={() => toggleItem(item.id)} />
+                            ))}
+                        </div>
+                    )}
                 </Section>
 
                 {selectedIds.length > 0 && (
-                    <StickyBar
-                        stackOnPhone
-                        title={`${selectedIds.length} artikel terpilih`}
-                        subtitle={
-                            [
-                                totalCuttingPieces > 0 ? `${totalCuttingPieces} pcs siap ke cutting` : null,
-                                totalWarehousePieces > 0 ? `${totalWarehousePieces} pcs siap ke gudang` : null,
-                            ]
-                                .filter(Boolean)
-                                .join(' · ') || 'Pilih aksi perpindahan di samping'
-                        }
-                    >
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedIds([])}
-                            className="h-9 text-xs text-muted-foreground hover:text-foreground"
-                        >
-                            Batal
-                        </Button>
+                    // One slim row above the phone menu: [batal] jumlah dipilih … [aksi + pcs]. Desktop: pinned to the bottom.
+                    <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 border-t border-border bg-card/95 px-3 py-2 shadow-[0_-4px_12px_rgb(0_0_0/0.08)] backdrop-blur lg:bottom-0 lg:left-[17rem]">
+                        <div className="mx-auto flex max-w-6xl items-center gap-2">
+                            <Button type="button" variant="ghost" size="icon" className="size-10 shrink-0 text-muted-foreground" onClick={() => setSelectedIds([])} aria-label="Batal pilih">
+                                <X className="size-5" />
+                            </Button>
+                            <div className="min-w-0 flex-1 leading-tight">
+                                <p className="truncate font-bold">{selectedIds.length} dipilih</p>
+                                {hiddenSelectedCount > 0 ? (
+                                    <p className="truncate text-xs text-muted-foreground">{hiddenSelectedCount} di luar pencarian</p>
+                                ) : (
+                                    selectedCuttingCandidates.length === 0 &&
+                                    selectedWarehouseCandidates.length === 0 && <p className="truncate text-xs text-muted-foreground">Tidak ada yang bisa dipindah</p>
+                                )}
+                            </div>
 
-                        {selectedCuttingCandidates.length > 0 && (
-                            <BatchTransferCuttingSheet
-                                workOrderId={workOrder.id}
-                                items={selectedCuttingCandidates}
-                                onSuccess={() => setSelectedIds([])}
-                                trigger={
-                                    <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs font-semibold">
-                                        <Scissors className="size-3.5" />
-                                        <span>Kirim ke cutting</span>
-                                        <span className="rounded-full bg-primary/10 px-1.5 py-0.2 text-[11px] font-bold text-primary">
-                                            {totalCuttingPieces} pcs
-                                        </span>
-                                    </Button>
-                                }
-                            />
-                        )}
+                            {selectedCuttingCandidates.length > 0 && (
+                                <BatchTransferCuttingSheet
+                                    workOrderId={workOrder.id}
+                                    items={selectedCuttingCandidates}
+                                    onSuccess={() => setSelectedIds([])}
+                                    trigger={
+                                        <Button variant={selectedWarehouseCandidates.length > 0 ? 'outline' : 'default'} className="h-10 shrink-0 gap-1.5 px-3 font-semibold" aria-label={`Kirim ${totalCuttingPieces} pcs ke cutting`}>
+                                            <Scissors className="size-4" />
+                                            Cutting
+                                            <span className={cn('rounded-full px-1.5 text-xs font-bold tabular', selectedWarehouseCandidates.length > 0 ? 'bg-foreground/10' : 'bg-white/20')}>{totalCuttingPieces}</span>
+                                        </Button>
+                                    }
+                                />
+                            )}
 
-                        {selectedWarehouseCandidates.length > 0 && (
-                            <BatchReceiveHancaanSheet
-                                workOrderId={workOrder.id}
-                                items={selectedWarehouseCandidates}
-                                onSuccess={() => setSelectedIds([])}
-                                trigger={
-                                    <Button variant="default" size="sm" className="h-9 gap-1.5 text-xs font-semibold">
-                                        <Warehouse className="size-3.5" />
-                                        <span>Hancaan masuk gudang</span>
-                                        <span className="rounded-full bg-white/20 px-1.5 py-0.2 text-[11px] font-bold">
-                                            {totalWarehousePieces} pcs
-                                        </span>
-                                    </Button>
-                                }
-                            />
-                        )}
-                    </StickyBar>
+                            {selectedWarehouseCandidates.length > 0 && (
+                                <BatchReceiveHancaanSheet
+                                    workOrderId={workOrder.id}
+                                    items={selectedWarehouseCandidates}
+                                    onSuccess={() => setSelectedIds([])}
+                                    trigger={
+                                        <Button className="h-10 shrink-0 gap-1.5 px-3 font-semibold" aria-label={`${totalWarehousePieces} pcs hancaan masuk gudang`}>
+                                            <Warehouse className="size-4" />
+                                            Gudang
+                                            <span className="rounded-full bg-white/20 px-1.5 text-xs font-bold tabular">{totalWarehousePieces}</span>
+                                        </Button>
+                                    }
+                                />
+                            )}
+                        </div>
+                    </div>
                 )}
 
                 {hasPrint && cuttingReceipts.length > 0 && (
@@ -334,6 +369,8 @@ export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [
                         <pre className="mt-3 overflow-x-auto font-mono text-sm whitespace-pre-wrap">{workOrder.source_text}</pre>
                     </details>
                 )}
+                {/* Room for the action bar so the end of the page is not hidden behind it. */}
+                {selectedIds.length > 0 && <div className="h-14" aria-hidden />}
             </div>
         </AppLayout>
     );
