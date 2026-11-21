@@ -35,6 +35,8 @@ export type CatalogArticle = {
     brand_name: string | null;
     category_name: string | null;
     fabric_type?: 'polos' | 'print' | null;
+    /** Proses di vendor setelah cutting (Bordir, Prisket, ...), urut pengerjaan. */
+    processes?: string[];
     sewing_rate: number;
     source: 'manual' | 'packingv2';
 };
@@ -52,7 +54,7 @@ export type WorkOrderSummary = {
     from_packing?: boolean;
     is_overdue: boolean;
     /** Per nama artikel: rencana, di gudang, dan di penjahit. Untuk laporan WA. */
-    article_lines?: { name: string; qty: number; warehouse_qty: number; sewing_qty: number }[];
+    article_lines?: { name: string; processes?: string[]; qty: number; warehouse_qty: number; sewing_qty: number }[];
     is_done: boolean;
     notes: string | null;
     items_count: number;
@@ -80,6 +82,8 @@ export type WorkOrderItemRecord = {
     article_id: number;
     article_name: string;
     item_type: 'print' | 'polosan';
+    /** Proses di vendor setelah cutting (Bordir, Prisket, ...), urut pengerjaan. */
+    processes?: string[];
     is_polosan: boolean;
     color: string | null;
     size: string | null;
@@ -276,6 +280,13 @@ export type PayoutSlipLineRecord = {
     occurred_at: string;
 };
 
+export type PayoutSlipKasbonDeduction = {
+    kasbon_id: number;
+    kasbon_number: string;
+    amount: number;
+    remaining_before: number;
+};
+
 export type PayoutSlipRecord = {
     id: number;
     invoice_number: string;
@@ -289,6 +300,11 @@ export type PayoutSlipRecord = {
     gross_amount: number;
     bonus_amount: number;
     deduction_amount: number;
+    /** Potongan kasbon dari hr-azzahra, terpisah dari potongan manual. */
+    kasbon_amount?: number;
+    kasbon_deductions?: PayoutSlipKasbonDeduction[];
+    /** Slip sudah dibayar tapi potongan kasbonnya belum tercatat di HR. */
+    kasbon_report_pending?: boolean;
     net_amount: number;
     notes: string | null;
     paid_at: string | null;
@@ -341,6 +357,7 @@ export type ArticleRecord = {
     brand_name: string | null;
     category_name: string | null;
     fabric_type?: 'polos' | 'print' | null;
+    processes?: string[];
     sewing_rate: number;
     makloon_sewing_rate: number | null;
     is_active: boolean;

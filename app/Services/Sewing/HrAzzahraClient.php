@@ -2,6 +2,7 @@
 
 namespace App\Services\Sewing;
 
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -70,6 +71,62 @@ class HrAzzahraClient
     }
 
     /**
+     * Absensi penjahit untuk satu rentang tanggal dalam satu panggilan (maks 62 hari).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function attendancesBetween(string $dateFrom, string $dateTo): array
+    {
+        $this->ensureConfigured();
+
+        $response = $this->request()->get('/api/v1/internal/attendances', [
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
+            'division' => 'Jahit',
+        ]);
+
+        if ($response->failed()) {
+            throw new RuntimeException("hr-azzahra menolak permintaan absensi (HTTP {$response->status()}).");
+        }
+
+        return $response->json('data', []);
+    }
+
+    /**
+     * Kasbon yang belum lunas untuk banyak penjahit sekaligus, dikelompokkan per nomor karyawan HR.
+     *
+     * @param  list<string>  $employeeNumbers
+     * @return array<string, array{total_outstanding: int, loans: list<array{id: int, kasbon_number: string, requested_date: string|null, remaining_amount: int}>}>
+     */
+    public function outstandingKasbonsFor(array $employeeNumbers): array
+    {
+        $employeeNumbers = array_values(array_unique(array_filter(array_map('strval', $employeeNumbers))));
+
+        if ($employeeNumbers === []) {
+            return [];
+        }
+
+        $this->ensureConfigured();
+
+        $response = $this->request()->get('/api/v1/internal/kasbons/active', [
+            'employee_numbers' => $employeeNumbers,
+        ]);
+
+        if ($response->failed()) {
+            throw new RuntimeException("hr-azzahra menolak permintaan kasbon (HTTP {$response->status()}).");
+        }
+
+        return (array) $response->json('data.employees', []);
+    }
+
+    public function ensureConfigured(): void
+    {
+        if (! $this->isConfigured()) {
+            throw new RuntimeException('Koneksi ke hr-azzahra belum diatur (HR_AZZAHRA_API_URL dan SWEING_PAY_INTERNAL_KEY di .env).');
+        }
+    }
+
+    /**
      * Mengecek sisa kasbon aktif karyawan penjahit.
      *
      * @return array{total_outstanding: int, loans: list<array<string, mixed>>}
@@ -120,10 +177,20 @@ class HrAzzahraClient
             ]);
 
         if ($response->failed()) {
-            throw new RuntimeException("Gagal mencatat pelunasan kasbon ke hr-azzahra (HTTP {$response->status()}).");
+            $reason = (string) ($response->json('message') ?: "HTTP {$response->status()}");
+
+            throw new RuntimeException("Gagal mencatat potongan kasbon ke hr-azzahra: {$reason}");
         }
 
         return $response->json('data', []);
+    }
+
+    private function request(): PendingRequest
+    {
+        return Http::baseUrl($this->baseUrl())
+            ->withHeaders(['X-Internal-Key' => (string) config('services.hr_azzahra.key')])
+            ->acceptJson()
+            ->timeout(15);
     }
 
     private function baseUrl(): string

@@ -12,6 +12,7 @@ import {
     CalendarCheck,
     ChevronLeft,
     ChevronRight,
+    CloudDownload,
     DollarSign,
     Save,
     Sparkles,
@@ -86,6 +87,21 @@ export default function AttendanceIndex({ date, rows, summary, mealAllowanceRule
     const todayStr = localDateString(new Date());
     const isToday = date === todayStr;
 
+    const [pullingHr, setPullingHr] = useState(false);
+
+    /** Ambil absensi tanggal ini dari HR sekarang juga (menimpa catatan yang belum dibayar). */
+    const handlePullHr = () => {
+        if (!confirm(`Tarik absensi penjahit tanggal ${date} dari HR? Catatan di OPSEW yang belum dibayar akan diganti dengan data HR.`)) {
+            return;
+        }
+
+        router.post(
+            route('attendances.pull-hr'),
+            { date_from: date, date_to: date },
+            { preserveScroll: true, onStart: () => setPullingHr(true), onFinish: () => setPullingHr(false), onError: showFirstError },
+        );
+    };
+
     const handleBatchPresent = () => {
         if (!confirm(`Tandai semua penjahit internal hadir 9 jam (uang makan ${formatIdr(mealAllowanceRules.under_10_hours)}) untuk tanggal ${date}?`)) {
             return;
@@ -120,6 +136,10 @@ export default function AttendanceIndex({ date, rows, summary, mealAllowanceRule
                                 Hari Ini
                             </Button>
                         )}
+                        <Button type="button" variant="outline" size="sm" onClick={handlePullHr} disabled={pullingHr} className="col-span-3 sm:col-span-1">
+                            <CloudDownload className={cn('size-4', pullingHr && 'animate-pulse')} />
+                            {pullingHr ? 'Menarik…' : 'Tarik dari HR'}
+                        </Button>
                         <Button type="button" size="sm" onClick={handleBatchPresent} className="col-span-3 sm:col-span-1">
                             <Sparkles className="size-4" />
                             Hadirkan Semua (9j)

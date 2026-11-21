@@ -44,6 +44,8 @@ class ReceivePackingWorkOrderAction
             'items.*.brand_name' => ['nullable', 'string', 'max:255'],
             'items.*.category_name' => ['nullable', 'string', 'max:255'],
             'items.*.fabric_type' => ['nullable', 'string', 'in:polos,print'],
+            'items.*.processes' => ['nullable', 'array', 'max:10'],
+            'items.*.processes.*' => ['string', 'max:60'],
             'items.*.color' => ['nullable', 'string', 'max:80'],
             'items.*.size' => ['nullable', 'string', 'max:20'],
             'items.*.quantity' => ['required', 'integer', 'min:1', 'max:100000'],
@@ -147,6 +149,10 @@ class ReceivePackingWorkOrderAction
                 $article->fabric_type = $fabricType;
             }
 
+            if (array_key_exists('processes', $line)) {
+                $article->processes = Article::normalizeProcesses($line['processes']);
+            }
+
             $article->save();
 
             return $article;
@@ -159,6 +165,7 @@ class ReceivePackingWorkOrderAction
             'brand_name' => $brandName,
             'category_name' => $line['category_name'] ?? null,
             'fabric_type' => $fabricType,
+            'processes' => Article::normalizeProcesses($line['processes'] ?? []),
             'sewing_rate' => 0,
             'is_active' => true,
             'synced_at' => now(),

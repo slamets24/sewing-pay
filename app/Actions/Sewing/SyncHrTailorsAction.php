@@ -16,10 +16,14 @@ class SyncHrTailorsAction
     public function __construct(private readonly HrAzzahraClient $client) {}
 
     /**
-     * @return array{synced: int, created: int, updated: int}
+     * Penjahit HR yang sudah resign (tidak ikut terkirim lagi) dinonaktifkan di sini.
+     *
+     * @return array{synced: int, created: int, updated: int, deactivated: int}
      */
     public function execute(): array
     {
+        $this->client->ensureConfigured();
+
         $employees = $this->client->sewingEmployees();
         $created = 0;
         $updated = 0;
@@ -52,7 +56,7 @@ class SyncHrTailorsAction
                     'employment_status' => $payload['employment_status'] ?? $tailor->employment_status,
                     'whatsapp_number' => $payload['phone'] ?? $tailor->whatsapp_number,
                     'joined_at' => $payload['joined_at'] ?? $tailor->joined_at,
-                    'is_active' => (bool) ($payload['is_active'] ?? true),
+                    'is_active' => (bool) ($payload['is_active'] ?? (($payload['employment_status'] ?? null) !== 'resigned')),
                 ]);
 
                 $tailor->save();
@@ -69,11 +73,39 @@ class SyncHrTailorsAction
             });
         }
 
+        $deactivated = $this->deactivateMissingTailors($employees);
+
         return [
             'synced' => count($employees),
             'created' => $created,
             'updated' => $updated,
+            'deactivated' => $deactivated,
         ];
+    }
+
+    /**
+     * Penjahit hasil sinkron HR yang tidak ada lagi di daftar aktif HR (resign/pindah divisi) dibuat nonaktif.
+     * Kalau HR mengirim daftar kosong, tidak ada yang dinonaktifkan supaya salah konfigurasi tidak mematikan semua penjahit.
+     *
+     * @param  list<array<string, mixed>>  $employees
+     */
+    private function deactivateMissingTailors(array $employees): int
+    {
+        if ($employees === []) {
+            return 0;
+        }
+
+        $activeHrIds = collect($employees)
+            ->filter(fn (array $payload): bool => (bool) ($payload['is_active'] ?? (($payload['employment_status'] ?? null) !== 'resigned')))
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+
+        return Tailor::query()
+            ->whereNotNull('hr_employee_id')
+            ->where('is_active', true)
+            ->whereNotIn('hr_employee_id', $activeHrIds)
+            ->update(['is_active' => false]);
     }
 
     private function generateCode(string $name, string $employeeNumber): string

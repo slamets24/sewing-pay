@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Sewing;
 
+use App\Actions\Sewing\PullHrAttendancesAction;
 use App\Enums\TailorType;
 use App\Http\Controllers\Controller;
 use App\Models\Tailor;
@@ -182,6 +183,38 @@ class TailorAttendanceController extends Controller
         }
 
         return back()->with('status', "Semua penjahit internal ditandai hadir {$hours} jam (Uang makan: Rp. ".number_format($allowance, 0, ',', '.').').');
+    }
+
+    /**
+     * Tombol "Tarik dari HR": ambil absensi penjahit dari hr-azzahra untuk rentang tanggal, langsung saat diklik.
+     */
+    public function pullFromHr(Request $request, PullHrAttendancesAction $pull): RedirectResponse
+    {
+        $validated = $request->validate([
+            'date_from' => ['required', 'date'],
+            'date_to' => ['required', 'date', 'after_or_equal:date_from'],
+        ]);
+
+        $dateFrom = Carbon::parse($validated['date_from'])->toDateString();
+        $dateTo = Carbon::parse($validated['date_to'])->toDateString();
+
+        if (Carbon::parse($dateFrom)->diffInDays(Carbon::parse($dateTo)) > 62) {
+            throw ValidationException::withMessages(['date_from' => 'Rentang tarik absensi maksimal 62 hari.']);
+        }
+
+        try {
+            $result = $pull->execute($dateFrom, $dateTo, $request->user()->id);
+        } catch (\Throwable $exception) {
+            return back()->with('error', 'Gagal menarik absensi dari HR: '.$exception->getMessage());
+        }
+
+        $notes = array_filter([
+            $result['skipped_paid'] > 0 ? "{$result['skipped_paid']} sudah dibayar jadi tidak diubah" : null,
+            $result['unmatched'] > 0 ? "{$result['unmatched']} karyawan HR belum terhubung ke penjahit (jalankan Sinkron HR)" : null,
+            $result['on_draft_slip'] > 0 ? "{$result['on_draft_slip']} ada di draft gaji, tekan \"Hitung ulang\" di draft itu" : null,
+        ]);
+
+        return back()->with('status', "Absensi HR ditarik: {$result['created']} baru, {$result['updated']} diperbarui".($notes !== [] ? ' · '.implode(' · ', $notes) : '').'.');
     }
 
     public function destroy(TailorAttendance $attendance): RedirectResponse

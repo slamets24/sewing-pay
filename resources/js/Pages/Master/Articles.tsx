@@ -202,6 +202,7 @@ function ArticleCard({ article, canEdit, canSync, canSamples, packingConfigured,
                 <div className="flex flex-wrap gap-1.5">
                     <ToneBadge tone={SOURCE_TONE[article.source]}>{article.source_label}</ToneBadge>
                     {article.fabric_type && <ToneBadge tone="neutral">{article.fabric_type === 'polos' ? 'Polos' : 'Print'}</ToneBadge>}
+                    {(article.processes?.length ?? 0) > 0 && <ToneBadge tone="neutral">{article.processes!.join(' → ')}</ToneBadge>}
                     {!article.is_active && <ToneBadge tone="neutral">Nonaktif</ToneBadge>}
                 </div>
             </div>

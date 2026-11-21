@@ -37,6 +37,7 @@ class WorkOrderPresenter
                 ->groupBy('article_id')
                 ->map(fn ($group) => [
                     'name' => $group->first()->article?->name ?? '-',
+                    'processes' => $group->first()->article?->processNames() ?? [],
                     'qty' => (int) $group->sum('planned_qty'),
                     'warehouse_qty' => (int) $group->sum(fn (WorkOrderItem $item) => $item->availableQty()),
                     'sewing_qty' => (int) $group->sum(fn (WorkOrderItem $item) => $item->sewingQty()),
@@ -89,6 +90,8 @@ class WorkOrderPresenter
             'color' => $item->color,
             'size' => $item->size,
             'item_type' => $item->item_type ?? 'print',
+            // Proses di vendor setelah cutting (Bordir, Prisket, ...), urut pengerjaan.
+            'processes' => $item->article->processNames(),
             'is_polosan' => $item->isPolosan(),
             'barcode_value' => $item->variant?->barcode_value,
             'sewing_rate' => $item->article->sewing_rate,

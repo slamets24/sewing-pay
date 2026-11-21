@@ -450,6 +450,11 @@ function ItemRow({
                 {item.article_name}
                 <span className="font-medium text-muted-foreground"> · {variantLabel(item.color, item.size) || 'Tanpa varian'}</span>
                 {item.is_polosan && <span className="font-medium text-muted-foreground"> · polosan</span>}
+                {(item.processes?.length ?? 0) > 0 && (
+                    <span className="font-semibold text-violet-700 dark:text-violet-300" title="Proses di vendor setelah cutting">
+                        {' '}· {item.processes!.join(' → ')}
+                    </span>
+                )}
             </p>
             <ToneBadge tone={ToneStyle.forStage(item.stage)} className="order-3 hidden shrink-0 px-2 py-0.5 text-[11px] sm:inline-flex">
                 {isDone ? 'Selesai' : item.stage_label}

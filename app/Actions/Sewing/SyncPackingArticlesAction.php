@@ -37,6 +37,9 @@ class SyncPackingArticlesAction
                 if (array_key_exists('fabric_type', $payload)) {
                     $article->fabric_type = in_array($payload['fabric_type'], ['polos', 'print'], true) ? $payload['fabric_type'] : null;
                 }
+                if (array_key_exists('processes', $payload)) {
+                    $article->processes = Article::normalizeProcesses($payload['processes']);
+                }
                 $article->sewing_rate ??= 0;
                 $article->save();
                 $articleCount++;

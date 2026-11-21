@@ -3,11 +3,11 @@ import { cn } from '@/lib/utils';
 import type { PayoutSlipRecord } from '@/types/sewing';
 
 type StatementListProps = {
-    slip: Pick<PayoutSlipRecord, 'qty' | 'gross_amount' | 'bonus_amount' | 'deduction_amount' | 'net_amount'>;
+    slip: Pick<PayoutSlipRecord, 'qty' | 'gross_amount' | 'bonus_amount' | 'deduction_amount' | 'net_amount'> & Partial<Pick<PayoutSlipRecord, 'kasbon_amount'>>;
     className?: string;
 };
 
-/** Ruled summary of a slip: pcs, kotor, bonus, potongan and the amount received. */
+/** Ruled summary of a slip: pcs, kotor, bonus, potongan, potong kasbon and the amount received. */
 export function StatementList({ slip, className }: StatementListProps) {
     return (
         <dl className={cn('divide-y overflow-hidden rounded-lg border', className)}>

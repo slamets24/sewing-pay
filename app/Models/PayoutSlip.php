@@ -19,6 +19,9 @@ class PayoutSlip extends Model
         'gross_amount',
         'bonus_amount',
         'deduction_amount',
+        'kasbon_amount',
+        'kasbon_deductions',
+        'kasbon_reported_at',
         'net_amount',
         'notes',
         'paid_at',
@@ -32,6 +35,9 @@ class PayoutSlip extends Model
             'gross_amount' => 'integer',
             'bonus_amount' => 'integer',
             'deduction_amount' => 'integer',
+            'kasbon_amount' => 'integer',
+            'kasbon_deductions' => 'array',
+            'kasbon_reported_at' => 'datetime',
             'net_amount' => 'integer',
             'paid_at' => 'datetime',
         ];
@@ -55,5 +61,11 @@ class PayoutSlip extends Model
     public function isPaid(): bool
     {
         return $this->status === PayoutStatus::Paid;
+    }
+
+    /** Slip sudah dibayar dan memotong kasbon, tapi potongannya belum tercatat di hr-azzahra. */
+    public function hasPendingKasbonReport(): bool
+    {
+        return $this->isPaid() && $this->kasbon_amount > 0 && $this->kasbon_reported_at === null;
     }
 }

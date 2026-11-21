@@ -53,6 +53,7 @@ class ArticleController extends Controller
                 'brand_name' => $article->brand_name,
                 'category_name' => $article->category_name,
                 'fabric_type' => $article->fabric_type,
+                'processes' => $article->processNames(),
                 'sewing_rate' => $article->sewing_rate,
                 'makloon_sewing_rate' => $article->makloon_sewing_rate,
                 'is_active' => $article->is_active,

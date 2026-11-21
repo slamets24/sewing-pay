@@ -19,6 +19,7 @@ class Article extends Model
         'brand_name',
         'category_name',
         'fabric_type',
+        'processes',
         'sewing_rate',
         'makloon_sewing_rate',
         'is_active',
@@ -31,6 +32,7 @@ class Article extends Model
         return [
             'source' => ArticleSource::class,
             'packing_article_id' => 'integer',
+            'processes' => 'array',
             'sewing_rate' => 'integer',
             'makloon_sewing_rate' => 'integer',
             'is_active' => 'boolean',
@@ -73,6 +75,40 @@ class Article extends Model
     public function displayName(): string
     {
         return trim($this->name);
+    }
+
+    /**
+     * Proses tambahan dari packingv2, dirapikan: teks tanpa spasi berlebih, tanpa duplikat, urutan tetap.
+     *
+     * @return list<string>
+     */
+    public static function normalizeProcesses(mixed $processes): array
+    {
+        if (! is_array($processes)) {
+            return [];
+        }
+
+        $names = [];
+
+        foreach ($processes as $process) {
+            $name = trim((string) preg_replace('/\s+/', ' ', (string) $process));
+
+            if ($name !== '' && ! in_array(mb_strtolower($name), array_map('mb_strtolower', $names), true)) {
+                $names[] = mb_substr($name, 0, 60);
+            }
+        }
+
+        return $names;
+    }
+
+    /**
+     * Proses tambahan artikel (Bordir, Prisket, ...) sesuai urutan; kosong berarti langsung jahit.
+     *
+     * @return list<string>
+     */
+    public function processNames(): array
+    {
+        return self::normalizeProcesses($this->processes);
     }
 
     /** Jenis kain packingv2 ('polos' / 'print') diterjemahkan ke jenis baris WO ('polosan' / 'print'). */

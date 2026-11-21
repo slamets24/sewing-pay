@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 /**
- * packingv2 mengirim perubahan artikel (nama / jenis kain) supaya OPSEW langsung ikut berubah.
+ * packingv2 mengirim perubahan artikel (nama / jenis kain / proses tambahan) supaya OPSEW langsung ikut berubah.
  */
 class PackingArticleApiController extends Controller
 {
@@ -24,6 +24,8 @@ class PackingArticleApiController extends Controller
             'articles.*.packing_article_id' => ['required', 'integer', 'distinct'],
             'articles.*.name' => ['nullable', 'string', 'max:255'],
             'articles.*.fabric_type' => ['nullable', 'string', 'in:polos,print'],
+            'articles.*.processes' => ['nullable', 'array', 'max:10'],
+            'articles.*.processes.*' => ['string', 'max:60'],
         ]);
 
         $updated = 0;
@@ -42,6 +44,10 @@ class PackingArticleApiController extends Controller
 
                 if (array_key_exists('fabric_type', $incoming)) {
                     $article->fabric_type = $incoming['fabric_type'];
+                }
+
+                if (array_key_exists('processes', $incoming)) {
+                    $article->processes = Article::normalizeProcesses($incoming['processes'] ?? []);
                 }
 
                 if ($article->isDirty('fabric_type')) {

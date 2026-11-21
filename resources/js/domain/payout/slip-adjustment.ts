@@ -13,7 +13,7 @@ export type SlipAdjustmentPayload = {
 };
 
 /**
- * Live preview of a slip's bonus/potongan edit: diterima = kotor + bonus − potongan.
+ * Live preview of a slip's bonus/potongan edit: diterima = kotor + bonus − potongan − potongan kasbon (dari HR, tidak diedit di sini).
  * Mirrors the server rules (whole rupiah, max 100 jt each, diterima never below zero) so mistakes show before saving.
  */
 export class SlipAdjustment {
@@ -23,10 +23,11 @@ export class SlipAdjustment {
         readonly gross: number,
         readonly bonus: number,
         readonly deduction: number,
+        readonly kasbon: number = 0,
     ) {}
 
-    static fromInput(gross: number, input: Pick<SlipAdjustmentInput, 'bonus_amount' | 'deduction_amount'>): SlipAdjustment {
-        return new SlipAdjustment(gross, SlipAdjustment.parseAmount(input.bonus_amount), SlipAdjustment.parseAmount(input.deduction_amount));
+    static fromInput(gross: number, input: Pick<SlipAdjustmentInput, 'bonus_amount' | 'deduction_amount'>, kasbon = 0): SlipAdjustment {
+        return new SlipAdjustment(gross, SlipAdjustment.parseAmount(input.bonus_amount), SlipAdjustment.parseAmount(input.deduction_amount), kasbon);
     }
 
     /** Form values for a slip as saved on the server; zero shows as an empty field. */
@@ -56,7 +57,7 @@ export class SlipAdjustment {
     }
 
     get net(): number {
-        return this.gross + this.bonus - this.deduction;
+        return this.gross + this.bonus - this.deduction - this.kasbon;
     }
 
     get bonusError(): string | null {
@@ -65,7 +66,11 @@ export class SlipAdjustment {
 
     get deductionError(): string | null {
         if (this.deduction > SlipAdjustment.MAX_AMOUNT) return 'Potongan terlalu besar (maksimal Rp. 100 juta).';
-        if (this.net < 0) return 'Potongan tidak boleh melebihi gaji kotor ditambah bonus.';
+        if (this.net < 0) {
+            return this.kasbon > 0
+                ? 'Potongan ditambah potongan kasbon tidak boleh melebihi gaji kotor ditambah bonus.'
+                : 'Potongan tidak boleh melebihi gaji kotor ditambah bonus.';
+        }
 
         return null;
     }

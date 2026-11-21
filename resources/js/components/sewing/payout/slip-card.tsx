@@ -9,7 +9,7 @@ import { ToneStyle } from '@/lib/tone';
 import { cn } from '@/lib/utils';
 import { floorActions } from '@/services/floor-actions';
 import type { PayoutSlipRecord } from '@/types/sewing';
-import { ChevronDown, CircleCheck, FileText, MessageCircle, Save, Undo2 } from 'lucide-react';
+import { ChevronDown, CircleCheck, FileText, HandCoins, MessageCircle, Save, Send, Undo2 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { AmountInput } from './amount-input';
 import { PayoutStatusBadge } from './payout-status-badge';
@@ -20,6 +20,8 @@ import { useSlipAdjustment } from './use-slip-adjustment';
 export function SlipCard({ slip }: { slip: PayoutSlipRecord }) {
     const [showLines, setShowLines] = useState(false);
     const [paying, setPaying] = useState(false);
+    const [reportingKasbon, setReportingKasbon] = useState(false);
+    const kasbon = slip.kasbon_amount ?? 0;
     const { form, adjustment, dirty, errors, save, reset } = useSlipAdjustment(slip);
 
     const editable = !slip.is_paid;
@@ -36,6 +38,14 @@ export function SlipCard({ slip }: { slip: PayoutSlipRecord }) {
     const markPaid = () =>
         floorActions.send('post', route('payout-slips.paid', slip.id), {}, { onStart: () => setPaying(true), onFinish: () => setPaying(false) });
 
+    const reportKasbon = () =>
+        floorActions.send(
+            'post',
+            route('payout-slips.report-kasbon', slip.id),
+            {},
+            { onStart: () => setReportingKasbon(true), onFinish: () => setReportingKasbon(false) },
+        );
+
     return (
         <article className={cn('overflow-hidden rounded-lg border border-t-4 bg-card shadow-xs', ToneStyle.topBorder(PayoutTone.forStatus(slip.status)))}>
             <header className="flex flex-wrap items-start gap-3 px-4 pt-4">
@@ -47,12 +57,27 @@ export function SlipCard({ slip }: { slip: PayoutSlipRecord }) {
             </header>
 
             <div className="grid gap-4 p-4 md:grid-cols-[minmax(0,1fr)_15rem]">
-                <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-2 xl:grid-cols-4">
-                    <Figure label="Jumlah" value={`${slip.qty} pcs`} />
-                    <Figure label="Kotor" value={formatIdr(slip.gross_amount)} />
-                    <Figure label="Bonus" value={`+ ${formatIdr(bonus)}`} />
-                    <Figure label="Potongan" value={`− ${formatIdr(deduction)}`} />
-                </dl>
+                <div className="flex flex-col gap-3">
+                    <dl className={cn('grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-2', kasbon > 0 ? 'xl:grid-cols-5' : 'xl:grid-cols-4')}>
+                        <Figure label="Jumlah" value={`${slip.qty} pcs`} />
+                        <Figure label="Kotor" value={formatIdr(slip.gross_amount)} />
+                        <Figure label="Bonus" value={`+ ${formatIdr(bonus)}`} />
+                        <Figure label="Potongan" value={`− ${formatIdr(deduction)}`} />
+                        {kasbon > 0 && <Figure label="Kasbon" value={`− ${formatIdr(kasbon)}`} />}
+                    </dl>
+                    {kasbon > 0 && (
+                        <p className="flex items-start gap-2 text-sm text-muted-foreground">
+                            <HandCoins className="mt-0.5 size-4 shrink-0" aria-hidden />
+                            <span>
+                                Potong kasbon HR:{' '}
+                                {(slip.kasbon_deductions ?? [])
+                                    .map((item) => `${item.kasbon_number} ${formatIdr(item.amount)}${item.amount < item.remaining_before ? ` (sisa ${formatIdr(item.remaining_before - item.amount)})` : ' (lunas)'}`)
+                                    .join(' · ')}
+                                {slip.is_paid && !slip.kasbon_report_pending && ' · sudah tercatat di HR'}
+                            </span>
+                        </p>
+                    )}
+                </div>
 
                 <div className={cn('flex flex-col justify-center gap-1 rounded-lg border-2 px-4 py-3', adjustment.isValid || !editable ? 'border-foreground/15 bg-muted/60' : 'border-destructive bg-destructive/5')}>
                     <span className="text-sm font-bold text-muted-foreground uppercase">Diterima</span>
@@ -123,6 +148,12 @@ export function SlipCard({ slip }: { slip: PayoutSlipRecord }) {
                             Tandai dibayar
                         </ConfirmButton>
                     )}
+                    {slip.kasbon_report_pending && (
+                        <Button type="button" variant="outline" onClick={reportKasbon} disabled={reportingKasbon}>
+                            <Send />
+                            {reportingKasbon ? 'Mengirim…' : 'Kirim kasbon ke HR'}
+                        </Button>
+                    )}
                     <WhatsappButton url={slip.whatsapp_url} hintId={`slip-${slip.id}-wa-hint`} />
                     <Button asChild variant="outline">
                         <a href={slip.public_url} target="_blank" rel="noreferrer">
@@ -136,6 +167,9 @@ export function SlipCard({ slip }: { slip: PayoutSlipRecord }) {
                     </Button>
                 </div>
                 {editable && dirty && <p className="text-sm text-muted-foreground">Simpan bonus/potongan dulu sebelum menandai dibayar.</p>}
+                {slip.kasbon_report_pending && (
+                    <p className="text-sm text-destructive">Slip sudah dibayar, tapi potongan kasbonnya belum tercatat di HR. Tekan "Kirim kasbon ke HR".</p>
+                )}
                 {!slip.whatsapp_url && (
                     <p id={`slip-${slip.id}-wa-hint`} className="text-sm text-muted-foreground">
                         No. WA belum diisi. Isi di menu Penjahit supaya slip bisa dikirim.

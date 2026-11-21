@@ -99,6 +99,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/absensi', [TailorAttendanceController::class, 'index'])->name('attendances.index')->middleware('can:'.Ability::AttendancesManage->value);
     Route::post('/absensi', [TailorAttendanceController::class, 'storeOrUpdate'])->name('attendances.store')->middleware('can:'.Ability::AttendancesManage->value);
     Route::post('/absensi/hadir-semua', [TailorAttendanceController::class, 'batchPresent'])->name('attendances.batch')->middleware('can:'.Ability::AttendancesManage->value);
+    Route::post('/absensi/tarik-hr', [TailorAttendanceController::class, 'pullFromHr'])->name('attendances.pull-hr')->middleware('can:'.Ability::AttendancesManage->value);
     Route::delete('/absensi/{attendance}', [TailorAttendanceController::class, 'destroy'])->name('attendances.destroy')->middleware('can:'.Ability::AttendancesManage->value);
 
     Route::get('/rekap-produksi', [ProductionReportController::class, 'index'])->name('production-reports.index')->middleware('can:'.Ability::ProductionReportsView->value);
@@ -136,6 +137,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/gaji/{payout}/hapus-total', [PayoutController::class, 'forceDestroy'])->name('payouts.force-destroy')->middleware('can:'.Ability::PayoutsForceDelete->value);
     Route::patch('/slip/{slip}', [PayoutController::class, 'updateSlip'])->name('payout-slips.update')->middleware('can:'.Ability::PayoutsManage->value);
     Route::post('/slip/{slip}/bayar', [PayoutController::class, 'markSlipPaid'])->name('payout-slips.paid')->middleware('can:'.Ability::PayoutsPay->value);
+    Route::post('/slip/{slip}/kirim-kasbon-hr', [PayoutController::class, 'reportSlipKasbon'])->name('payout-slips.report-kasbon')->middleware('can:'.Ability::PayoutsPay->value);
 
     Route::get('/pembayaran-maklun', [MakloonPaymentController::class, 'index'])->name('makloon-payments.index')->middleware('can:'.Ability::MakloonPaymentsManage->value);
     Route::get('/pembayaran-maklun/baru', [MakloonPaymentController::class, 'create'])->name('makloon-payments.create')->middleware('can:'.Ability::MakloonPaymentsManage->value);

@@ -32,7 +32,9 @@ class TailorController extends Controller
         try {
             $result = $syncAction->execute();
 
-            return Redirect::back()->with('status', "Sinkronisasi HR selesai: {$result['synced']} penjahit diperiksa ({$result['created']} baru, {$result['updated']} diperbarui).");
+            $deactivatedNote = $result['deactivated'] > 0 ? ", {$result['deactivated']} dinonaktifkan karena tidak aktif lagi di HR" : '';
+
+            return Redirect::back()->with('status', "Sinkronisasi HR selesai: {$result['synced']} penjahit diperiksa ({$result['created']} baru, {$result['updated']} diperbarui{$deactivatedNote}).");
         } catch (\Throwable $e) {
             return Redirect::back()->with('error', 'Gagal menyinkronkan dengan HR: '.$e->getMessage());
         }

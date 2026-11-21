@@ -57,6 +57,7 @@ class ExternalPayrollApiController extends Controller
                     'gross_amount' => $slip->gross_amount,
                     'bonus_amount' => $slip->bonus_amount,
                     'deduction_amount' => $slip->deduction_amount,
+                    'kasbon_amount' => $slip->kasbon_amount,
                     'net_amount' => $slip->net_amount,
                     'public_url' => route('payout-slips.public', [
                         'invoiceNumber' => $slip->invoice_number,
