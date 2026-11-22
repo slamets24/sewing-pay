@@ -85,13 +85,13 @@ export function ReportDefectSheet({
                     {/* 1. JENIS CACAT */}
                     <FormField label="Jenis Masalah / Cacat">
                         <div className="grid grid-cols-2 gap-2">
-                            <Button variant="plain" size="plain"
+                            <Button variant="outline"
                                 type="button"
                                 onClick={() => setData('type', 'material')}
-                                className={cn(
-                                    'flex flex-col items-start gap-1 rounded-xl border-2 p-3 text-left transition-all',
+                                className={cn('h-auto whitespace-normal justify-start',
+                                    'flex flex-col items-start gap-1 border p-3 text-left transition-all',
                                     data.type === 'material'
-                                        ? 'border-primary bg-primary/10 shadow-xs'
+                                        ? 'border-primary bg-primary/10 '
                                         : 'border-border/60 hover:bg-muted/40',
                                 )}
                             >
@@ -104,13 +104,13 @@ export function ReportDefectSheet({
                                 </span>
                             </Button>
 
-                            <Button variant="plain" size="plain"
+                            <Button variant="outline"
                                 type="button"
                                 onClick={() => setData('type', 'sewing')}
-                                className={cn(
-                                    'flex flex-col items-start gap-1 rounded-xl border-2 p-3 text-left transition-all',
+                                className={cn('h-auto whitespace-normal justify-start',
+                                    'flex flex-col items-start gap-1 border p-3 text-left transition-all',
                                     data.type === 'sewing'
-                                        ? 'border-amber-500 bg-amber-500/10 shadow-xs'
+                                        ? 'border-amber-500 bg-amber-500/10 '
                                         : 'border-border/60 hover:bg-muted/40',
                                 )}
                             >
@@ -148,7 +148,7 @@ export function ReportDefectSheet({
                                 <NativeSelect
                                     value={data.revision_part_id}
                                     onChange={(e) => setData('revision_part_id', e.target.value)}
-                                    className="w-full rounded-xl border border-input bg-card px-3 py-2 text-sm shadow-2xs focus:border-primary focus:outline-none"
+                                    className="w-full border border-input bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none"
                                 >
                                     <NativeSelectOption value="">-- Pilih Bagian --</NativeSelectOption>
                                     {revisionParts.map((part) => (
@@ -223,7 +223,7 @@ export function ReportDefectSheet({
                             onChange={(e) => setData('notes', e.target.value)}
                             placeholder="Contoh: Kain bolong di dekat jahitan kerah depan..."
                             rows={3}
-                            className="rounded-xl text-sm shadow-2xs"
+                            className=" text-sm "
                         />
                     </FormField>
 
@@ -232,7 +232,7 @@ export function ReportDefectSheet({
                             type="submit"
                             size="lg"
                             disabled={processing}
-                            className="w-full rounded-xl bg-rose-600 font-bold text-white hover:bg-rose-700 shadow-md transition-all active:scale-95"
+                            className="w-full bg-rose-600 font-bold text-white hover:bg-rose-700 transition-all "
                         >
                             <Check className="size-4 mr-2" />
                             Simpan Laporan Cacat ({data.qty} pcs)
@@ -312,7 +312,7 @@ export function ReassignRevisionSheet({
                                 type="button"
                                 onClick={() => reassignTo(selectedTailor.id)}
                                 disabled={busy}
-                                className="mt-1 h-9.5 rounded-xl font-bold bg-primary text-primary-foreground shadow-sm active:scale-95"
+                                className="mt-1 h-9.5 font-bold bg-primary text-primary-foreground "
                             >
                                 <Check className="size-4 mr-1.5" />
                                 Serahkan ke {selectedTailor.name}
@@ -329,7 +329,7 @@ export function ReassignRevisionSheet({
                             id={`revision-tailor-${revision.id}`}
                             value={targetTailorId}
                             onChange={(e) => setTargetTailorId(Number(e.target.value))}
-                            className="w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm shadow-2xs focus:border-primary focus:outline-none"
+                            className="w-full border border-input bg-card px-3 py-2.5 text-sm focus:border-primary focus:outline-none"
                         >
                             {tailors.map((t) => (
                                 <NativeSelectOption key={t.id} value={t.id}>
@@ -343,7 +343,7 @@ export function ReassignRevisionSheet({
                             onClick={() => reassignTo(targetTailorId)}
                             disabled={busy || targetTailorId === revision.tailor_id}
                             variant="secondary"
-                            className="mt-2 h-10 rounded-xl font-bold active:scale-95"
+                            className="mt-2 h-10 font-bold "
                         >
                             Simpan Pengalihan Penjahit
                         </Button>

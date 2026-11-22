@@ -66,7 +66,7 @@ type WorkloadCardProps = {
 function WorkloadCard({ workload, pendingId, onRecord, onMore }: WorkloadCardProps) {
     return (
         <Card asChild>
-            <article className="overflow-hidden rounded-xl border bg-card">
+            <article className="overflow-hidden border bg-card">
                 <header className="flex items-center gap-3 px-3 py-2.5">
                     <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold" aria-hidden>
                         {workload.initials}

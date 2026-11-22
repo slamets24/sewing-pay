@@ -57,19 +57,19 @@ export default function Overview({ stats, board, dueSoon, recentDeliveries }: Ov
                             </p>
                         </div>
                         <div className="grid shrink-0 grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-2.5 lg:self-center">
-                            <Button asChild size="default" variant="outline" className="rounded-xl border-white/40 bg-white/10 px-2 font-bold text-white shadow-xs hover:bg-white/20 sm:px-4">
+                            <Button asChild size="default" variant="outline" className=" border-white/40 bg-white/10 px-2 font-bold text-white hover:bg-white/20 sm:px-4">
                                 <Link href={route('production-reports.index')}>
                                     <BarChart3 className="size-4 sm:mr-1.5" />
                                     Rekap<span className="hidden sm:inline"> Produksi</span>
                                 </Link>
                             </Button>
-                            <Button asChild size="default" variant="outline" className="rounded-xl border-white/40 bg-white/10 px-2 font-bold text-white shadow-xs hover:bg-white/20 sm:px-4">
+                            <Button asChild size="default" variant="outline" className=" border-white/40 bg-white/10 px-2 font-bold text-white hover:bg-white/20 sm:px-4">
                                 <Link href={route('work-orders.create')}>
                                     <Plus className="size-4 sm:mr-1.5" />
                                     WO baru
                                 </Link>
                             </Button>
-                            <Button asChild size="default" className="order-first col-span-2 rounded-xl border-0 bg-white font-bold text-primary shadow-xs hover:bg-white/90 sm:order-none">
+                            <Button asChild size="default" className="order-first col-span-2 border-0 bg-white font-bold text-primary hover:bg-white/90 sm:order-none">
                                 <Link href={route('desk.index')}>
                                     Buka Meja Loket
                                 </Link>
@@ -105,7 +105,7 @@ export default function Overview({ stats, board, dueSoon, recentDeliveries }: Ov
                                     <Card asChild>
                                         <Link
                                             href={route('desk.index', { tailor: row.tailor.id })}
-                                            className="flex items-center gap-3 rounded-lg border bg-card px-3 py-2.5 transition-colors hover:border-foreground/30"
+                                            className="flex items-center gap-3 border bg-card px-3 py-2.5 transition-colors hover:border-foreground/30"
                                         >
                                             <div className="min-w-0 flex-1">
                                                 <p className="truncate font-bold">{row.tailor.name}</p>

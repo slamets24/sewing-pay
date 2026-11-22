@@ -30,7 +30,7 @@ export function RevisionCard({ revision, tailors }: { revision: RevisionRecord; 
 
     return (
         <Card asChild>
-            <article className={cn('flex flex-col gap-3 rounded-lg border border-t-4 bg-card p-4 shadow-xs', ToneStyle.topBorder(typeTone))}>
+            <article className={cn('flex flex-col gap-3 border border-t-4 bg-card p-4 ', ToneStyle.topBorder(typeTone))}>
                 <div className="flex flex-wrap items-center gap-2">
                     <ToneBadge tone={typeTone}>{revision.type_label}</ToneBadge>
                     <ToneBadge tone={ToneStyle.forRevisionStatus(revision.status)}>{revision.status_label}</ToneBadge>

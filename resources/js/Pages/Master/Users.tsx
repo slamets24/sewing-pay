@@ -64,7 +64,7 @@ function UserRow({ user, onAction }: { user: ManagedUserRecord; onAction: (kind:
     const canManage = user.can_manage;
     return (
         <Card asChild>
-            <li className="flex flex-col gap-3 rounded-lg border bg-card p-4 lg:flex-row lg:items-center lg:gap-4 lg:rounded-none lg:border-0 lg:px-4 lg:py-3">
+            <li className="flex flex-col gap-3 border bg-card p-4 lg:flex-row lg:items-center lg:gap-4 lg:rounded-none lg:border-0 lg:px-4 lg:py-3">
                 <div className="flex min-w-0 flex-1 flex-col gap-2">
                     <div className="min-w-0">
                         <p className="text-lg leading-tight font-bold wrap-anywhere">{user.name}</p>

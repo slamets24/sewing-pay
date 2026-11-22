@@ -65,7 +65,7 @@ function PrintSettings({ sheet, size, onSizeChange }: { sheet: LabelSheet; size:
 
     return (
         <Card asChild>
-            <section className="flex flex-col gap-4 rounded-lg border border-t-4 border-t-primary bg-card p-4 shadow-xs print:hidden" aria-label="Pengaturan cetak">
+            <section className="flex flex-col gap-4 border border-t-4 border-t-primary bg-card p-4 print:hidden" aria-label="Pengaturan cetak">
                 <div className="flex flex-col gap-2">
                     <h2 className="font-display text-xl font-bold uppercase">Ukuran label</h2>
                     <SegmentedChoice options={LabelSheet.sizes} value={size} onChange={onSizeChange} label="Ukuran label" />
@@ -111,7 +111,7 @@ function ShipmentSummary({ sheet }: { sheet: LabelSheet }) {
 
     return (
         <Card asChild>
-            <section className="qc-summary overflow-hidden rounded-lg border bg-card shadow-xs print:overflow-visible print:rounded-none print:border-0 print:shadow-none" aria-label="Ringkasan kiriman">
+            <section className="qc-summary overflow-hidden border bg-card print:overflow-visible print:rounded-none print:border-0 print:shadow-none" aria-label="Ringkasan kiriman">
                 <header className="flex flex-wrap items-end justify-between gap-3 border-b bg-muted/60 px-4 py-3 print:bg-transparent print:px-0">
                     <div>
                         <p className="text-sm font-semibold text-muted-foreground uppercase">Kiriman ke QC</p>

@@ -30,8 +30,8 @@ export function FormSheet({ open, onOpenChange, title, description, submitLabel 
             <SheetContent side="right" showCloseButton={false} className="w-full gap-0 sm:max-w-lg">
                 <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col" noValidate>
                     <SheetHeader className="border-b bg-muted/60">
-                        <SheetTitle className="font-display text-2xl font-bold uppercase">{title}</SheetTitle>
-                        {description && <SheetDescription className="text-base text-muted-foreground">{description}</SheetDescription>}
+                        <SheetTitle>{title}</SheetTitle>
+                        {description && <SheetDescription>{description}</SheetDescription>}
                     </SheetHeader>
 
                     <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-4">{children}</div>

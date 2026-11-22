@@ -156,7 +156,7 @@ function PackingSyncPanel({ configured, lastSyncedAt, canSync }: { configured: b
 
     return (
         <Card asChild>
-            <div className="flex flex-col gap-3 rounded-lg border border-t-4 border-t-stage-ready bg-card p-4 shadow-xs sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-3 border border-t-4 border-t-stage-ready bg-card p-4 sm:flex-row sm:items-center">
                 <span className="hidden size-10 shrink-0 items-center justify-center rounded-md bg-stage-ready text-white sm:flex" aria-hidden>
                     <CloudDownload className="size-5" />
                 </span>
@@ -194,7 +194,7 @@ function ArticleCard({ article, canEdit, canSync, canSamples, packingConfigured,
         <Card asChild>
             <li
                 className={cn(
-                    'flex min-w-0 flex-col gap-3 rounded-lg border p-4',
+                    'flex min-w-0 flex-col gap-3 border p-4',
                     article.is_active ? 'bg-card' : 'border-dashed bg-muted/70',
                     needsRate && 'border-l-4 border-l-stage-revision',
                 )}

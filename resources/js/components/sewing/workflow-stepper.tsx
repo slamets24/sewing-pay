@@ -103,7 +103,7 @@ export function WorkflowStepper({ stats }: { stats: WorkflowStats }) {
 
     return (
         <Card asChild>
-            <section className="surface-card flex flex-col gap-4 p-4 sm:p-5">
+            <section className=" flex flex-col gap-4 p-4 sm:p-5">
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h2 className="text-base font-bold tracking-tight text-foreground sm:text-lg">
@@ -130,9 +130,9 @@ export function WorkflowStepper({ stats }: { stats: WorkflowStats }) {
                                 <Link
                                         href={item.href}
                                         className={cn(
-                                            'group relative flex w-full flex-col justify-between gap-2 rounded-xl border p-2.5 transition-colors sm:gap-3 sm:p-3',
+                                            'group relative flex w-full flex-col justify-between gap-2 border p-2.5 transition-colors sm:gap-3 sm:p-3',
                                             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-                                            item.attention ? 'border-primary/50 bg-card shadow-2xs' : 'border-border/70 bg-muted/30 hover:bg-card hover:border-foreground/30'
+                                            item.attention ? 'border-primary/50 bg-card ' : 'border-border/70 bg-muted/30 hover:bg-card hover:border-foreground/30'
                                         )}
                                     >
                                         <div className="flex items-center justify-between gap-2">

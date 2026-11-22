@@ -1,6 +1,8 @@
-import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { cn } from '@/lib/utils';
-import { Check, type LucideIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { useId } from 'react';
 
 export type ChoiceOption<T extends string> = {
     value: T;
@@ -20,43 +22,31 @@ type ChoiceButtonsProps<T extends string> = {
 
 /** Big pick-one buttons with a short explanation each; easier to hit and read than a dropdown. */
 export function ChoiceButtons<T extends string>({ label, value, options, onChange, className }: ChoiceButtonsProps<T>) {
+    const id = useId();
     return (
-        <div role="group" aria-label={label} className={cn('grid gap-2 sm:grid-cols-2', className)}>
+        <RadioGroup aria-label={label} value={value} onValueChange={(next) => onChange(next as T)} className={cn('grid gap-2 sm:grid-cols-2', className)}>
             {options.map((option) => {
                 const selected = option.value === value;
                 const Icon = option.icon;
 
                 return (
-                    <Button variant="plain" size="plain"
+                    <Label
                         key={option.value}
-                        type="button"
-                        aria-pressed={selected}
-                        onClick={() => onChange(option.value)}
-                        className={cn(
-                            'flex min-h-14 items-start gap-3 rounded-lg border-2 p-3 text-left text-foreground transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
-                            selected ? 'border-primary bg-primary/15' : 'border-input bg-card hover:bg-accent',
-                        )}
+                        htmlFor={`${id}-${option.value}`}
+                        className={cn('flex min-h-14 cursor-pointer items-start gap-3 rounded-md border p-3 text-left transition-colors hover:bg-accent has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50', selected ? 'border-primary bg-accent' : 'border-input bg-card')}
                     >
-                        <span
-                            aria-hidden
-                            className={cn(
-                                'mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border-2',
-                                selected ? 'border-primary bg-primary text-primary-foreground' : 'border-input bg-background',
-                            )}
-                        >
-                            {selected && <Check className="size-4" />}
-                        </span>
+                        <RadioGroupItem id={`${id}-${option.value}`} value={option.value} className="mt-0.5" />
                         <span className="flex min-w-0 flex-col gap-0.5">
-                            <span className="flex items-center gap-2 text-base font-semibold">
+                            <span className="flex items-center gap-2 text-sm font-medium">
                                 {Icon && <Icon className="size-5 shrink-0" />}
                                 {option.label}
                             </span>
                             {option.description && <span className="text-sm text-muted-foreground">{option.description}</span>}
                         </span>
-                    </Button>
+                    </Label>
                 );
             })}
-        </div>
+        </RadioGroup>
     );
 }
 

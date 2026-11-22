@@ -85,10 +85,10 @@ export function ArticlePicker({ articles, value, onChange, suggestedName, classN
                     <ul className="flex flex-col gap-2">
                         {filtered.map((article) => (
                             <li key={article.id}>
-                                <Button variant="plain" size="plain"
+                                <Button variant="outline"
                                     type="button"
                                     onClick={() => choose(article.id)}
-                                    className={cn(
+                                    className={cn('h-auto whitespace-normal justify-start',
                                         'flex min-h-14 w-full items-center justify-between gap-3 rounded-md border bg-card px-4 py-2 text-left hover:bg-accent focus-visible:ring-4 focus-visible:ring-ring/50 focus-visible:outline-none',
                                         article.id === value && 'border-primary bg-primary/15',
                                     )}

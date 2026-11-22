@@ -3,8 +3,8 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@
 import { ToneBadge } from '@/components/sewing/tone-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatIdr, variantLabel } from '@/lib/format';
-import { cn } from '@/lib/utils';
 import {
     BarChart3,
     Search,
@@ -42,7 +42,7 @@ export function DetailTables({ topArticles, topTailors, deliveryLogs }: DetailTa
 
     if (!open) {
         return (
-            <Button variant="outline" className="h-auto min-h-12 w-full rounded-2xl py-2.5 whitespace-normal" onClick={() => setOpen(true)}>
+            <Button variant="outline" className="h-auto min-h-12 w-full py-2.5 whitespace-normal" onClick={() => setOpen(true)}>
                 <BarChart3 />
                 <span className="min-w-0 text-left">Tampilkan tabel rinci ({deliveryLogs.length} setoran)</span>
             </Button>
@@ -51,47 +51,26 @@ export function DetailTables({ topArticles, topTailors, deliveryLogs }: DetailTa
 
     return (
         <Card asChild>
-            <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-xs">
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="flex flex-col gap-4 border border-border bg-card p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-3.5">
                     {/* Tab Switchers */}
-                    <div className="flex rounded-xl bg-muted/60 p-1 border border-border/60">
-                        <Button variant="plain" size="plain"
-                            type="button"
-                            onClick={() => setActiveTab('articles')}
-                            className={cn(
-                                'rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all',
-                                activeTab === 'articles'
-                                    ? 'bg-card text-foreground shadow-xs'
-                                    : 'text-muted-foreground hover:text-foreground',
-                            )}
+                    <TabsList className="h-auto min-w-0 max-w-full flex-wrap gap-1 p-1">
+                        <TabsTrigger value="articles"
+                            className="h-auto min-w-0 flex-1 whitespace-normal px-3.5 py-1.5 text-xs"
                         >
                             Rekap Per Artikel ({topArticles.length})
-                        </Button>
-                        <Button variant="plain" size="plain"
-                            type="button"
-                            onClick={() => setActiveTab('tailors')}
-                            className={cn(
-                                'rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all',
-                                activeTab === 'tailors'
-                                    ? 'bg-card text-foreground shadow-xs'
-                                    : 'text-muted-foreground hover:text-foreground',
-                            )}
+                        </TabsTrigger>
+                        <TabsTrigger value="tailors"
+                            className="h-auto min-w-0 flex-1 whitespace-normal px-3.5 py-1.5 text-xs"
                         >
                             Rekap Per Penjahit ({topTailors.length})
-                        </Button>
-                        <Button variant="plain" size="plain"
-                            type="button"
-                            onClick={() => setActiveTab('logs')}
-                            className={cn(
-                                'rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all',
-                                activeTab === 'logs'
-                                    ? 'bg-card text-foreground shadow-xs'
-                                    : 'text-muted-foreground hover:text-foreground',
-                            )}
+                        </TabsTrigger>
+                        <TabsTrigger value="logs"
+                            className="h-auto min-w-0 flex-1 whitespace-normal px-3.5 py-1.5 text-xs"
                         >
                             Log Riwayat Setoran ({deliveryLogs.length})
-                        </Button>
-                    </div>
+                        </TabsTrigger>
+                    </TabsList>
 
                     {/* Search Input */}
                     <div className="relative w-full sm:w-64">
@@ -100,14 +79,14 @@ export function DetailTables({ topArticles, topTailors, deliveryLogs }: DetailTa
                             placeholder="Cari nama artikel / penjahit..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="h-9 pl-8 text-xs rounded-xl"
+                            className="h-9 pl-8 text-xs "
                         />
                     </div>
                 </div>
 
                 {/* TAB 1: REKAP ARTIKEL TABLE */}
                 {activeTab === 'articles' && (
-                    <div className="overflow-x-auto">
+                    <TabsContent value="articles" className="min-w-0 overflow-x-auto">
                         <Table scrollContainer={false} className="w-full text-left text-xs">
                             <TableHeader>
                                 <TableRow className="border-b border-border/60 text-muted-foreground uppercase tracking-wider text-[10px]">
@@ -150,12 +129,12 @@ export function DetailTables({ topArticles, topTailors, deliveryLogs }: DetailTa
                                 )}
                             </TableBody>
                         </Table>
-                    </div>
+                    </TabsContent>
                 )}
 
                 {/* TAB 2: REKAP PENJAHIT TABLE */}
                 {activeTab === 'tailors' && (
-                    <div className="overflow-x-auto">
+                    <TabsContent value="tailors" className="min-w-0 overflow-x-auto">
                         <Table scrollContainer={false} className="w-full text-left text-xs">
                             <TableHeader>
                                 <TableRow className="border-b border-border/60 text-muted-foreground uppercase tracking-wider text-[10px]">
@@ -209,12 +188,12 @@ export function DetailTables({ topArticles, topTailors, deliveryLogs }: DetailTa
                                 )}
                             </TableBody>
                         </Table>
-                    </div>
+                    </TabsContent>
                 )}
 
                 {/* TAB 3: LOG RIWAYAT SETORAN TABLE */}
                 {activeTab === 'logs' && (
-                    <div className="overflow-x-auto">
+                    <TabsContent value="logs" className="min-w-0 overflow-x-auto">
                         <Table scrollContainer={false} className="w-full text-left text-xs">
                             <TableHeader>
                                 <TableRow className="border-b border-border/60 text-muted-foreground uppercase tracking-wider text-[10px]">
@@ -268,9 +247,9 @@ export function DetailTables({ topArticles, topTailors, deliveryLogs }: DetailTa
                                 )}
                             </TableBody>
                         </Table>
-                    </div>
+                    </TabsContent>
                 )}
-            </div>
+            </Tabs>
         </Card>
     );
 }

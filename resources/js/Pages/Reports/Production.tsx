@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate, formatIdr } from '@/lib/format';
-import { cn } from '@/lib/utils';
 import { Link, router } from '@inertiajs/react';
 import {
     Calendar,
@@ -93,7 +92,7 @@ export default function ProductionReport({
                     hideTextOnPhone
                     actions={
                         <div className="flex items-center gap-2">
-                            <Button asChild variant="outline" size="sm" className="rounded-xl shadow-xs">
+                            <Button asChild variant="outline" size="sm" className=" ">
                                 <Link href={route('desk.index')}>
                                     Buka Meja Loket
                                 </Link>
@@ -106,7 +105,7 @@ export default function ProductionReport({
 
                 {/* FILTER CONTROLS BAR */}
                 <Card asChild>
-                    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-3 border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
                         {/* Preset Pills */}
                         <div className="flex flex-wrap items-center gap-1.5">
                             <span className="mr-1 hidden items-center gap-1 text-xs font-bold tracking-wider text-muted-foreground uppercase sm:flex">
@@ -120,16 +119,12 @@ export default function ProductionReport({
                                 { id: 'this_month', label: 'Bulan Ini' },
                                 { id: 'custom', label: 'Kustom' },
                             ].map((btn) => (
-                                <Button variant="plain" size="plain"
+                                <Button variant={selectedPreset === btn.id ? 'default' : 'secondary'}
                                     key={btn.id}
                                     type="button"
+                                    aria-pressed={selectedPreset === btn.id}
                                     onClick={() => applyPreset(btn.id)}
-                                    className={cn(
-                                        'rounded-xl px-3 py-1.5 text-xs font-bold transition-all',
-                                        selectedPreset === btn.id
-                                            ? 'bg-primary text-primary-foreground shadow-xs'
-                                            : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground',
-                                    )}
+                                    className="h-auto whitespace-normal px-3 py-1.5 text-xs"
                                 >
                                     {btn.label}
                                 </Button>
@@ -141,21 +136,23 @@ export default function ProductionReport({
                             <div className="flex flex-wrap items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-border">
                                 <Input
                                     type="date"
+                                    aria-label="Tanggal mulai"
                                     value={customFrom}
                                     onChange={(e) => setCustomFrom(e.target.value)}
-                                    className="h-8 w-36 rounded-lg text-xs"
+                                    className="h-8 w-36 text-xs"
                                 />
                                 <span className="text-xs text-muted-foreground">s/d</span>
                                 <Input
                                     type="date"
+                                    aria-label="Tanggal akhir"
                                     value={customTo}
                                     onChange={(e) => setCustomTo(e.target.value)}
-                                    className="h-8 w-36 rounded-lg text-xs"
+                                    className="h-8 w-36 text-xs"
                                 />
                                 <Button
                                     size="sm"
                                     onClick={applyCustomRange}
-                                    className="h-8 rounded-lg text-xs font-bold px-3"
+                                    className="h-8 text-xs font-bold px-3"
                                 >
                                     Terapkan
                                 </Button>
@@ -174,13 +171,13 @@ export default function ProductionReport({
                 {/* 5 KEY KPI STAT TILES */}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                     {/* Metric 1: Total Produksi */}
-                    <div className="flex flex-col justify-between rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 shadow-xs">
+                    <Card className="justify-between gap-0 p-4">
                         <div className="flex items-center justify-between text-muted-foreground">
                             <span className="text-xs font-bold uppercase tracking-wider">Total Disetor</span>
                             <PackageCheck className="size-4 text-emerald-600" />
                         </div>
-                        <div className="mt-3">
-                            <span className="font-display text-3xl font-black text-emerald-700 dark:text-emerald-400 tabular">
+                        <div className="mt-3 flex min-w-0 flex-wrap items-baseline gap-x-1">
+                            <span className="font-display text-2xl font-semibold [overflow-wrap:anywhere] text-emerald-700 dark:text-emerald-400 tabular sm:text-3xl">
                                 {stats.total_qty.toLocaleString('id-ID')}
                             </span>
                             <span className="ml-1 text-xs font-bold text-muted-foreground">pcs</span>
@@ -188,16 +185,16 @@ export default function ProductionReport({
                         <p className="mt-1 text-[11px] text-muted-foreground">
                             Dari {stats.active_days_count} hari aktif produksi
                         </p>
-                    </div>
+                    </Card>
 
                     {/* Metric 2: Rata-Rata Harian */}
-                    <div className="flex flex-col justify-between rounded-2xl border border-blue-500/30 bg-blue-500/5 p-4 shadow-xs">
+                    <Card className="justify-between gap-0 p-4">
                         <div className="flex items-center justify-between text-muted-foreground">
                             <span className="text-xs font-bold uppercase tracking-wider">Rata-Rata / Hari</span>
                             <TrendingUp className="size-4 text-blue-600" />
                         </div>
-                        <div className="mt-3">
-                            <span className="font-display text-3xl font-black text-blue-700 dark:text-blue-400 tabular">
+                        <div className="mt-3 flex min-w-0 flex-wrap items-baseline gap-x-1">
+                            <span className="font-display text-2xl font-semibold [overflow-wrap:anywhere] text-blue-700 dark:text-blue-400 tabular sm:text-3xl">
                                 {stats.daily_avg_qty.toLocaleString('id-ID')}
                             </span>
                             <span className="ml-1 text-xs font-bold text-muted-foreground">pcs/hari</span>
@@ -205,32 +202,32 @@ export default function ProductionReport({
                         <p className="mt-1 text-[11px] text-muted-foreground">
                             Kecepatan output workshop
                         </p>
-                    </div>
+                    </Card>
 
                     {/* Metric 3: Total Nilai Upah */}
-                    <div className="flex flex-col justify-between rounded-2xl border border-indigo-500/30 bg-indigo-500/5 p-4 shadow-xs">
+                    <Card className="justify-between gap-0 p-4">
                         <div className="flex items-center justify-between text-muted-foreground">
                             <span className="text-xs font-bold uppercase tracking-wider">Nilai Upah</span>
                             <Wallet className="size-4 text-indigo-600" />
                         </div>
                         <div className="mt-3">
-                            <span className="font-display text-2xl font-black text-indigo-700 dark:text-indigo-400 tabular">
+                            <span className="block min-w-0 font-display text-xl font-semibold [overflow-wrap:anywhere] text-indigo-700 dark:text-indigo-400 tabular sm:text-2xl">
                                 {formatIdr(stats.total_earnings)}
                             </span>
                         </div>
                         <p className="mt-1 text-[11px] text-muted-foreground">
                             Biaya ongkos jahit terakumulasi
                         </p>
-                    </div>
+                    </Card>
 
                     {/* Metric 4: Penjahit & Artikel */}
-                    <div className="flex flex-col justify-between rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 shadow-xs">
+                    <Card className="justify-between gap-0 p-4">
                         <div className="flex items-center justify-between text-muted-foreground">
                             <span className="text-xs font-bold uppercase tracking-wider">Kapasitas Tim</span>
                             <Users className="size-4 text-amber-600" />
                         </div>
-                        <div className="mt-3 flex items-baseline gap-2">
-                            <span className="font-display text-3xl font-black text-amber-700 dark:text-amber-400 tabular">
+                        <div className="mt-3 flex min-w-0 flex-wrap items-baseline gap-x-2">
+                            <span className="font-display text-2xl font-semibold [overflow-wrap:anywhere] text-amber-700 dark:text-amber-400 tabular sm:text-3xl">
                                 {stats.active_tailors_count}
                             </span>
                             <span className="text-xs font-bold text-muted-foreground">penjahit</span>
@@ -238,11 +235,11 @@ export default function ProductionReport({
                         <p className="mt-1 text-[11px] text-muted-foreground">
                             Mengerjakan {stats.articles_count} model artikel
                         </p>
-                    </div>
+                    </Card>
 
                     {/* Metric 5: Kualitas / Lolos QC */}
                     <Card asChild>
-                        <div className="flex flex-col justify-between rounded-2xl border border-border bg-card p-4 shadow-xs col-span-2 sm:col-span-1">
+                        <div className="flex flex-col justify-between border border-border bg-card p-4 col-span-2 sm:col-span-1">
                             <div className="flex items-center justify-between text-muted-foreground">
                                 <span className="text-xs font-bold uppercase tracking-wider">Kualitas Hasil</span>
                                 <CheckCircle2 className="size-4 text-emerald-600" />

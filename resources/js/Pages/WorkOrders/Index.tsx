@@ -92,7 +92,7 @@ export default function WorkOrderIndex({ filters, workOrders, packingConfigured 
             />
 
             <Card asChild>
-                <div className="mb-6 flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:p-5 shadow-xs">
+                <div className="mb-6 flex flex-col gap-4 border border-border bg-card p-4 sm:p-5 ">
                     {/* HP: satu baris tiga tombol sama lebar; laptop: tombol biasa. */}
                     <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap" role="group" aria-label="Saring status">
                         {STATUS_FILTERS.map((option) => (
@@ -101,7 +101,7 @@ export default function WorkOrderIndex({ filters, workOrders, packingConfigured 
                                 variant={filters.status === option.value ? 'default' : 'outline'}
                                 onClick={() => visit({ status: option.value })}
                                 aria-pressed={filters.status === option.value}
-                                className="rounded-xl px-2 font-semibold shadow-2xs transition-all active:scale-95 sm:px-4"
+                                className=" px-2 font-semibold transition-all sm:px-4"
                             >
                                 {option.label}
                             </Button>
@@ -114,10 +114,10 @@ export default function WorkOrderIndex({ filters, workOrders, packingConfigured 
                                 value={search}
                                 onChange={(event) => setSearch(event.target.value)}
                                 placeholder="Cari nomor WO atau nama artikel…"
-                                className="h-11 rounded-xl pl-10 pr-4 text-base shadow-2xs"
+                                className="h-11 pl-10 pr-4 text-base "
                             />
                         </div>
-                        <Button type="submit" variant="secondary" className="h-11 rounded-xl px-5 font-semibold shadow-2xs active:scale-95">
+                        <Button type="submit" variant="secondary" className="h-11 px-5 font-semibold ">
                             Cari
                         </Button>
                     </form>

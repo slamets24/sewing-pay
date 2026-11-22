@@ -127,7 +127,7 @@ export default function MakloonPaymentIndex({ payments, tailors, summary }: Inde
                                     <Card asChild key={tailor.id}>
                                         <div
 
-                                            className="flex flex-col justify-between rounded-xl border bg-card p-4 shadow-2xs transition-all hover:border-foreground/30"
+                                            className="flex flex-col justify-between border bg-card p-4 transition-all hover:border-foreground/30"
                                         >
                                             <div>
                                                 <div className="flex items-center justify-between gap-2">
@@ -193,7 +193,7 @@ export default function MakloonPaymentIndex({ payments, tailors, summary }: Inde
                         </EmptyState>
                     ) : (
                         <Card asChild>
-                            <div className="overflow-x-auto rounded-xl border bg-card shadow-2xs">
+                            <div className="overflow-x-auto border bg-card ">
                                 <Table scrollContainer={false} className="w-full text-left text-sm">
                                     <TableHeader className="border-b bg-muted/40 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                                         <TableRow>

@@ -97,11 +97,11 @@ function Metric({
 /** Tombol lipat sederhana untuk bagian yang jarang dibuka. */
 function FoldToggle({ open, onToggle, icon, children }: { open: boolean; onToggle: () => void; icon: ReactNode; children: ReactNode }) {
     return (
-        <Button variant="plain" size="plain"
+        <Button variant="ghost"
             type="button"
             onClick={onToggle}
             aria-expanded={open}
-            className="flex w-full items-center justify-between gap-2 rounded-lg px-1 py-1.5 text-left text-xs font-semibold text-muted-foreground hover:text-foreground"
+            className="h-auto whitespace-normal justify-start flex w-full items-center justify-between gap-2 px-1 py-1.5 text-left text-xs font-semibold text-muted-foreground hover:text-foreground"
         >
             <span className="flex min-w-0 items-center gap-1.5">
                 {icon}
@@ -127,7 +127,7 @@ export function OtherTailorRevisions({
 
     return (
         <Card asChild>
-            <div className="rounded-xl border border-border/70 bg-card px-3 py-1.5 shadow-xs">
+            <div className=" border border-border/70 bg-card px-3 py-1.5 ">
                 <FoldToggle open={open} onToggle={() => setOpen((v) => !v)} icon={<ArrowLeftRight className="size-3.5 text-primary" />}>
                     Revisi penjahit lain yang bisa dikerjakan ({otherTailorRevisions.length})
                 </FoldToggle>
@@ -150,7 +150,7 @@ export function OtherTailorRevisions({
                                     size="sm"
                                     variant="secondary"
                                     onClick={() => reassignRevision(rev, selectedTailor.id)}
-                                    className="h-8 rounded-lg text-xs font-bold shrink-0 hover:bg-primary hover:text-primary-foreground shadow-2xs active:scale-95"
+                                    className="h-8 text-xs font-bold shrink-0 hover:bg-primary hover:text-primary-foreground "
                                 >
                                     Kerjakan ({selectedTailor.name})
                                 </Button>
@@ -201,7 +201,7 @@ export function DeskRecentDeliveries({
                                         <Card asChild key={delivery.id}>
                                             <div
 
-                                                className="flex items-center justify-between gap-2 rounded-xl border border-border/60 bg-card p-2.5 shadow-2xs hover:border-border transition-all"
+                                                className="flex items-center justify-between gap-2 border border-border/60 bg-card p-2.5 hover:border-border transition-all"
                                             >
                                                 <div className="min-w-0 flex-1">
                                                     <p className="font-bold text-foreground text-xs truncate">

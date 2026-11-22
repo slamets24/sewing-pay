@@ -22,7 +22,7 @@ export default function PublicPayoutSlip({ slip }: PublicSlipProps) {
             <Head title="Slip gaji" />
 
             <Card asChild>
-                <article className="surface-card mx-auto max-w-3xl overflow-hidden print:max-w-none print:rounded-none print:border-0 print:shadow-none">
+                <article className=" mx-auto max-w-3xl overflow-hidden print:max-w-none print:rounded-none print:border-0 print:shadow-none">
                     <header className="sidebar-shell text-steel-foreground">
                         <div className="flex flex-col gap-4 px-4 py-5 sm:px-6">
                             <div className="flex items-center justify-between gap-3">

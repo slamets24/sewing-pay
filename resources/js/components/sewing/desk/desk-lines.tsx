@@ -34,7 +34,7 @@ export function DeskHoldingLine({ item, revisionParts }: { item: PickupItemRecor
 
     return (
         <Card asChild>
-            <div className="group flex flex-col gap-2.5 rounded-xl border border-border/60 bg-card p-4 transition-all duration-200 hover:border-primary/40 hover:shadow-xs">
+            <div className="group flex flex-col gap-2.5 border border-border/60 bg-card p-4 transition-all duration-200 hover:border-primary/40 hover:shadow-xs">
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                         <p className="font-bold text-sm text-foreground truncate">{item.article_name}</p>
@@ -70,7 +70,7 @@ export function DeskHoldingLine({ item, revisionParts }: { item: PickupItemRecor
                                 size="sm"
                                 onClick={() => deliver(deliverableQty)}
                                 disabled={busy || deliverableQty <= 0}
-                                className="h-8.5 gap-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all active:scale-95"
+                                className="h-8.5 gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all "
                             >
                                 <PackageCheck className="size-3.5" />
                                 Setor Semua ({deliverableQty})
@@ -81,7 +81,7 @@ export function DeskHoldingLine({ item, revisionParts }: { item: PickupItemRecor
                                     variant="outline"
                                     onClick={() => setCustom(1)}
                                     disabled={busy}
-                                    className="h-8.5 rounded-xl text-xs font-semibold hover:border-primary transition-all active:scale-95"
+                                    className="h-8.5 text-xs font-semibold hover:border-primary transition-all "
                                 >
                                     Sebagian
                                 </Button>
@@ -98,7 +98,7 @@ export function DeskHoldingLine({ item, revisionParts }: { item: PickupItemRecor
                                         size="sm"
                                         variant="ghost"
                                         disabled={busy || deliverableQty <= 0}
-                                        className="h-8.5 rounded-xl text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all active:scale-95"
+                                        className="h-8.5 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all "
                                     >
                                         <TriangleAlert className="size-3.5 mr-1" />
                                         Cacat
@@ -124,11 +124,11 @@ export function DeskHoldingLine({ item, revisionParts }: { item: PickupItemRecor
                                 size="sm"
                                 onClick={() => deliver(custom)}
                                 disabled={busy}
-                                className="h-8.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
+                                className="h-8.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
                             >
                                 Setor {custom}
                             </Button>
-                            <Button size="sm" variant="ghost" onClick={() => setCustom(null)} className="h-8.5 rounded-xl text-xs">
+                            <Button size="sm" variant="ghost" onClick={() => setCustom(null)} className="h-8.5 text-xs">
                                 Batal
                             </Button>
                         </div>
@@ -146,9 +146,9 @@ export function DeskItemRow({ item, qty, onQty }: { item: WorkOrderItemRecord; q
         <Card asChild>
             <div
                 className={cn(
-                    'flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5 transition-all duration-200',
+                    'flex flex-wrap items-center justify-between gap-3 border p-3.5 transition-all duration-200',
                     selected
-                        ? 'border-primary bg-primary/10 ring-2 ring-primary/20 shadow-xs'
+                        ? 'border-primary bg-primary/10 ring-2 ring-primary/20 '
                         : 'border-border/60 bg-card hover:border-primary/40 hover:shadow-2xs',
                 )}
             >
@@ -167,7 +167,7 @@ export function DeskItemRow({ item, qty, onQty }: { item: WorkOrderItemRecord; q
                             <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-8 rounded-lg text-xs font-semibold"
+                                className="h-8 text-xs font-semibold"
                                 onClick={() => onQty(item.available_qty)}
                             >
                                 Semua
@@ -179,7 +179,7 @@ export function DeskItemRow({ item, qty, onQty }: { item: WorkOrderItemRecord; q
                         <Button
                             size="sm"
                             variant="outline"
-                            className="h-8 rounded-lg text-xs font-semibold hover:border-primary hover:text-primary transition-all active:scale-95"
+                            className="h-8 text-xs font-semibold hover:border-primary hover:text-primary transition-all "
                             onClick={() => onQty(1)}
                         >
                             +1
@@ -188,7 +188,7 @@ export function DeskItemRow({ item, qty, onQty }: { item: WorkOrderItemRecord; q
                             <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-8 rounded-lg text-xs font-semibold hover:border-primary hover:text-primary transition-all active:scale-95"
+                                className="h-8 text-xs font-semibold hover:border-primary hover:text-primary transition-all "
                                 onClick={() => onQty(5)}
                             >
                                 +5
@@ -198,7 +198,7 @@ export function DeskItemRow({ item, qty, onQty }: { item: WorkOrderItemRecord; q
                             <Button
                                 size="sm"
                                 variant="secondary"
-                                className="h-8 rounded-lg text-xs font-bold transition-all active:scale-95"
+                                className="h-8 text-xs font-bold transition-all "
                                 onClick={() => onQty(item.available_qty)}
                             >
                                 Semua ({item.available_qty})

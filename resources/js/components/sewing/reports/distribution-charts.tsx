@@ -48,7 +48,7 @@ export function DistributionCharts({ distribution }: { distribution: Distributio
 
     return (
         <Card asChild>
-            <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 shadow-xs sm:p-5">
+            <section className="flex flex-col gap-4 border border-border bg-card p-4 sm:p-5">
                 <header className="flex flex-col gap-3 border-b border-border/60 pb-3.5">
                     <div>
                         <h3 className="flex items-center gap-2 font-display text-base font-bold text-foreground">
@@ -91,14 +91,14 @@ function Segmented<T extends string>({
     return (
         <div className="flex rounded-lg bg-muted/60 p-0.5" role="group" aria-label={label}>
             {options.map((option) => (
-                <Button variant="plain" size="plain"
+                <Button variant="ghost"
                     key={option.value}
                     type="button"
                     aria-pressed={value === option.value}
                     onClick={() => onChange(option.value)}
-                    className={cn(
+                    className={cn('h-auto whitespace-normal',
                         'rounded-md px-3 py-1.5 text-xs font-semibold transition-colors',
-                        value === option.value ? 'bg-card text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground',
+                        value === option.value ? 'bg-card text-foreground ' : 'text-muted-foreground hover:text-foreground',
                     )}
                 >
                     {option.label}
@@ -167,14 +167,14 @@ function PerTailorChart({ tailors, brands, measure }: { tailors: DistributionTai
                             <div className="relative h-6 min-w-0 flex-1" onMouseLeave={() => setHover(null)}>
                                 <div className="flex h-full gap-[2px]" style={{ width: `${(total / max) * 100}%` }}>
                                     {segments.map((segment, index) => (
-                                        <Button variant="plain" size="plain"
+                                        <Button variant="ghost"
                                             key={segment.brand.key}
                                             type="button"
                                             aria-label={`${tailor.name}, ${segment.brand.name}: ${formatValue(segment.value, measure)}`}
                                             onMouseEnter={() => setHover({ tailorId: tailor.id, key: segment.brand.key })}
                                             onFocus={() => setHover({ tailorId: tailor.id, key: segment.brand.key })}
                                             onBlur={() => setHover(null)}
-                                            className={cn(
+                                            className={cn('h-auto whitespace-normal',
                                                 'h-full min-w-[3px] outline-offset-2 transition-opacity',
                                                 index === segments.length - 1 && 'rounded-r-[4px]',
                                                 hover && hover.tailorId === tailor.id && hover.key !== segment.brand.key && 'opacity-50',

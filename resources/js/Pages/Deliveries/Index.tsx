@@ -30,7 +30,7 @@ export default function DeliveryIndex({ board, recentDeliveries }: IndexProps) {
             <PageIntro
                 actions={
                     <>
-                        <Button asChild className="gap-1.5 font-bold shadow-sm">
+                        <Button asChild className="gap-1.5 font-bold ">
                             <Link href={route('desk.index')}>
                                 <Zap className="size-4" />
                                 Loket Cepat

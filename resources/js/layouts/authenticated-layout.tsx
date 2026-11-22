@@ -107,7 +107,7 @@ function NavLink({ item }: { item: NavItem }) {
     const active = route().current(item.routeName);
 
     return (
-        <Button asChild variant="ghost" className={cn('justify-start rounded-xl', active ? 'bg-primary/10 text-primary' : 'text-muted-foreground')}>
+        <Button asChild variant="ghost" className={cn('justify-start ', active ? 'bg-primary/10 text-primary' : 'text-muted-foreground')}>
             <Link href={route(item.routeName)}>{item.label}</Link>
         </Button>
     );

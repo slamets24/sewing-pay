@@ -95,10 +95,10 @@ export function PickupWizard({ tailors, articles, idPrefix, board, preset, stick
             >
                 <div className="grid grid-cols-2 gap-2">
                     {tailors.map((item) => (
-                        <Button variant="plain" size="plain"
+                        <Button variant="outline"
                             key={item.id}
                             type="button"
-                            className="flex min-w-0 flex-col items-start gap-0.5 rounded-lg border bg-background p-3 text-left transition-colors outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            className="h-auto whitespace-normal justify-start flex min-w-0 flex-col items-start gap-0.5 border bg-background p-3 text-left transition-colors outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
                             onClick={() => setDraft(draft.withTailor(item.id))}
                         >
                             <span className="w-full truncate text-sm font-medium">{item.name}</span>
@@ -125,10 +125,10 @@ export function PickupWizard({ tailors, articles, idPrefix, board, preset, stick
                         />
                     )}
                     {visibleArticles.map((article) => (
-                        <Button variant="plain" size="plain"
+                        <Button variant="outline"
                             key={article.id}
                             type="button"
-                            className="flex items-center justify-between gap-3 rounded-lg border bg-background p-3 text-left transition-colors outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            className="h-auto whitespace-normal justify-start flex items-center justify-between gap-3 border bg-background p-3 text-left transition-colors outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
                             onClick={() => setDraft(draft.withArticle(article))}
                         >
                             <span className="flex min-w-0 flex-col gap-0.5">
@@ -194,7 +194,7 @@ type WizardStepProps = {
 function WizardStep({ number, title, state, summary, onEdit, children }: WizardStepProps) {
     return (
         <Card asChild>
-            <section className={cn('rounded-xl border bg-card', state === 'locked' && 'opacity-60')} aria-current={state === 'active' ? 'step' : undefined}>
+            <section className={cn(' border bg-card', state === 'locked' && 'opacity-60')} aria-current={state === 'active' ? 'step' : undefined}>
                 <header className="flex items-center gap-3 px-3 py-2.5">
                     <span
                         className={cn(

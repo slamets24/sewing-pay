@@ -129,14 +129,14 @@ export default function MakloonPaymentCreate({ tailors, selectedTailorId, unpaid
                         {tailors.map((tailor) => {
                             const isCurrent = tailor.id === selectedTailorId;
                             return (
-                                <Button variant="plain" size="plain"
+                                <Button variant="outline"
                                     key={tailor.id}
                                     type="button"
                                     onClick={() => handleTailorChange(tailor.id)}
-                                    className={cn(
-                                        'flex min-h-16 flex-col items-start justify-center gap-1 rounded-xl border-2 bg-card p-3 text-left transition-all',
+                                    className={cn('h-auto whitespace-normal justify-start',
+                                        'flex min-h-16 flex-col items-start justify-center gap-1 border bg-card p-3 text-left transition-all',
                                         isCurrent
-                                            ? 'border-primary bg-primary/10 shadow-xs'
+                                            ? 'border-primary bg-primary/10 '
                                             : 'hover:border-foreground/30'
                                     )}
                                 >
@@ -193,7 +193,7 @@ export default function MakloonPaymentCreate({ tailors, selectedTailorId, unpaid
                             </div>
 
                             <Card asChild>
-                                <div className="overflow-x-auto rounded-xl border bg-card shadow-2xs">
+                                <div className="overflow-x-auto border bg-card ">
                                     <Table scrollContainer={false} className="w-full text-left text-sm">
                                         <TableHeader className="border-b bg-muted/40 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                                             <TableRow>
@@ -279,7 +279,7 @@ export default function MakloonPaymentCreate({ tailors, selectedTailorId, unpaid
                                     id="payment-method"
                                     value={form.data.payment_method}
                                     onChange={(e) => form.setData('payment_method', e.target.value)}
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                 >
                                     <NativeSelectOption value="transfer">Transfer Bank</NativeSelectOption>
                                     <NativeSelectOption value="cash">Tunai (Cash)</NativeSelectOption>

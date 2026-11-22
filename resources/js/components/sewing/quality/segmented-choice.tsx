@@ -24,7 +24,7 @@ export function SegmentedChoice<T extends string>({ options, value, onChange, la
                         variant={active ? 'default' : 'outline'}
                         aria-pressed={active}
                         onClick={() => onChange(option.value)}
-                        className={cn('min-w-0', active && 'shadow-sm')}
+                        className={cn('min-w-0', active && '')}
                     >
                         {active && <Check aria-hidden />}
                         {option.label}

@@ -15,7 +15,7 @@ export function TrendChart({ trend }: { trend: TrendDay[] }) {
 
     return (
         <Card asChild>
-            <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 shadow-xs">
+            <div className="flex flex-col gap-3 border border-border bg-card p-5 ">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-3">
                     <div>
                         <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">

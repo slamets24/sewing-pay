@@ -76,7 +76,7 @@ export default function RevisionsIndex({ filters, revisions, sewingItems, shippe
 function FilterPanel({ filter, onChange }: { filter: RevisionFilter; onChange: (filter: RevisionFilter) => void }) {
     return (
         <Card asChild>
-            <div className="flex flex-col gap-4 rounded-lg border bg-card p-4 shadow-xs lg:flex-1 lg:flex-row lg:flex-wrap lg:gap-x-8">
+            <div className="flex flex-col gap-4 border bg-card p-4 lg:flex-1 lg:flex-row lg:flex-wrap lg:gap-x-8">
                 <div className="flex flex-col gap-2">
                     <span className="text-sm font-semibold text-muted-foreground uppercase">Status</span>
                     <SegmentedChoice options={RevisionFilter.statusOptions} value={filter.status} onChange={(status) => onChange(filter.withStatus(status))} label="Saring menurut status" />

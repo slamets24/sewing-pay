@@ -69,7 +69,7 @@ function PartCard({ part, onEdit }: { part: RevisionPartRecord; onEdit: () => vo
 
     return (
         <Card asChild>
-            <li className={cn('flex min-w-0 flex-col gap-3 rounded-lg border p-4', active ? 'bg-card' : 'border-dashed bg-muted/70')}>
+            <li className={cn('flex min-w-0 flex-col gap-3 border p-4', active ? 'bg-card' : 'border-dashed bg-muted/70')}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
                     <p className={cn('min-w-0 flex-1 text-lg leading-tight font-bold wrap-anywhere', !active && 'text-muted-foreground')}>{part.name}</p>
                     <div className="flex flex-wrap gap-1.5">
@@ -154,7 +154,7 @@ function RevisionPartSheet({ state, suggestions, onOpenChange }: RevisionPartShe
                                 type="button"
                                 variant={selected ? 'default' : 'outline'}
                                 aria-pressed={selected}
-                                className="rounded-full"
+                                className=""
                                 onClick={() => form.setData('material_type', type)}
                             >
                                 {selected && <Check />}

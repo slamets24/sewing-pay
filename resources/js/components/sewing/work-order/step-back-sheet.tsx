@@ -46,7 +46,7 @@ export function StepBackSheet({ item, trigger }: { item: WorkOrderItemRecord; tr
                                     <Card asChild key={pickup.id}>
                                         <li
 
-                                            className="flex items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2 text-sm"
+                                            className="flex items-center justify-between gap-2 border bg-card px-3 py-2 text-sm"
                                         >
                                             <span className="min-w-0 truncate">
                                                 <span className="font-semibold">{pickup.tailor_name}</span> · {pickup.qty} pcs

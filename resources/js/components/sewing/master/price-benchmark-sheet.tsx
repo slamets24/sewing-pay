@@ -1,3 +1,4 @@
+import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { ConfirmButton } from '@/components/confirm-button';
@@ -130,7 +131,7 @@ export function PriceBenchmarkSheet({ article, tailors, canAdoptRate, canManageS
                                 <ul className="flex flex-col gap-2">
                                     {benchmark.samples.map((sample) => (
                                         <Card asChild key={sample.id}>
-                                            <li  className="flex items-start justify-between gap-3 rounded-lg border bg-card p-3 shadow-2xs">
+                                            <li  className="flex items-start justify-between gap-3 border bg-card p-3 ">
                                                 <div className="min-w-0">
                                                     <div className="flex items-center gap-2">
                                                         <p className="font-semibold text-base">{sample.color}</p>
@@ -183,15 +184,15 @@ export function PriceBenchmarkSheet({ article, tailors, canAdoptRate, canManageS
                                     </div>
                                     <div role="group" aria-labelledby={`sample-hours-${article.id}`} className="grid grid-cols-4 gap-1.5">
                                         {SHIFT_OPTIONS.map((opt) => (
-                                            <Button variant="plain" size="plain"
+                                            <Button variant="outline"
                                                 key={opt}
                                                 type="button"
                                                 onClick={() => form.setData('working_hours', opt)}
-                                                className={`rounded-lg py-2 px-1 text-center text-xs font-semibold border transition-all ${
+                                                className={cn('h-auto whitespace-normal', ` py-2 px-1 text-center text-xs font-semibold border transition-all ${
                                                     form.data.working_hours === opt
-                                                        ? 'bg-primary text-primary-foreground border-primary shadow-xs'
+                                                        ? 'bg-primary text-primary-foreground border-primary '
                                                         : 'bg-muted/40 hover:bg-muted text-muted-foreground'
-                                                }`}
+                                                }`)}
                                             >
                                                 <div>{opt} Jam</div>
                                                 <div className="text-[10px] font-normal opacity-85">
@@ -227,22 +228,22 @@ export function PriceBenchmarkSheet({ article, tailors, canAdoptRate, canManageS
                                         </Label>
                                         {/* Stopwatch helper */}
                                         {!isTiming ? (
-                                            <Button variant="plain" size="plain"
+                                            <Button variant="ghost"
                                                 type="button"
                                                 onClick={() => {
                                                     setSecondsElapsed(0);
                                                     setIsTiming(true);
                                                 }}
-                                                className="flex items-center gap-1 text-xs text-primary hover:underline font-medium"
+                                                className="h-auto whitespace-normal flex items-center gap-1 text-xs text-primary hover:underline font-medium"
                                             >
                                                 <Play className="size-3 fill-current" />
                                                 Pakai Stopwatch
                                             </Button>
                                         ) : (
-                                            <Button variant="plain" size="plain"
+                                            <Button variant="ghost"
                                                 type="button"
                                                 onClick={handleStopTimer}
-                                                className="flex items-center gap-1 text-xs text-rose-600 hover:underline font-semibold animate-pulse"
+                                                className="h-auto whitespace-normal flex items-center gap-1 text-xs text-rose-600 hover:underline font-semibold animate-pulse"
                                             >
                                                 <Square className="size-3 fill-current" />
                                                 Berhenti ({Math.floor(secondsElapsed / 60)}m {secondsElapsed % 60}s)

@@ -88,7 +88,7 @@ export default function MakloonPaymentShow({ payment }: { payment: PaymentDetail
 
             {/* Printable Invoice Container */}
             <Card asChild>
-                <div className="mx-auto max-w-4xl rounded-2xl border bg-card p-6 shadow-xs sm:p-10 print:border-none print:shadow-none print:p-0">
+                <div className="mx-auto max-w-4xl border bg-card p-6 sm:p-10 print:border-none print:shadow-none print:p-0">
                     {/* Header Nota */}
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b pb-6">
                         <div>

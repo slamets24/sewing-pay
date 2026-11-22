@@ -265,7 +265,7 @@ function AttendanceCard({
 
     return (
         <Card asChild>
-            <div className={cn('flex min-w-0 flex-col gap-2 rounded-xl border bg-card p-3 shadow-2xs', !recorded && 'border-dashed')}>
+            <div className={cn('flex min-w-0 flex-col gap-2 border bg-card p-3 ', !recorded && 'border-dashed')}>
                 {/* Row 1: who, allowance, detail toggle */}
                 <div className="flex items-center gap-2">
                     <div className="min-w-0 flex-1">
@@ -302,14 +302,14 @@ function AttendanceCard({
                 <div className="flex flex-wrap items-center gap-2">
                     <div className="flex gap-1 rounded-lg bg-muted/50 p-0.5" role="group" aria-label={`Status ${row.tailor_name}`}>
                         {STATUS_OPTIONS.map((option) => (
-                            <Button variant="plain" size="plain"
+                            <Button variant="ghost"
                                 key={option.value}
                                 type="button"
                                 onClick={() => option.value !== status && changeStatus(option.value)}
                                 aria-pressed={status === option.value}
-                                className={cn(
+                                className={cn('h-auto whitespace-normal',
                                     'rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors',
-                                    status === option.value ? 'bg-primary text-primary-foreground shadow-xs' : 'text-muted-foreground hover:bg-muted',
+                                    status === option.value ? 'bg-primary text-primary-foreground ' : 'text-muted-foreground hover:bg-muted',
                                 )}
                             >
                                 {option.label}
@@ -319,14 +319,14 @@ function AttendanceCard({
                     {isPresent && (
                         <div className="flex gap-1 rounded-lg bg-muted/50 p-0.5" role="group" aria-label={`Jam kerja ${row.tailor_name}`}>
                             {WORKING_HOURS_OPTIONS.map((option) => (
-                                <Button variant="plain" size="plain"
+                                <Button variant="ghost"
                                     key={option}
                                     type="button"
                                     onClick={() => option !== hours && changeHours(option)}
                                     aria-pressed={hours === option}
-                                    className={cn(
+                                    className={cn('h-auto whitespace-normal',
                                         'rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors',
-                                        hours === option ? 'bg-primary text-primary-foreground shadow-xs' : 'text-muted-foreground hover:bg-muted',
+                                        hours === option ? 'bg-primary text-primary-foreground ' : 'text-muted-foreground hover:bg-muted',
                                     )}
                                 >
                                     {option}j

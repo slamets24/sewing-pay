@@ -134,7 +134,7 @@ export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [
 
             <div className="flex flex-col gap-6">
                 <Card asChild>
-                    <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:p-5 shadow-xs">
+                    <div className="flex flex-col gap-4 border border-border bg-card p-4 sm:p-5 ">
                         <div className="flex flex-wrap gap-2">
                             {workOrder.is_done && <ToneBadge tone="done">Selesai jahit</ToneBadge>}
                             {!workOrder.is_done && due && <ToneBadge tone={workOrder.is_overdue ? 'revision' : 'neutral'}>Deadline {formatDate(workOrder.due_at)} · {due}</ToneBadge>}
@@ -167,7 +167,7 @@ export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [
                                 </ConfirmButton>
                             )}
                             {workOrder.available_qty > 0 && (
-                                <Button asChild variant="secondary" className="rounded-xl">
+                                <Button asChild variant="secondary" className="">
                                     <Link href={route('pickups.create')}>
                                         <HandPlatter />
                                         Penjahit ambil
@@ -234,13 +234,13 @@ export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [
                                     const active = option.value === filter.stage;
 
                                     return (
-                                        <Button variant="plain" size="plain"
+                                        <Button variant="outline"
                                             key={option.value}
                                             type="button"
                                             aria-pressed={active}
                                             onClick={() => setFilter(filter.withStage(option.value))}
-                                            className={cn(
-                                                'inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm font-semibold transition-colors',
+                                            className={cn('h-auto whitespace-normal',
+                                                'inline-flex h-8 shrink-0 items-center gap-1.5 border px-3 text-sm font-semibold transition-colors',
                                                 active ? 'border-primary bg-primary text-primary-foreground' : 'border-input bg-card text-foreground hover:bg-accent',
                                             )}
                                         >
@@ -466,7 +466,7 @@ export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [
                 {workOrder.source_text && (
                     <Collapsible className="rounded-lg border bg-card p-4">
                         <CollapsibleTrigger asChild>
-                            <Button type="button" variant="plain" size="plain" className="cursor-pointer font-semibold before:mr-2 before:content-['▸'] data-[state=open]:before:content-['▾']">Teks WA asli</Button>
+                            <Button type="button" variant="ghost"  className="h-auto whitespace-normal cursor-pointer font-semibold before:mr-2 before:content-['▸'] data-[state=open]:before:content-['▾']">Teks WA asli</Button>
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                             <pre className="mt-3 overflow-x-auto font-mono text-sm whitespace-pre-wrap">{workOrder.source_text}</pre>
@@ -552,7 +552,7 @@ function ItemRow({
         <Card asChild>
             <div
                 className={cn(
-                    'flex flex-wrap items-center gap-x-2.5 gap-y-1 rounded-xl border bg-card p-3 shadow-2xs transition-colors hover:border-foreground/30',
+                    'flex flex-wrap items-center gap-x-2.5 gap-y-1 border bg-card p-3 transition-colors hover:border-foreground/30',
                     selected ? 'border-primary/60 bg-primary/[0.04] ring-2 ring-primary/20' : 'border-border',
                 )}
             >
@@ -644,7 +644,7 @@ function ItemRow({
                         <StepBackSheet
                             item={item}
                             trigger={
-                                <Button variant="ghost" size="icon" className="size-9 rounded-lg border text-muted-foreground hover:text-foreground" aria-label="Mundurkan tahap" title="Mundurkan tahap">
+                                <Button variant="ghost" size="icon" className="size-9 border text-muted-foreground hover:text-foreground" aria-label="Mundurkan tahap" title="Mundurkan tahap">
                                     <Undo2 className="size-4" />
                                 </Button>
                             }
@@ -653,7 +653,7 @@ function ItemRow({
                     <PlannedQtySheet
                         item={item}
                         trigger={
-                            <Button variant="ghost" size="icon" className="size-9 rounded-lg border text-muted-foreground hover:text-foreground" aria-label="Ubah qty WO">
+                            <Button variant="ghost" size="icon" className="size-9 border text-muted-foreground hover:text-foreground" aria-label="Ubah qty WO">
                                 <Pencil className="size-4" />
                             </Button>
                         }

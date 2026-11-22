@@ -18,7 +18,7 @@ export function PayoutCard({ payout }: { payout: PayoutSummary }) {
             <Link
                 href={route('payouts.show', payout.id)}
                 className={cn(
-                    'flex h-full flex-col gap-3 rounded-lg border border-t-4 bg-card p-4 shadow-xs transition-colors hover:bg-accent/40 focus-visible:ring-4 focus-visible:ring-ring/50 focus-visible:outline-none',
+                    'flex h-full flex-col gap-3 border border-t-4 bg-card p-4 transition-colors hover:bg-accent/40 focus-visible:ring-4 focus-visible:ring-ring/50 focus-visible:outline-none',
                     ToneStyle.topBorder(record.tone),
                 )}
             >

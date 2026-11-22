@@ -38,7 +38,7 @@ export default function PublicWorkOrder({ workOrder }: PublicWorkOrderProps) {
             <Head title={`WO ${workOrder.number}`} />
 
             <Card asChild>
-                <article className="surface-card mx-auto max-w-3xl overflow-hidden print:max-w-none print:rounded-none print:border-0 print:shadow-none">
+                <article className=" mx-auto max-w-3xl overflow-hidden print:max-w-none print:rounded-none print:border-0 print:shadow-none">
                     <header className="border-b px-4 py-5 sm:px-6">
                         <AppLogo subtitle="Divisi jahit" />
                         <div className="mt-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-2">

@@ -49,7 +49,7 @@ export function SlipCard({ slip }: { slip: PayoutSlipRecord }) {
 
     return (
         <Card asChild>
-            <article className={cn('overflow-hidden rounded-lg border border-t-4 bg-card shadow-xs', ToneStyle.topBorder(PayoutTone.forStatus(slip.status)))}>
+            <article className={cn('overflow-hidden border border-t-4 bg-card ', ToneStyle.topBorder(PayoutTone.forStatus(slip.status)))}>
                 <header className="flex flex-wrap items-start gap-3 px-4 pt-4">
                     <div className="min-w-0 flex-1">
                         <h3 className="text-2xl font-bold break-words">{slip.tailor_name}</h3>

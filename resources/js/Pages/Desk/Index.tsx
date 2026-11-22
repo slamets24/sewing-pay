@@ -237,19 +237,19 @@ export default function DeskIndex({
                 actions={
                     <>
                         <div className="hidden flex-wrap gap-2 sm:flex">
-                            <Button asChild variant="outline" size="sm" className="rounded-xl shadow-xs transition-all hover:shadow-sm">
+                            <Button asChild variant="outline" size="sm" className=" transition-all hover:shadow-sm">
                                 <Link href={route('production-reports.index')}>
                                     <BarChart3 className="size-4" />
                                     Rekap Produksi
                                 </Link>
                             </Button>
-                            <Button asChild variant="outline" size="sm" className="rounded-xl shadow-xs transition-all hover:shadow-sm">
+                            <Button asChild variant="outline" size="sm" className=" transition-all hover:shadow-sm">
                                 <Link href={route('deliveries.index')}>
                                     <PackageCheck className="size-4" />
                                     Halaman Setor
                                 </Link>
                             </Button>
-                            <Button asChild variant="outline" size="sm" className="rounded-xl shadow-xs transition-all hover:shadow-sm">
+                            <Button asChild variant="outline" size="sm" className=" transition-all hover:shadow-sm">
                                 <Link href={route('pickups.create')}>
                                     <HandPlatter className="size-4" />
                                     Halaman Ambil
@@ -259,7 +259,7 @@ export default function DeskIndex({
                         {/* HP: tiga tautan di atas dilipat ke satu tombol supaya daftar penjahit langsung terlihat. */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm" className="rounded-xl sm:hidden">
+                                <Button variant="outline" size="sm" className=" sm:hidden">
                                     <Ellipsis className="size-4" />
                                     Halaman lain
                                 </Button>
@@ -296,7 +296,7 @@ export default function DeskIndex({
                 {/* 1. TAILOR SELECTOR OR ACTIVE TAILOR PROFILE */}
                 {!selectedTailor ? (
                     <Card asChild>
-                        <div className="surface-card rounded-xl border border-border bg-card p-4 sm:p-5 shadow-xs">
+                        <div className=" border border-border bg-card p-4 sm:p-5 ">
                             <div className="flex flex-col gap-4">
                                 <div className="flex flex-wrap items-center justify-between gap-3">
                                     <h2 className="flex items-center gap-2.5 font-display text-lg font-bold text-foreground">
@@ -306,51 +306,51 @@ export default function DeskIndex({
                                         Pilih Penjahit yang Berada di Meja Loket:
                                     </h2>
                                     <div className="flex flex-wrap items-center gap-1.5 text-xs sm:text-sm">
-                                        <Button variant="plain" size="plain"
+                                        <Button variant="ghost"
                                             type="button"
                                             onClick={() => setTailorFilter('all')}
-                                            className={cn(
-                                                'rounded-lg px-3 py-1.5 font-semibold transition-all active:scale-95',
+                                            className={cn('h-auto whitespace-normal',
+                                                ' px-3 py-1.5 font-semibold transition-all ',
                                                 tailorFilter === 'all'
-                                                    ? 'bg-primary text-primary-foreground shadow-sm'
+                                                    ? 'bg-primary text-primary-foreground '
                                                     : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                                             )}
                                         >
                                             Semua ({tailors.length})
                                         </Button>
-                                        <Button variant="plain" size="plain"
+                                        <Button variant="ghost"
                                             type="button"
                                             onClick={() => setTailorFilter('holding')}
-                                            className={cn(
-                                                'rounded-lg px-3 py-1.5 font-semibold transition-all active:scale-95',
+                                            className={cn('h-auto whitespace-normal',
+                                                ' px-3 py-1.5 font-semibold transition-all ',
                                                 tailorFilter === 'holding'
-                                                    ? 'bg-amber-600 text-white shadow-sm'
+                                                    ? 'bg-amber-600 text-white '
                                                     : 'text-amber-700 dark:text-amber-400 hover:bg-amber-500/10',
                                             )}
                                         >
                                             Pegang Barang ({holdingTailorsCount})
                                         </Button>
                                         {revisionTailorsCount > 0 && (
-                                            <Button variant="plain" size="plain"
+                                            <Button variant="ghost"
                                                 type="button"
                                                 onClick={() => setTailorFilter('revisions')}
-                                                className={cn(
-                                                    'rounded-lg px-3 py-1.5 font-semibold transition-all active:scale-95',
+                                                className={cn('h-auto whitespace-normal',
+                                                    ' px-3 py-1.5 font-semibold transition-all ',
                                                     tailorFilter === 'revisions'
-                                                        ? 'bg-rose-600 text-white shadow-sm'
+                                                        ? 'bg-rose-600 text-white '
                                                         : 'text-rose-600 hover:bg-rose-500/10',
                                                 )}
                                             >
                                                 Ada Revisi ({revisionTailorsCount})
                                             </Button>
                                         )}
-                                        <Button variant="plain" size="plain"
+                                        <Button variant="ghost"
                                             type="button"
                                             onClick={() => setTailorFilter('today')}
-                                            className={cn(
-                                                'rounded-lg px-3 py-1.5 font-semibold transition-all active:scale-95',
+                                            className={cn('h-auto whitespace-normal',
+                                                ' px-3 py-1.5 font-semibold transition-all ',
                                                 tailorFilter === 'today'
-                                                    ? 'bg-emerald-600 text-white shadow-sm'
+                                                    ? 'bg-emerald-600 text-white '
                                                     : 'text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10',
                                             )}
                                         >
@@ -366,13 +366,13 @@ export default function DeskIndex({
                                         value={tailorSearch}
                                         onChange={(e) => setTailorSearch(e.target.value)}
                                         placeholder="Ketik nama atau kode penjahit (contoh: Budi / P01)..."
-                                        className="h-11 rounded-xl pl-10.5 pr-9 text-base shadow-2xs"
+                                        className="h-11 pl-10.5 pr-9 text-base "
                                     />
                                     {tailorSearch && (
-                                        <Button variant="plain" size="plain"
+                                        <Button variant="ghost"
                                             type="button"
                                             onClick={() => setTailorSearch('')}
-                                            className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                            className="h-auto whitespace-normal absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                         >
                                             <X className="size-4" />
                                         </Button>
@@ -386,15 +386,15 @@ export default function DeskIndex({
                                         const todayQty = tailor.today_delivered_qty ?? 0;
 
                                         return (
-                                            <Button variant="plain" size="plain"
+                                            <Button variant="outline"
                                                 key={tailor.id}
                                                 type="button"
                                                 onClick={() => {
                                                     setSelectedTailorId(tailor.id);
                                                     setTailorSearch('');
                                                 }}
-                                                className={cn(
-                                                    'group flex flex-col items-start gap-1.5 rounded-xl border p-3 text-left transition-colors',
+                                                className={cn('h-auto whitespace-normal justify-start',
+                                                    'group flex flex-col items-start gap-1.5 border p-3 text-left transition-colors',
                                                     holdingQty > 0
                                                         ? 'border-amber-500/40 bg-amber-500/10 hover:border-amber-500/70 hover:bg-amber-500/15'
                                                         : 'border-border bg-card hover:border-foreground/30 hover:bg-muted/40',
@@ -450,7 +450,7 @@ export default function DeskIndex({
                 ) : (
                     /* ACTIVE TAILOR BAR & METRICS DASHBOARD */
                     <Card asChild>
-                        <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:p-5 shadow-xs">
+                        <div className="flex flex-col gap-4 border border-border bg-card p-4 sm:p-5 ">
                             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
                                 <div className="flex items-center gap-3.5">
                                     <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xl font-black text-primary shadow-xs ring-2 ring-primary/10">
@@ -485,7 +485,7 @@ export default function DeskIndex({
                                         setSelectedTailorId(null);
                                         setCart(PickupCart.start(null));
                                     }}
-                                    className="h-9 gap-2 rounded-xl font-semibold shadow-xs hover:border-primary hover:text-primary transition-all active:scale-95"
+                                    className="h-9 gap-2 font-semibold hover:border-primary hover:text-primary transition-all "
                                 >
                                     <ArrowLeftRight className="size-4" />
                                     Ganti Penjahit Lain
@@ -517,7 +517,7 @@ export default function DeskIndex({
                                             asChild
                                             size="sm"
                                             variant="outline"
-                                            className="h-8 rounded-xl text-xs border-rose-300 bg-card font-semibold shadow-2xs hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                                            className="h-8 text-xs border-rose-300 bg-card font-semibold hover:bg-rose-50 dark:hover:bg-rose-950/40"
                                         >
                                             <Link
                                                 href={route('revisions.index', {
@@ -534,7 +534,7 @@ export default function DeskIndex({
                                             <Card asChild key={rev.id}>
                                             <div
 
-                                                    className="flex flex-col justify-between gap-2.5 rounded-xl bg-card p-3.5 text-xs shadow-xs border border-border/70"
+                                                    className="flex flex-col justify-between gap-2.5 bg-card p-3.5 text-xs border border-border/70"
                                                 >
                                                     <div className="flex items-start justify-between gap-2">
                                                         <div className="min-w-0 flex-1">
@@ -588,7 +588,7 @@ export default function DeskIndex({
                                                                 <Button
                                                                     size="sm"
                                                                     onClick={() => advanceRevision(rev)}
-                                                                    className="h-8 flex-1 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs"
+                                                                    className="h-8 flex-1 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white "
                                                                 >
                                                                     <Package className="size-3.5 mr-1" />
                                                                     Bahan Datang
@@ -598,7 +598,7 @@ export default function DeskIndex({
                                                                     tailors={tailors}
                                                                     selectedTailor={selectedTailor}
                                                                     trigger={
-                                                                        <Button size="sm" variant="outline" className="h-8 rounded-lg text-xs font-semibold">
+                                                                        <Button size="sm" variant="outline" className="h-8 text-xs font-semibold">
                                                                             <ArrowLeftRight className="size-3 mr-1" />
                                                                             Alihkan
                                                                         </Button>
@@ -612,7 +612,7 @@ export default function DeskIndex({
                                                                 <Button
                                                                     size="sm"
                                                                     onClick={() => advanceRevision(rev)}
-                                                                    className="h-8 flex-1 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs"
+                                                                    className="h-8 flex-1 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white "
                                                                 >
                                                                     <Shirt className="size-3.5 mr-1" />
                                                                     Mulai Dikerjakan
@@ -622,7 +622,7 @@ export default function DeskIndex({
                                                                     tailors={tailors}
                                                                     selectedTailor={selectedTailor}
                                                                     trigger={
-                                                                        <Button size="sm" variant="outline" className="h-8 rounded-lg text-xs font-semibold">
+                                                                        <Button size="sm" variant="outline" className="h-8 text-xs font-semibold">
                                                                             <ArrowLeftRight className="size-3 mr-1" />
                                                                             Alihkan
                                                                         </Button>
@@ -635,7 +635,7 @@ export default function DeskIndex({
                                                             <Button
                                                                 size="sm"
                                                                 onClick={() => advanceRevision(rev)}
-                                                                className="h-8 w-full rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+                                                                className="h-8 w-full text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white "
                                                             >
                                                                 <Check className="size-3.5 mr-1" />
                                                                 Selesai Jahit Revisi
@@ -658,12 +658,12 @@ export default function DeskIndex({
                 {/* MOBILE / TABLET SEGMENTED TABS SWITCHER (< lg screens) */}
                 {selectedTailor && (
                     <div className="flex rounded-xl bg-muted/60 p-1 border border-border shadow-xs lg:hidden">
-                        <Button variant="plain" size="plain"
+                        <Button variant="ghost"
                             type="button"
                             onClick={() => setMobileTab('setor')}
-                            className={cn(
-                                'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-colors',
-                                mobileTab === 'setor' ? 'bg-card text-emerald-600 shadow-xs' : 'text-muted-foreground hover:text-foreground',
+                            className={cn('h-auto whitespace-normal',
+                                'flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold transition-colors',
+                                mobileTab === 'setor' ? 'bg-card text-emerald-600 ' : 'text-muted-foreground hover:text-foreground',
                             )}
                         >
                             <PackageCheck className="size-4.5" />
@@ -674,12 +674,12 @@ export default function DeskIndex({
                                 </span>
                             )}
                         </Button>
-                        <Button variant="plain" size="plain"
+                        <Button variant="ghost"
                             type="button"
                             onClick={() => setMobileTab('ambil')}
-                            className={cn(
-                                'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95',
-                                mobileTab === 'ambil' ? 'bg-card text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground',
+                            className={cn('h-auto whitespace-normal',
+                                'flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold transition-all ',
+                                mobileTab === 'ambil' ? 'bg-card text-primary ' : 'text-muted-foreground hover:text-foreground',
                             )}
                         >
                             <ShoppingBasket className="size-4.5" />
@@ -698,7 +698,7 @@ export default function DeskIndex({
                         <Card asChild>
                             <div
                                 className={cn(
-                                    'flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:p-5 shadow-xs',
+                                    'flex flex-col gap-4 border border-border bg-card p-4 sm:p-5 ',
                                     mobileTab === 'ambil' ? 'hidden lg:flex' : 'flex',
                                 )}
                             >
@@ -715,7 +715,7 @@ export default function DeskIndex({
                                         <Button
                                             onClick={handleBatchDeliver}
                                             disabled={batchBusy}
-                                            className="gap-2 rounded-lg bg-emerald-600 text-sm font-bold text-white hover:bg-emerald-700 shadow-xs transition-colors"
+                                            className="gap-2 bg-emerald-600 text-sm font-bold text-white hover:bg-emerald-700 transition-colors"
                                         >
                                             <Zap className="size-4" />
                                             Setor Semua ({tailorBoardRow.deliverable_qty ?? tailorBoardRow.remaining_qty} pcs)
@@ -767,7 +767,7 @@ export default function DeskIndex({
                         <Card asChild>
                             <div
                                 className={cn(
-                                    'flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:p-5 shadow-xs',
+                                    'flex flex-col gap-4 border border-border bg-card p-4 sm:p-5 ',
                                     mobileTab === 'setor' ? 'hidden lg:flex' : 'flex',
                                 )}
                             >
@@ -787,7 +787,7 @@ export default function DeskIndex({
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => setCart(PickupCart.start(selectedTailor))}
-                                                className="h-9 px-2 text-xs rounded-xl text-muted-foreground hover:text-foreground"
+                                                className="h-9 px-2 text-xs text-muted-foreground hover:text-foreground"
                                             >
                                                 <X className="size-3.5 mr-1" />
                                                 Reset
@@ -798,10 +798,10 @@ export default function DeskIndex({
                                             onClick={handleSavePickup}
                                             disabled={!cart.isReady || pickupBusy}
                                             className={cn(
-                                                'h-9 gap-2 rounded-xl text-xs font-bold shadow-md transition-all active:scale-95 px-3.5',
+                                                'h-9 gap-2 text-xs font-bold transition-all px-3.5',
                                                 cart.isReady
                                                     ? 'bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-lg'
-                                                    : 'bg-muted text-muted-foreground cursor-not-allowed opacity-60 shadow-none',
+                                                    : 'bg-muted text-muted-foreground cursor-not-allowed opacity-60 ',
                                             )}
                                         >
                                             <ShoppingBasket className="size-4" />
@@ -826,13 +826,13 @@ export default function DeskIndex({
                                         value={itemQuery}
                                         onChange={(e) => setItemQuery(e.target.value)}
                                         placeholder="Cari artikel, warna, atau nomor WO gudang..."
-                                        className="h-10 rounded-xl pl-9.5 pr-8 text-sm shadow-2xs"
+                                        className="h-10 pl-9.5 pr-8 text-sm "
                                     />
                                     {itemQuery && (
-                                        <Button variant="plain" size="plain"
+                                        <Button variant="ghost"
                                             type="button"
                                             onClick={() => setItemQuery('')}
-                                            className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                            className="h-auto whitespace-normal absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                         >
                                             <X className="size-3.5" />
                                         </Button>
@@ -842,7 +842,7 @@ export default function DeskIndex({
                                 {availableItems.length === 0 ? (
                                     <EmptyState className="text-base py-14">
                                         Gudang kosong. Belum ada potongan hancaan siap di gudang.
-                                        <Button asChild variant="outline" size="sm" className="mt-3 rounded-xl">
+                                        <Button asChild variant="outline" size="sm" className="mt-3 ">
                                             <Link href={route('work-orders.index')}>
                                                 <ClipboardList className="size-4" />
                                                 Buka Halaman WO
@@ -885,7 +885,7 @@ export default function DeskIndex({
                 ) : (
                     /* EMPTY STATE WHEN NO TAILOR IS SELECTED */
                     <Card asChild>
-                        <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border py-16 text-center bg-card">
+                        <div className="flex flex-col items-center justify-center border border-dashed border-border py-16 text-center bg-card">
                             <span className="mb-3.5 flex size-14 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-xs ring-2 ring-primary/10">
                                 <Zap className="size-8" />
                             </span>

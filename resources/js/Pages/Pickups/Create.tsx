@@ -65,7 +65,7 @@ export default function PickupCreate({ tailors, availableItems, presetTailorId }
         <AppLayout title="Ambil barang">
             <PageIntro
                 actions={
-                    <Button asChild className="gap-1.5 font-bold shadow-sm">
+                    <Button asChild className="gap-1.5 font-bold ">
                         <Link href={route('desk.index', cart.tailor ? { tailor: cart.tailor.id } : undefined)}>
                             <Zap className="size-4" />
                             Loket Cepat (Setor & Ambil)
@@ -100,13 +100,13 @@ export default function PickupCreate({ tailors, availableItems, presetTailorId }
                                         const selected = cart.tailor?.id === tailor.id;
 
                                         return (
-                                            <Button variant="plain" size="plain"
+                                            <Button variant="outline"
                                                 key={tailor.id}
                                                 type="button"
                                                 onClick={() => setCart(cart.withTailor(selected ? null : tailor))}
                                                 aria-pressed={selected}
-                                                className={cn(
-                                                    'flex min-h-16 flex-col items-start justify-center gap-1 rounded-lg border-2 bg-card px-3 py-2 text-left transition-colors focus-visible:ring-4 focus-visible:ring-ring/50 focus-visible:outline-none',
+                                                className={cn('h-auto whitespace-normal justify-start',
+                                                    'flex min-h-16 flex-col items-start justify-center gap-1 border bg-card px-3 py-2 text-left transition-colors focus-visible:ring-4 focus-visible:ring-ring/50 focus-visible:outline-none',
                                                     selected ? 'border-primary bg-primary/20' : 'hover:border-foreground/40',
                                                 )}
                                             >
@@ -199,7 +199,7 @@ function ItemRow({ item, qty, onQty }: { item: WorkOrderItemRecord; qty: number;
 
     return (
         <Card asChild>
-            <div className={cn('flex flex-wrap items-center gap-3 rounded-lg border-2 bg-card p-3', selected && 'border-primary bg-primary/10')}>
+            <div className={cn('flex flex-wrap items-center gap-3 border bg-card p-3', selected && 'border-primary bg-primary/10')}>
                 <div className="min-w-0 flex-1">
                     <p className="text-lg font-bold">{item.article_name}</p>
                     <p className="text-base">{variantLabel(item.color, item.size)}</p>

@@ -4,14 +4,18 @@ import { Slot } from "radix-ui"
 
 function Card({ className, asChild = false, ...props }: React.ComponentProps<"div"> & { asChild?: boolean }) {
   const Comp = asChild ? Slot.Root : "div"
+  const child = asChild ? React.Children.only(props.children) as React.ReactElement<{ className?: string }> : null
   return (
     <Comp
       data-slot="card"
       className={cn(
-        !asChild && "surface-card flex flex-col gap-6 py-6 text-card-foreground",
+        "min-w-0 rounded-lg border bg-card text-card-foreground shadow-sm",
+        !asChild && "flex flex-col gap-6 py-6",
+        child?.props.className,
         className
       )}
       {...props}
+      children={child ? React.cloneElement(child, { className: undefined }) : props.children}
     />
   )
 }

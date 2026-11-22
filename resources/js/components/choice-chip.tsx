@@ -17,7 +17,7 @@ export function ChoiceChip({ selected, onToggle, children }: ChoiceChipProps) {
             pressed={selected}
             onPressedChange={onToggle}
             className={cn(
-                'h-8 min-w-0 gap-1 rounded-full border px-3 text-sm font-normal transition-colors data-[state=on]:bg-primary data-[state=on]:text-primary-foreground',
+                'h-8 min-w-0 gap-1 border px-3 text-sm font-medium transition-colors data-[state=on]:bg-primary data-[state=on]:text-primary-foreground',
                 selected ? 'border-primary bg-primary text-primary-foreground' : 'bg-background hover:bg-accent',
             )}
         >

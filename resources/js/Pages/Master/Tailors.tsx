@@ -77,14 +77,14 @@ export default function Tailors({ tailors, nextCode, nextMakloonCode }: TailorsP
             <Section title="Daftar penjahit & makloon" icon={Users} description={<TailorCounts directory={directory} />}>
                 <div className="mb-4 flex flex-wrap items-center gap-2">
                     <Card asChild>
-                        <div className="flex gap-1 rounded-xl border bg-card p-1" role="group" aria-label="Saring jenis">
+                        <div className="flex gap-1 border bg-card p-1" role="group" aria-label="Saring jenis">
                             {TYPE_FILTERS.map((option) => (
                                 <Button
                                     key={option.value}
                                     size="sm"
                                     variant={typeFilter === option.value ? 'default' : 'ghost'}
                                     onClick={() => setTypeFilter(option.value)}
-                                    className="rounded-lg font-semibold"
+                                    className=" font-semibold"
                                 >
                                     {option.label}
                                     <span className="tabular opacity-70">{option.value === 'all' ? tailors.length : tailors.filter((t) => t.type === option.value).length}</span>
@@ -148,7 +148,7 @@ function TailorRow({ tailor, onEdit }: { tailor: TailorRecord; onEdit: () => voi
             <li
                 className={cn(
                     ROW_GRID,
-                    'flex flex-col gap-3 rounded-lg border p-4 lg:rounded-none lg:border-0 lg:px-4 lg:py-3',
+                    'flex flex-col gap-3 border p-4 lg:rounded-none lg:border-0 lg:px-4 lg:py-3',
                     tailor.is_active ? 'bg-card' : 'border-dashed bg-muted/70',
                 )}
             >

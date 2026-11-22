@@ -17,7 +17,7 @@ type StatTileProps = {
 export function StatTile({ label, value, icon: Icon, tone, hint, href }: StatTileProps) {
     const body = (
         <Card asChild>
-            <div className="surface-card flex h-full flex-col gap-1.5 p-3 transition-colors group-hover:border-foreground/25 sm:gap-2.5 sm:p-4">
+            <div className=" flex h-full flex-col gap-1.5 p-3 transition-colors group-hover:border-foreground/25 sm:gap-2.5 sm:p-4">
                 <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-medium text-muted-foreground sm:text-sm">{label}</span>
                     <span className={cn('flex size-7 shrink-0 items-center justify-center rounded-lg sm:size-9', ToneStyle.soft(tone))}>

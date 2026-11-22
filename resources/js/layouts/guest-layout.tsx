@@ -18,7 +18,7 @@ export default function GuestLayout({ title, description, children }: GuestLayou
             <div className="flex flex-1 flex-col items-center justify-center gap-8 px-4 pb-12">
                 <AppLogo subtitle="Divisi jahit" />
                 <Card asChild>
-                    <div className="surface-card w-full max-w-md overflow-hidden">
+                    <div className=" w-full max-w-md overflow-hidden">
                         <div className="flex flex-col gap-1 px-6 py-6">
                             <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
                             {description && <p className="text-sm text-muted-foreground">{description}</p>}

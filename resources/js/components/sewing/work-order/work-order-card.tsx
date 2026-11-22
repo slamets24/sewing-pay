@@ -16,7 +16,7 @@ export function WorkOrderCard({ workOrder, compact = false }: { workOrder: WorkO
             <Link
                 href={route('work-orders.show', workOrder.id)}
                 className={cn(
-                    'group flex min-w-0 flex-col gap-3.5 rounded-xl border border-border bg-card p-4.5 shadow-xs transition-colors hover:border-foreground/30 hover:bg-muted/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                    'group flex min-w-0 flex-col gap-3.5 border border-border bg-card p-4.5 transition-colors hover:border-foreground/30 hover:bg-muted/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
                     workOrder.is_overdue && 'border-stage-revision/60 ring-1 ring-stage-revision/20 bg-stage-revision/[0.02]',
                 )}
             >

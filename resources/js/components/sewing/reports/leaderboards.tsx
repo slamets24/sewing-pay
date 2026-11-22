@@ -1,4 +1,6 @@
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { EmptyState } from '@/components/empty-state';
 import { formatIdr } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -20,12 +22,12 @@ export function Leaderboards({ topArticles: allArticles, topTailors: allTailors 
     const topTailors = showAllTailors ? allTailors : allTailors.slice(0, TOP_COUNT);
 
     return (
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-2">
             {/* COLUMN 1: TOP ARTIKEL PALING BANYAK DIKERJAKAN */}
             <Card asChild>
-                <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-xs">
-                    <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                        <div>
+                <div className="flex flex-col gap-4 border border-border bg-card p-5 ">
+                    <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-3">
+                        <div className="min-w-0 flex-1">
                             <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
                                 <Shirt className="size-4.5 text-primary" />
                                 Artikel Terbanyak Dikerjakan
@@ -34,7 +36,7 @@ export function Leaderboards({ topArticles: allArticles, topTailors: allTailors 
                                 Peringkat model pakaian berdasarkan volume pengerjaan
                             </p>
                         </div>
-                        <span className="text-xs font-bold text-muted-foreground">
+                        <span className="shrink-0 text-xs font-bold text-muted-foreground">
                             {allArticles.length} model
                         </span>
                     </div>
@@ -44,9 +46,9 @@ export function Leaderboards({ topArticles: allArticles, topTailors: allTailors 
                     ) : (
                         <div className="flex flex-col gap-3.5">
                             {topArticles.slice(0, 7).map((article, idx) => (
-                                <div
+                                <Card
                                     key={article.id}
-                                    className="flex flex-col gap-2 rounded-xl border border-border/60 bg-muted/15 p-3.5 transition-all hover:bg-muted/30"
+                                    className="gap-2 bg-muted/15 p-3.5 transition-colors hover:bg-muted/30"
                                 >
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="flex items-center gap-2.5 min-w-0">
@@ -86,12 +88,7 @@ export function Leaderboards({ topArticles: allArticles, topTailors: allTailors 
 
                                     {/* Progress Bar of Total Production */}
                                     <div className="flex items-center gap-2">
-                                        <div className="h-2 flex-1 rounded-full bg-muted overflow-hidden">
-                                            <div
-                                                style={{ width: `${article.percentage}%` }}
-                                                className="h-full rounded-full bg-primary"
-                                            />
-                                        </div>
+                                        <Progress value={article.percentage} aria-label={`Kontribusi ${article.name}`} className="flex-1 bg-muted" />
                                         <span className="text-[11px] font-bold text-muted-foreground w-12 text-right">
                                             {article.percentage}%
                                         </span>
@@ -101,16 +98,17 @@ export function Leaderboards({ topArticles: allArticles, topTailors: allTailors 
                                     {article.variants.length > 0 && (
                                         <div className="flex flex-wrap gap-1.5 pt-1 border-t border-border/40">
                                             {article.variants.map((v) => (
-                                                <span
+                                                <Badge
                                                     key={v.label}
-                                                    className="rounded-md bg-card border border-border/70 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground"
+                                                    variant="outline"
+                                                    className="max-w-full whitespace-normal text-[10px] text-muted-foreground"
                                                 >
-                                                    {v.label}: <strong className="text-foreground">{v.qty}</strong>
-                                                </span>
+                                                    <span className="min-w-0 [overflow-wrap:anywhere]">{v.label}: <strong className="text-foreground">{v.qty}</strong></span>
+                                                </Badge>
                                             ))}
                                         </div>
                                     )}
-                                </div>
+                                </Card>
                             ))}
                         </div>
                     )}
@@ -124,9 +122,9 @@ export function Leaderboards({ topArticles: allArticles, topTailors: allTailors 
 
             {/* COLUMN 2: TOP PENJAHIT PALING PRODUKTIF (LEADERBOARD) */}
             <Card asChild>
-                <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-xs">
-                    <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                        <div>
+                <div className="flex flex-col gap-4 border border-border bg-card p-5 ">
+                    <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-3">
+                        <div className="min-w-0 flex-1">
                             <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
                                 <Award className="size-4.5 text-amber-600" />
                                 Penjahit Paling Produktif
@@ -135,7 +133,7 @@ export function Leaderboards({ topArticles: allArticles, topTailors: allTailors 
                                 Peringkat penjahit dengan output setoran tertinggi
                             </p>
                         </div>
-                        <span className="text-xs font-bold text-muted-foreground">
+                        <span className="shrink-0 text-xs font-bold text-muted-foreground">
                             {allTailors.length} penjahit
                         </span>
                     </div>
@@ -145,9 +143,9 @@ export function Leaderboards({ topArticles: allArticles, topTailors: allTailors 
                     ) : (
                         <div className="flex flex-col gap-3.5">
                             {topTailors.slice(0, 7).map((tailor, idx) => (
-                                <div
+                                <Card
                                     key={tailor.id}
-                                    className="flex flex-col gap-2 rounded-xl border border-border/60 bg-muted/15 p-3.5 transition-all hover:bg-muted/30"
+                                    className="gap-2 bg-muted/15 p-3.5 transition-colors hover:bg-muted/30"
                                 >
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="flex items-center gap-2.5 min-w-0">
@@ -192,12 +190,7 @@ export function Leaderboards({ topArticles: allArticles, topTailors: allTailors 
 
                                     {/* Progress Bar Contribution */}
                                     <div className="flex items-center gap-2">
-                                        <div className="h-2 flex-1 rounded-full bg-muted overflow-hidden">
-                                            <div
-                                                style={{ width: `${tailor.percentage}%` }}
-                                                className="h-full rounded-full bg-amber-500"
-                                            />
-                                        </div>
+                                        <Progress value={tailor.percentage} aria-label={`Kontribusi ${tailor.name}`} className="flex-1 bg-muted" indicatorClassName="bg-amber-500" />
                                         <span className="text-[11px] font-bold text-muted-foreground w-12 text-right">
                                             {tailor.percentage}%
                                         </span>
@@ -209,7 +202,7 @@ export function Leaderboards({ topArticles: allArticles, topTailors: allTailors 
                                             Fokus artikel utama: <strong className="text-foreground">{tailor.top_article}</strong>
                                         </p>
                                     )}
-                                </div>
+                                </Card>
                             ))}
                         </div>
                     )}

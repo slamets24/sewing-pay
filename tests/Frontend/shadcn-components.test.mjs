@@ -44,16 +44,20 @@ test('cards can keep an existing article root and its layout classes', () => {
     assert.match(html, /^<article /);
     assert.match(html, /data-slot="card"/);
     assert.match(html, /class="[^"]*grid gap-3 p-4/);
+    assert.match(html, /rounded-lg/);
+    assert.match(html, /shadow-sm/);
     assert.doesNotMatch(html, /flex-col|py-6/);
 });
 
-test('custom picker buttons keep layout and explicit button type', () => {
-    const html = render(Button, { variant: 'plain', size: 'plain', type: 'button', className: 'grid grid-cols-2 p-3', 'aria-pressed': true }, 'Pilih');
+test('picker buttons use the shadcn outline appearance while keeping their grid', () => {
+    const html = render(Button, { variant: 'outline', type: 'button', className: 'grid h-auto grid-cols-2 whitespace-normal p-3', 'aria-pressed': true }, 'Pilih');
     assert.match(html, /type="button"/);
     assert.match(html, /aria-pressed="true"/);
-    assert.match(html, /grid grid-cols-2 p-3/);
+    assert.match(html, /grid-cols-2/);
     assert.match(html, /focus-visible:ring/);
-    assert.doesNotMatch(html, /inline-flex|h-11|px-5|whitespace-nowrap/);
+    assert.match(html, /rounded-md/);
+    assert.match(html, /shadow-xs/);
+    assert.doesNotMatch(html, /rounded-xl|shadow-md|whitespace-nowrap|md:h-\d|md:text-/);
 });
 
 test('progress exposes the displayed value and supports production status colors', () => {

@@ -149,7 +149,7 @@ function RoleCard({ role, selection, total, onEdit }: { role: RoleRecord; select
 
     return (
         <Card asChild>
-            <li className={cn('flex min-w-0 flex-col gap-3 rounded-lg border p-4', role.can_login ? 'bg-card' : 'border-dashed bg-muted/70')}>
+            <li className={cn('flex min-w-0 flex-col gap-3 border p-4', role.can_login ? 'bg-card' : 'border-dashed bg-muted/70')}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
                         <p className="text-lg leading-tight font-bold wrap-anywhere">{role.name}</p>
