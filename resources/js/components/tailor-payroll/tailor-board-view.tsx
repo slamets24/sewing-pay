@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/empty-state';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -64,33 +65,35 @@ type WorkloadCardProps = {
 
 function WorkloadCard({ workload, pendingId, onRecord, onMore }: WorkloadCardProps) {
     return (
-        <article className="overflow-hidden rounded-xl border bg-card">
-            <header className="flex items-center gap-3 px-3 py-2.5">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold" aria-hidden>
-                    {workload.initials}
-                </div>
-                <div className="min-w-0 flex-1">
-                    <h3 className="truncate leading-tight font-semibold">{workload.name}</h3>
-                    <p className="truncate text-xs text-muted-foreground">{workload.summary}</p>
-                </div>
-                <div className="shrink-0 text-right">
-                    <p className="text-sm font-semibold tabular-nums">{formatIdr(workload.periodWage)}</p>
-                    <p className="text-xs text-muted-foreground">periode ini</p>
-                </div>
-            </header>
-            <ul className="divide-y border-t">
-                {workload.assignments.map((assignment) => (
-                    <AssignmentQuickRow
-                        key={assignment.id}
-                        assignment={assignment}
-                        pending={pendingId === assignment.id}
-                        locked={pendingId !== null}
-                        onRecord={onRecord}
-                        onMore={onMore}
-                    />
-                ))}
-            </ul>
-        </article>
+        <Card asChild>
+            <article className="overflow-hidden rounded-xl border bg-card">
+                <header className="flex items-center gap-3 px-3 py-2.5">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold" aria-hidden>
+                        {workload.initials}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <h3 className="truncate leading-tight font-semibold">{workload.name}</h3>
+                        <p className="truncate text-xs text-muted-foreground">{workload.summary}</p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                        <p className="text-sm font-semibold tabular-nums">{formatIdr(workload.periodWage)}</p>
+                        <p className="text-xs text-muted-foreground">periode ini</p>
+                    </div>
+                </header>
+                <ul className="divide-y border-t">
+                    {workload.assignments.map((assignment) => (
+                        <AssignmentQuickRow
+                            key={assignment.id}
+                            assignment={assignment}
+                            pending={pendingId === assignment.id}
+                            locked={pendingId !== null}
+                            onRecord={onRecord}
+                            onMore={onMore}
+                        />
+                    ))}
+                </ul>
+            </article>
+        </Card>
     );
 }
 

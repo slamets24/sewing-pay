@@ -1,7 +1,9 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { useFieldAccessibility } from "@/lib/field-context"
 
 function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
+  const field = useFieldAccessibility(props)
   return (
     <textarea
       data-slot="textarea"
@@ -10,6 +12,7 @@ function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
         className
       )}
       {...props}
+      {...field}
     />
   )
 }

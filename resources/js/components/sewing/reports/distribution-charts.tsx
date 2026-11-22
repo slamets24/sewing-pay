@@ -1,3 +1,5 @@
+import { Card } from '@/components/ui/card';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { EmptyState } from '@/components/empty-state';
 import { Button } from '@/components/ui/button';
 import {
@@ -45,31 +47,33 @@ export function DistributionCharts({ distribution }: { distribution: Distributio
         .filter(({ brand }) => tailors.some((tailor) => valueOf(tailor.segments[brand.key], measure) > 0));
 
     return (
-        <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 shadow-xs sm:p-5">
-            <header className="flex flex-col gap-3 border-b border-border/60 pb-3.5">
-                <div>
-                    <h3 className="flex items-center gap-2 font-display text-base font-bold text-foreground">
-                        <Scale className="size-4.5 text-primary" />
-                        Pemerataan pembagian hancaan
-                    </h3>
-                    <p className="text-xs text-muted-foreground">Dari ambilan penjahit dalam periode ini (ambilan yang dibatalkan tidak dihitung).</p>
-                </div>
-                {/* Filter dalam satu baris di atas kedua grafik */}
-                <div className="flex flex-wrap items-center gap-2">
-                    <Segmented options={SCOPES} value={scope} onChange={setScope} label="Jenis penjahit" />
-                    <Segmented options={MEASURES} value={measure} onChange={setMeasure} label="Ukuran" />
-                </div>
-            </header>
+        <Card asChild>
+            <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 shadow-xs sm:p-5">
+                <header className="flex flex-col gap-3 border-b border-border/60 pb-3.5">
+                    <div>
+                        <h3 className="flex items-center gap-2 font-display text-base font-bold text-foreground">
+                            <Scale className="size-4.5 text-primary" />
+                            Pemerataan pembagian hancaan
+                        </h3>
+                        <p className="text-xs text-muted-foreground">Dari ambilan penjahit dalam periode ini (ambilan yang dibatalkan tidak dihitung).</p>
+                    </div>
+                    {/* Filter dalam satu baris di atas kedua grafik */}
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Segmented options={SCOPES} value={scope} onChange={setScope} label="Jenis penjahit" />
+                        <Segmented options={MEASURES} value={measure} onChange={setMeasure} label="Ukuran" />
+                    </div>
+                </header>
 
-            {tailors.length === 0 ? (
-                <EmptyState>Belum ada ambilan hancaan untuk pilihan ini dalam periode ini.</EmptyState>
-            ) : (
-                <div className="grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-                    <PerTailorChart tailors={tailors} brands={brandsInView} measure={measure} />
-                    <PerBrandChart rows={evenness} measure={measure} />
-                </div>
-            )}
-        </section>
+                {tailors.length === 0 ? (
+                    <EmptyState>Belum ada ambilan hancaan untuk pilihan ini dalam periode ini.</EmptyState>
+                ) : (
+                    <div className="grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+                        <PerTailorChart tailors={tailors} brands={brandsInView} measure={measure} />
+                        <PerBrandChart rows={evenness} measure={measure} />
+                    </div>
+                )}
+            </section>
+        </Card>
     );
 }
 
@@ -87,7 +91,7 @@ function Segmented<T extends string>({
     return (
         <div className="flex rounded-lg bg-muted/60 p-0.5" role="group" aria-label={label}>
             {options.map((option) => (
-                <button
+                <Button variant="plain" size="plain"
                     key={option.value}
                     type="button"
                     aria-pressed={value === option.value}
@@ -98,7 +102,7 @@ function Segmented<T extends string>({
                     )}
                 >
                     {option.label}
-                </button>
+                </Button>
             ))}
         </div>
     );
@@ -163,7 +167,7 @@ function PerTailorChart({ tailors, brands, measure }: { tailors: DistributionTai
                             <div className="relative h-6 min-w-0 flex-1" onMouseLeave={() => setHover(null)}>
                                 <div className="flex h-full gap-[2px]" style={{ width: `${(total / max) * 100}%` }}>
                                     {segments.map((segment, index) => (
-                                        <button
+                                        <Button variant="plain" size="plain"
                                             key={segment.brand.key}
                                             type="button"
                                             aria-label={`${tailor.name}, ${segment.brand.name}: ${formatValue(segment.value, measure)}`}
@@ -218,34 +222,34 @@ function PerTailorChart({ tailors, brands, measure }: { tailors: DistributionTai
 function DistributionTable({ tailors, brands, measure }: { tailors: DistributionTailor[]; brands: BrandSwatch[]; measure: Measure }) {
     return (
         <div className="overflow-x-auto rounded-lg border">
-            <table className="w-full text-xs">
-                <thead className="bg-muted/50 text-muted-foreground">
-                    <tr>
-                        <th className="px-2.5 py-2 text-left font-semibold">Penjahit</th>
+            <Table scrollContainer={false} className="w-full text-xs">
+                <TableHeader className="bg-muted/50 text-muted-foreground">
+                    <TableRow>
+                        <TableHead className="h-auto whitespace-normal px-2.5 py-2 text-left font-semibold">Penjahit</TableHead>
                         {brands.map(({ brand }) => (
-                            <th key={brand.key} className="px-2.5 py-2 text-right font-semibold whitespace-nowrap">
+                            <TableHead key={brand.key} className="px-2.5 py-2 text-right font-semibold whitespace-nowrap">
                                 {brand.name}
-                            </th>
+                            </TableHead>
                         ))}
-                        <th className="px-2.5 py-2 text-right font-semibold">Total</th>
-                    </tr>
-                </thead>
-                <tbody>
+                        <TableHead className="h-auto whitespace-normal px-2.5 py-2 text-right font-semibold">Total</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
                     {tailors.map((tailor) => (
-                        <tr key={tailor.id} className="border-t">
-                            <td className="px-2.5 py-1.5 font-semibold whitespace-nowrap">{tailor.name}</td>
+                        <TableRow key={tailor.id} className="border-t">
+                            <TableCell className="px-2.5 py-1.5 font-semibold whitespace-nowrap">{tailor.name}</TableCell>
                             {brands.map(({ brand }) => (
-                                <td key={brand.key} className="px-2.5 py-1.5 text-right tabular">
+                                <TableCell key={brand.key} className="whitespace-normal px-2.5 py-1.5 text-right tabular">
                                     {valueOf(tailor.segments[brand.key], measure) > 0
                                         ? formatValue(valueOf(tailor.segments[brand.key], measure), measure)
                                         : '–'}
-                                </td>
+                                </TableCell>
                             ))}
-                            <td className="px-2.5 py-1.5 text-right font-semibold tabular">{formatValue(tailor[measure], measure)}</td>
-                        </tr>
+                            <TableCell className="whitespace-normal px-2.5 py-1.5 text-right font-semibold tabular">{formatValue(tailor[measure], measure)}</TableCell>
+                        </TableRow>
                     ))}
-                </tbody>
-            </table>
+                </TableBody>
+            </Table>
         </div>
     );
 }

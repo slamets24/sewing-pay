@@ -1,3 +1,5 @@
+import { Card } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import { ArticlePicker } from '@/components/sewing/work-order/article-picker';
 import { WorkOrderHeaderFields } from '@/components/sewing/work-order/header-fields';
 import { PageIntro, Section } from '@/components/sewing/section';
@@ -115,7 +117,7 @@ export default function WorkOrderCreate({ articles, aliases }: CreateProps) {
                 <Section title="2. Data WO" icon={ClipboardList}>
                     <div className="flex flex-col gap-4">
                         <WorkOrderHeaderFields values={draft.header} onChange={(changes) => update(draft.withHeader(changes))} errors={errors} idPrefix="wo-new" />
-                        <label className="flex cursor-pointer items-start gap-3 rounded-md border-2 border-dashed p-4 has-[[data-state=checked]]:border-stage-ready has-[[data-state=checked]]:bg-stage-ready/8">
+                        <Label className="flex cursor-pointer items-start gap-3 rounded-md border-2 border-dashed p-4 has-[[data-state=checked]]:border-stage-ready has-[[data-state=checked]]:bg-stage-ready/8">
                             <Checkbox
                                 checked={draft.header.is_opening_stock}
                                 onCheckedChange={(checked) => update(draft.withHeader({ is_opening_stock: checked === true }))}
@@ -124,7 +126,7 @@ export default function WorkOrderCreate({ articles, aliases }: CreateProps) {
                             <span className="flex flex-col gap-0.5">
                                 <span className="font-bold">Stok awal: barang sudah ada di gudang</span>
                             </span>
-                        </label>
+                        </Label>
                     </div>
                 </Section>
 
@@ -256,40 +258,42 @@ function GroupCard({ index, group, draft, articles, onChange }: GroupCardProps) 
                     <span />
                 </div>
                 {group.lines.map((line) => (
-                    <div key={line.key} className="grid grid-cols-[1fr_auto] gap-2 rounded-md border bg-card p-2 md:grid-cols-[1fr_8rem_11rem_2.75rem] md:border-0 md:bg-transparent md:p-0">
-                        <Input
-                            value={line.color}
-                            onChange={(event) => onChange(draft.withLine(group.key, line.key, { color: event.target.value }))}
-                            placeholder="Warna"
-                            aria-label="Warna"
-                            className="order-1"
-                        />
-                        <Input
-                            value={line.size}
-                            onChange={(event) => onChange(draft.withLine(group.key, line.key, { size: event.target.value.toUpperCase() }))}
-                            list="size-options"
-                            placeholder="Ukuran"
-                            aria-label="Ukuran"
-                            className="order-3 font-semibold uppercase md:order-2"
-                        />
-                        <QtyStepper
-                            value={line.qty}
-                            min={1}
-                            onChange={(qty) => onChange(draft.withLine(group.key, line.key, { qty }))}
-                            label="Jumlah"
-                            className="order-4 md:order-3"
-                        />
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onChange(draft.removeLine(group.key, line.key))}
-                            aria-label="Hapus baris"
-                            className="order-2 justify-self-end md:order-4"
-                        >
-                            <X />
-                        </Button>
-                    </div>
+                    <Card asChild key={line.key}>
+                        <div  className="grid grid-cols-[1fr_auto] gap-2 rounded-md border bg-card p-2 md:grid-cols-[1fr_8rem_11rem_2.75rem] md:border-0 md:bg-transparent md:p-0">
+                            <Input
+                                value={line.color}
+                                onChange={(event) => onChange(draft.withLine(group.key, line.key, { color: event.target.value }))}
+                                placeholder="Warna"
+                                aria-label="Warna"
+                                className="order-1"
+                            />
+                            <Input
+                                value={line.size}
+                                onChange={(event) => onChange(draft.withLine(group.key, line.key, { size: event.target.value.toUpperCase() }))}
+                                list="size-options"
+                                placeholder="Ukuran"
+                                aria-label="Ukuran"
+                                className="order-3 font-semibold uppercase md:order-2"
+                            />
+                            <QtyStepper
+                                value={line.qty}
+                                min={1}
+                                onChange={(qty) => onChange(draft.withLine(group.key, line.key, { qty }))}
+                                label="Jumlah"
+                                className="order-4 md:order-3"
+                            />
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => onChange(draft.removeLine(group.key, line.key))}
+                                aria-label="Hapus baris"
+                                className="order-2 justify-self-end md:order-4"
+                            >
+                                <X />
+                            </Button>
+                        </div>
+                    </Card>
                 ))}
                 <Button type="button" variant="outline" className="self-start" onClick={() => onChange(draft.addLine(group.key))}>
                     <Plus />

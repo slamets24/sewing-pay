@@ -1,3 +1,6 @@
+import { Card } from '@/components/ui/card';
+import { ConfirmAction } from '@/components/confirm-action';
+import { Label } from '@/components/ui/label';
 import { EmptyState } from '@/components/empty-state';
 import { PageIntro, Section } from '@/components/sewing/section';
 import { StatTile } from '@/components/sewing/stat-tile';
@@ -18,7 +21,7 @@ import {
     Sparkles,
     UserCheck,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { toast } from 'sonner';
 
 type AttendanceRow = {
@@ -91,10 +94,6 @@ export default function AttendanceIndex({ date, rows, summary, mealAllowanceRule
 
     /** Ambil absensi tanggal ini dari HR sekarang juga (menimpa catatan yang belum dibayar). */
     const handlePullHr = () => {
-        if (!confirm(`Tarik absensi penjahit tanggal ${date} dari HR? Catatan di OPSEW yang belum dibayar akan diganti dengan data HR.`)) {
-            return;
-        }
-
         router.post(
             route('attendances.pull-hr'),
             { date_from: date, date_to: date },
@@ -103,10 +102,6 @@ export default function AttendanceIndex({ date, rows, summary, mealAllowanceRule
     };
 
     const handleBatchPresent = () => {
-        if (!confirm(`Tandai semua penjahit internal hadir 9 jam (uang makan ${formatIdr(mealAllowanceRules.under_10_hours)}) untuk tanggal ${date}?`)) {
-            return;
-        }
-
         router.post(route('attendances.batch'), { date, working_hours: 9 }, { preserveScroll: true, onError: showFirstError });
     };
 
@@ -136,14 +131,18 @@ export default function AttendanceIndex({ date, rows, summary, mealAllowanceRule
                                 Hari Ini
                             </Button>
                         )}
-                        <Button type="button" variant="outline" size="sm" onClick={handlePullHr} disabled={pullingHr} className="col-span-3 sm:col-span-1">
-                            <CloudDownload className={cn('size-4', pullingHr && 'animate-pulse')} />
-                            {pullingHr ? 'Menarik…' : 'Tarik dari HR'}
-                        </Button>
-                        <Button type="button" size="sm" onClick={handleBatchPresent} className="col-span-3 sm:col-span-1">
-                            <Sparkles className="size-4" />
-                            Hadirkan Semua (9j)
-                        </Button>
+                        <ConfirmAction title="Tarik absensi dari HR?" description={`Catatan tanggal ${date} di OPSEW yang belum dibayar akan diganti dengan data HR.`} confirmLabel="Tarik dari HR" onConfirm={handlePullHr}>
+                            <Button type="button" variant="outline" size="sm" disabled={pullingHr} className="col-span-3 sm:col-span-1">
+                                <CloudDownload className={cn('size-4', pullingHr && 'animate-pulse')} />
+                                {pullingHr ? 'Menarik…' : 'Tarik dari HR'}
+                            </Button>
+                        </ConfirmAction>
+                        <ConfirmAction title="Hadirkan semua penjahit internal?" description={`Tandai hadir 9 jam dengan uang makan ${formatIdr(mealAllowanceRules.under_10_hours)} untuk tanggal ${date}.`} confirmLabel="Hadirkan semua" onConfirm={handleBatchPresent}>
+                            <Button type="button" size="sm" className="col-span-3 sm:col-span-1">
+                                <Sparkles className="size-4" />
+                                Hadirkan Semua (9j)
+                            </Button>
+                        </ConfirmAction>
                     </div>
                 }
             />
@@ -205,6 +204,7 @@ function AttendanceCard({
     row: AttendanceRow;
     mealRules: MealAllowanceRules;
 }) {
+    const fieldId = useId();
     const [status, setStatus] = useState<AttendanceRow['status']>(row.status);
     const [hours, setHours] = useState(row.working_hours);
     const [clockIn, setClockIn] = useState(row.clock_in ?? '');
@@ -264,101 +264,103 @@ function AttendanceCard({
     };
 
     return (
-        <div className={cn('flex min-w-0 flex-col gap-2 rounded-xl border bg-card p-3 shadow-2xs', !recorded && 'border-dashed')}>
-            {/* Row 1: who, allowance, detail toggle */}
-            <div className="flex items-center gap-2">
-                <div className="min-w-0 flex-1">
-                    <p className="truncate font-bold">{row.tailor_name}</p>
-                    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                        <span className="truncate">
-                            {[row.tailor_code, clockIn && clockOut ? `${clockIn}–${clockOut}` : null, note || null].filter(Boolean).join(' · ')}
-                        </span>
-                        {row.is_self_clocked && (
-                            <Badge variant="secondary" className="bg-emerald-50 text-[11px] text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-                                Portal HP
-                            </Badge>
-                        )}
-                        {!recorded && (
-                            <Badge variant="outline" className="border-amber-300 text-[11px] text-amber-600">
-                                Belum dicatat
-                            </Badge>
-                        )}
-                    </p>
-                </div>
-                <div className="shrink-0 text-right">
-                    <p className="font-display text-base font-bold tabular">{isPresent ? formatIdr(mealAllowance) : '—'}</p>
-                    <p className="text-[11px] text-muted-foreground">
-                        {saveState === 'saving' ? 'Menyimpan…' : saveState === 'saved' ? 'Tersimpan ✓' : 'uang makan'}
-                    </p>
-                </div>
-                <Button type="button" variant="ghost" size="sm" onClick={() => setShowDetail(!showDetail)} aria-expanded={showDetail} aria-label="Detail" className="px-2">
-                    <span className="hidden sm:inline">Detail</span>
-                    <ChevronRight className={cn('size-4 transition-transform', showDetail && 'rotate-90')} />
-                </Button>
-            </div>
-
-            {/* Row 2: status and hours, saved on tap */}
-            <div className="flex flex-wrap items-center gap-2">
-                <div className="flex gap-1 rounded-lg bg-muted/50 p-0.5" role="group" aria-label={`Status ${row.tailor_name}`}>
-                    {STATUS_OPTIONS.map((option) => (
-                        <button
-                            key={option.value}
-                            type="button"
-                            onClick={() => option.value !== status && changeStatus(option.value)}
-                            aria-pressed={status === option.value}
-                            className={cn(
-                                'rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors',
-                                status === option.value ? 'bg-primary text-primary-foreground shadow-xs' : 'text-muted-foreground hover:bg-muted',
+        <Card asChild>
+            <div className={cn('flex min-w-0 flex-col gap-2 rounded-xl border bg-card p-3 shadow-2xs', !recorded && 'border-dashed')}>
+                {/* Row 1: who, allowance, detail toggle */}
+                <div className="flex items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                        <p className="truncate font-bold">{row.tailor_name}</p>
+                        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                            <span className="truncate">
+                                {[row.tailor_code, clockIn && clockOut ? `${clockIn}–${clockOut}` : null, note || null].filter(Boolean).join(' · ')}
+                            </span>
+                            {row.is_self_clocked && (
+                                <Badge variant="secondary" className="bg-emerald-50 text-[11px] text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                                    Portal HP
+                                </Badge>
                             )}
-                        >
-                            {option.label}
-                        </button>
-                    ))}
+                            {!recorded && (
+                                <Badge variant="outline" className="border-amber-300 text-[11px] text-amber-600">
+                                    Belum dicatat
+                                </Badge>
+                            )}
+                        </p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                        <p className="font-display text-base font-bold tabular">{isPresent ? formatIdr(mealAllowance) : '—'}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                            {saveState === 'saving' ? 'Menyimpan…' : saveState === 'saved' ? 'Tersimpan ✓' : 'uang makan'}
+                        </p>
+                    </div>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setShowDetail(!showDetail)} aria-expanded={showDetail} aria-label="Detail" className="px-2">
+                        <span className="hidden sm:inline">Detail</span>
+                        <ChevronRight className={cn('size-4 transition-transform', showDetail && 'rotate-90')} />
+                    </Button>
                 </div>
-                {isPresent && (
-                    <div className="flex gap-1 rounded-lg bg-muted/50 p-0.5" role="group" aria-label={`Jam kerja ${row.tailor_name}`}>
-                        {WORKING_HOURS_OPTIONS.map((option) => (
-                            <button
-                                key={option}
+
+                {/* Row 2: status and hours, saved on tap */}
+                <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex gap-1 rounded-lg bg-muted/50 p-0.5" role="group" aria-label={`Status ${row.tailor_name}`}>
+                        {STATUS_OPTIONS.map((option) => (
+                            <Button variant="plain" size="plain"
+                                key={option.value}
                                 type="button"
-                                onClick={() => option !== hours && changeHours(option)}
-                                aria-pressed={hours === option}
+                                onClick={() => option.value !== status && changeStatus(option.value)}
+                                aria-pressed={status === option.value}
                                 className={cn(
                                     'rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors',
-                                    hours === option ? 'bg-primary text-primary-foreground shadow-xs' : 'text-muted-foreground hover:bg-muted',
+                                    status === option.value ? 'bg-primary text-primary-foreground shadow-xs' : 'text-muted-foreground hover:bg-muted',
                                 )}
                             >
-                                {option}j
-                            </button>
+                                {option.label}
+                            </Button>
                         ))}
+                    </div>
+                    {isPresent && (
+                        <div className="flex gap-1 rounded-lg bg-muted/50 p-0.5" role="group" aria-label={`Jam kerja ${row.tailor_name}`}>
+                            {WORKING_HOURS_OPTIONS.map((option) => (
+                                <Button variant="plain" size="plain"
+                                    key={option}
+                                    type="button"
+                                    onClick={() => option !== hours && changeHours(option)}
+                                    aria-pressed={hours === option}
+                                    className={cn(
+                                        'rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors',
+                                        hours === option ? 'bg-primary text-primary-foreground shadow-xs' : 'text-muted-foreground hover:bg-muted',
+                                    )}
+                                >
+                                    {option}j
+                                </Button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {showDetail && (
+                    <div className="grid gap-3 rounded-lg bg-muted/40 p-3 sm:grid-cols-[auto_10rem_1fr_auto] sm:items-end">
+                        <div className="flex flex-col gap-1">
+                            <Label htmlFor={`${fieldId}-in`} className="text-xs font-medium text-muted-foreground">Masuk — Pulang</Label>
+                            <div className="flex items-center gap-1">
+                                <Input id={`${fieldId}-in`} aria-label={`Jam masuk ${row.tailor_name}`} type="time" value={clockIn} onChange={(e) => setClockIn(e.target.value)} className="h-9 w-28 px-2" disabled={!isPresent} />
+                                <span className="text-muted-foreground">–</span>
+                                <Input id={`${fieldId}-out`} aria-label={`Jam pulang ${row.tailor_name}`} type="time" value={clockOut} onChange={(e) => setClockOut(e.target.value)} className="h-9 w-28 px-2" disabled={!isPresent} />
+                            </div>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <Label htmlFor={`${fieldId}-meal`} className="text-xs font-medium text-muted-foreground">Uang makan (Rp)</Label>
+                            <Input id={`${fieldId}-meal`} type="number" min={0} value={mealAllowance} onChange={(e) => setMealAllowance(Number(e.target.value))} className="h-9 font-semibold tabular" disabled={!isPresent} />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <Label htmlFor={`${fieldId}-note`} className="text-xs font-medium text-muted-foreground">Catatan</Label>
+                            <Input id={`${fieldId}-note`} value={note} onChange={(e) => setNote(e.target.value)} className="h-9" placeholder="Opsional" />
+                        </div>
+                        <Button type="button" size="sm" className="h-9" onClick={() => save()} disabled={saveState === 'saving'}>
+                            <Save className="size-4" />
+                            Simpan detail
+                        </Button>
                     </div>
                 )}
             </div>
-
-            {showDetail && (
-                <div className="grid gap-3 rounded-lg bg-muted/40 p-3 sm:grid-cols-[auto_10rem_1fr_auto] sm:items-end">
-                    <div className="flex flex-col gap-1">
-                        <label className="text-xs font-medium text-muted-foreground">Masuk — Pulang</label>
-                        <div className="flex items-center gap-1">
-                            <Input type="time" value={clockIn} onChange={(e) => setClockIn(e.target.value)} className="h-9 w-28 px-2" disabled={!isPresent} />
-                            <span className="text-muted-foreground">–</span>
-                            <Input type="time" value={clockOut} onChange={(e) => setClockOut(e.target.value)} className="h-9 w-28 px-2" disabled={!isPresent} />
-                        </div>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <label className="text-xs font-medium text-muted-foreground">Uang makan (Rp)</label>
-                        <Input type="number" min={0} value={mealAllowance} onChange={(e) => setMealAllowance(Number(e.target.value))} className="h-9 font-semibold tabular" disabled={!isPresent} />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <label className="text-xs font-medium text-muted-foreground">Catatan</label>
-                        <Input value={note} onChange={(e) => setNote(e.target.value)} className="h-9" placeholder="Opsional" />
-                    </div>
-                    <Button type="button" size="sm" className="h-9" onClick={() => save()} disabled={saveState === 'saving'}>
-                        <Save className="size-4" />
-                        Simpan detail
-                    </Button>
-                </div>
-            )}
-        </div>
+        </Card>
     );
 }

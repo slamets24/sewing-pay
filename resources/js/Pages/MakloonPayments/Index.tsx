@@ -1,3 +1,6 @@
+import { Card } from '@/components/ui/card';
+import { ConfirmAction } from '@/components/confirm-action';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { EmptyState } from '@/components/empty-state';
 import { Section } from '@/components/sewing/section';
 import { StatTile } from '@/components/sewing/stat-tile';
@@ -67,9 +70,7 @@ type IndexProps = {
 
 export default function MakloonPaymentIndex({ payments, tailors, summary }: IndexProps) {
     const handleDelete = (payment: PaymentRow) => {
-        if (confirm(`Batalkan pembayaran ${payment.code}? Setoran akan dikembalikan ke daftar belum dibayar.`)) {
-            router.delete(route('makloon-payments.destroy', payment.id));
-        }
+        router.delete(route('makloon-payments.destroy', payment.id));
     };
 
     return (
@@ -123,54 +124,56 @@ export default function MakloonPaymentIndex({ payments, tailors, summary }: Inde
                             {tailors.map((tailor) => {
                                 const hasUnpaid = tailor.unpaid_count > 0;
                                 return (
-                                    <div
-                                        key={tailor.id}
-                                        className="flex flex-col justify-between rounded-xl border bg-card p-4 shadow-2xs transition-all hover:border-foreground/30"
-                                    >
-                                        <div>
-                                            <div className="flex items-center justify-between gap-2">
-                                                <h3 className="font-bold text-base text-foreground leading-snug">
-                                                    {tailor.name}
-                                                </h3>
-                                                <ToneBadge tone="qc">{tailor.code}</ToneBadge>
-                                            </div>
+                                    <Card asChild key={tailor.id}>
+                                        <div
 
-                                            {tailor.whatsapp_number && (
-                                                <p className="text-xs text-muted-foreground mt-0.5">
-                                                    WA: {tailor.whatsapp_number}
-                                                </p>
-                                            )}
+                                            className="flex flex-col justify-between rounded-xl border bg-card p-4 shadow-2xs transition-all hover:border-foreground/30"
+                                        >
+                                            <div>
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <h3 className="font-bold text-base text-foreground leading-snug">
+                                                        {tailor.name}
+                                                    </h3>
+                                                    <ToneBadge tone="qc">{tailor.code}</ToneBadge>
+                                                </div>
 
-                                            <div className="mt-4 rounded-lg bg-muted/50 p-2.5">
-                                                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                                                    Tagihan Belum Dibayar
-                                                </p>
-                                                <div className="mt-1 flex items-baseline justify-between">
-                                                    <span className="font-display text-lg font-bold text-foreground">
-                                                        {formatIdr(tailor.unpaid_amount)}
-                                                    </span>
-                                                    <span className="text-xs font-semibold text-muted-foreground">
-                                                        {tailor.unpaid_qty} pcs ({tailor.unpaid_count} setor)
-                                                    </span>
+                                                {tailor.whatsapp_number && (
+                                                    <p className="text-xs text-muted-foreground mt-0.5">
+                                                        WA: {tailor.whatsapp_number}
+                                                    </p>
+                                                )}
+
+                                                <div className="mt-4 rounded-lg bg-muted/50 p-2.5">
+                                                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                                        Tagihan Belum Dibayar
+                                                    </p>
+                                                    <div className="mt-1 flex items-baseline justify-between">
+                                                        <span className="font-display text-lg font-bold text-foreground">
+                                                            {formatIdr(tailor.unpaid_amount)}
+                                                        </span>
+                                                        <span className="text-xs font-semibold text-muted-foreground">
+                                                            {tailor.unpaid_qty} pcs ({tailor.unpaid_count} setor)
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        <div className="mt-4 pt-2 border-t">
-                                            {hasUnpaid ? (
-                                                <Button asChild className="w-full" size="sm">
-                                                    <Link href={route('makloon-payments.create', { tailor_id: tailor.id })}>
-                                                        <Plus className="size-4" />
-                                                        Proses Bayar ({tailor.unpaid_count})
-                                                    </Link>
-                                                </Button>
-                                            ) : (
-                                                <Button variant="outline" size="sm" className="w-full" disabled>
-                                                    Semua Lunas
-                                                </Button>
-                                            )}
+                                            <div className="mt-4 pt-2 border-t">
+                                                {hasUnpaid ? (
+                                                    <Button asChild className="w-full" size="sm">
+                                                        <Link href={route('makloon-payments.create', { tailor_id: tailor.id })}>
+                                                            <Plus className="size-4" />
+                                                            Proses Bayar ({tailor.unpaid_count})
+                                                        </Link>
+                                                    </Button>
+                                                ) : (
+                                                    <Button variant="outline" size="sm" className="w-full" disabled>
+                                                        Semua Lunas
+                                                    </Button>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
+                                    </Card>
                                 );
                             })}
                         </div>
@@ -189,76 +192,80 @@ export default function MakloonPaymentIndex({ payments, tailors, summary }: Inde
                             <p className="text-base">Belum ada riwayat pembayaran maklun.</p>
                         </EmptyState>
                     ) : (
-                        <div className="overflow-x-auto rounded-xl border bg-card shadow-2xs">
-                            <table className="w-full text-left text-sm">
-                                <thead className="border-b bg-muted/40 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                    <tr>
-                                        <th className="px-4 py-3">No. Faktur</th>
-                                        <th className="px-4 py-3">Tanggal</th>
-                                        <th className="px-4 py-3">Vendor Maklun</th>
-                                        <th className="px-4 py-3 text-right">Jumlah Pcs</th>
-                                        <th className="px-4 py-3 text-right">Total Dibayar</th>
-                                        <th className="px-4 py-3">Metode</th>
-                                        <th className="px-4 py-3 text-right">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y">
-                                    {payments.data.map((payment) => (
-                                        <tr key={payment.id} className="hover:bg-muted/20 transition-colors">
-                                            <td className="px-4 py-3 font-semibold text-primary">
-                                                <Link
-                                                    href={route('makloon-payments.show', payment.id)}
-                                                    className="hover:underline flex items-center gap-1.5"
-                                                >
-                                                    <FileText className="size-3.5" />
-                                                    {payment.code}
-                                                </Link>
-                                            </td>
-                                            <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                                                <span className="flex items-center gap-1.5">
-                                                    <Calendar className="size-3.5" />
-                                                    {payment.payment_date}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3 font-medium text-foreground">
-                                                {payment.tailor.name}
-                                            </td>
-                                            <td className="px-4 py-3 text-right font-semibold tabular">
-                                                {payment.total_qty} pcs
-                                            </td>
-                                            <td className="px-4 py-3 text-right font-bold text-foreground tabular">
-                                                {formatIdr(payment.net_amount)}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs font-medium uppercase text-muted-foreground">
-                                                    {payment.payment_method || 'transfer'}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3 text-right">
-                                                <div className="flex items-center justify-end gap-1.5">
-                                                    <Button asChild variant="ghost" size="sm">
-                                                        <Link href={route('makloon-payments.show', payment.id)}>
-                                                            Faktur
-                                                            <ChevronRight className="size-3.5 ml-1" />
-                                                        </Link>
-                                                    </Button>
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleDelete(payment)}
-                                                        className="text-destructive hover:bg-destructive/10"
-                                                        title="Batalkan pembayaran"
+                        <Card asChild>
+                            <div className="overflow-x-auto rounded-xl border bg-card shadow-2xs">
+                                <Table scrollContainer={false} className="w-full text-left text-sm">
+                                    <TableHeader className="border-b bg-muted/40 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                        <TableRow>
+                                            <TableHead className="h-auto whitespace-normal px-4 py-3">No. Faktur</TableHead>
+                                            <TableHead className="h-auto whitespace-normal px-4 py-3">Tanggal</TableHead>
+                                            <TableHead className="h-auto whitespace-normal px-4 py-3">Vendor Maklun</TableHead>
+                                            <TableHead className="h-auto whitespace-normal px-4 py-3 text-right">Jumlah Pcs</TableHead>
+                                            <TableHead className="h-auto whitespace-normal px-4 py-3 text-right">Total Dibayar</TableHead>
+                                            <TableHead className="h-auto whitespace-normal px-4 py-3">Metode</TableHead>
+                                            <TableHead className="h-auto whitespace-normal px-4 py-3 text-right">Aksi</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody className="divide-y">
+                                        {payments.data.map((payment) => (
+                                            <TableRow key={payment.id} className="hover:bg-muted/20 transition-colors">
+                                                <TableCell className="whitespace-normal px-4 py-3 font-semibold text-primary">
+                                                    <Link
+                                                        href={route('makloon-payments.show', payment.id)}
+                                                        className="hover:underline flex items-center gap-1.5"
                                                     >
-                                                        <Trash2 className="size-3.5" />
-                                                    </Button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                                        <FileText className="size-3.5" />
+                                                        {payment.code}
+                                                    </Link>
+                                                </TableCell>
+                                                <TableCell className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                                                    <span className="flex items-center gap-1.5">
+                                                        <Calendar className="size-3.5" />
+                                                        {payment.payment_date}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="whitespace-normal px-4 py-3 font-medium text-foreground">
+                                                    {payment.tailor.name}
+                                                </TableCell>
+                                                <TableCell className="whitespace-normal px-4 py-3 text-right font-semibold tabular">
+                                                    {payment.total_qty} pcs
+                                                </TableCell>
+                                                <TableCell className="whitespace-normal px-4 py-3 text-right font-bold text-foreground tabular">
+                                                    {formatIdr(payment.net_amount)}
+                                                </TableCell>
+                                                <TableCell className="whitespace-normal px-4 py-3">
+                                                    <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs font-medium uppercase text-muted-foreground">
+                                                        {payment.payment_method || 'transfer'}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="whitespace-normal px-4 py-3 text-right">
+                                                    <div className="flex items-center justify-end gap-1.5">
+                                                        <Button asChild variant="ghost" size="sm">
+                                                            <Link href={route('makloon-payments.show', payment.id)}>
+                                                                Faktur
+                                                                <ChevronRight className="size-3.5 ml-1" />
+                                                            </Link>
+                                                        </Button>
+                                                        <ConfirmAction title={`Batalkan pembayaran ${payment.code}?`} description="Setoran akan dikembalikan ke daftar belum dibayar." confirmLabel="Batalkan pembayaran" destructive onConfirm={() => handleDelete(payment)}>
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="text-destructive hover:bg-destructive/10"
+                                                                title="Batalkan pembayaran"
+                                                                aria-label={`Batalkan pembayaran ${payment.code}`}
+                                                            >
+                                                                <Trash2 className="size-3.5" />
+                                                            </Button>
+                                                        </ConfirmAction>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </Card>
                     )}
                 </Section>
             </div>

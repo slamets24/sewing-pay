@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Check, type LucideIcon } from 'lucide-react';
 
@@ -26,7 +27,7 @@ export function ChoiceButtons<T extends string>({ label, value, options, onChang
                 const Icon = option.icon;
 
                 return (
-                    <button
+                    <Button variant="plain" size="plain"
                         key={option.value}
                         type="button"
                         aria-pressed={selected}
@@ -52,7 +53,7 @@ export function ChoiceButtons<T extends string>({ label, value, options, onChang
                             </span>
                             {option.description && <span className="text-sm text-muted-foreground">{option.description}</span>}
                         </span>
-                    </button>
+                    </Button>
                 );
             })}
         </div>

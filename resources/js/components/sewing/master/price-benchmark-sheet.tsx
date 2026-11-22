@@ -1,3 +1,5 @@
+import { Card } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import { ConfirmButton } from '@/components/confirm-button';
 import { FormField } from '@/components/form-field';
 import { TailorSelect } from '@/components/sewing/quality/record-selects';
@@ -127,20 +129,22 @@ export function PriceBenchmarkSheet({ article, tailors, canAdoptRate, canManageS
                                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Sample Tercatat ({benchmark.samples.length})</p>
                                 <ul className="flex flex-col gap-2">
                                     {benchmark.samples.map((sample) => (
-                                        <li key={sample.id} className="flex items-start justify-between gap-3 rounded-lg border bg-card p-3 shadow-2xs">
-                                            <div className="min-w-0">
-                                                <div className="flex items-center gap-2">
-                                                    <p className="font-semibold text-base">{sample.color}</p>
-                                                    <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                                                        {formatIdr(sample.price)}
-                                                    </span>
+                                        <Card asChild key={sample.id}>
+                                            <li  className="flex items-start justify-between gap-3 rounded-lg border bg-card p-3 shadow-2xs">
+                                                <div className="min-w-0">
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="font-semibold text-base">{sample.color}</p>
+                                                        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                                                            {formatIdr(sample.price)}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {sample.tailor_name} {sample.working_hours ? `(${sample.working_hours}j)` : ''} · Durasi: {sample.minutes_label}
+                                                    </p>
                                                 </div>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {sample.tailor_name} {sample.working_hours ? `(${sample.working_hours}j)` : ''} · Durasi: {sample.minutes_label}
-                                                </p>
-                                            </div>
-                                            {canManageSamples && <DeleteSample articleId={article.id} sampleId={sample.id} />}
-                                        </li>
+                                                {canManageSamples && <DeleteSample articleId={article.id} sampleId={sample.id} />}
+                                            </li>
+                                        </Card>
                                     ))}
                                 </ul>
                             </div>
@@ -172,14 +176,14 @@ export function PriceBenchmarkSheet({ article, tailors, canAdoptRate, canManageS
                                 {/* Standar Acuan Jam Masuk */}
                                 <div className="flex flex-col gap-1.5">
                                     <div className="flex items-center justify-between">
-                                        <label className="text-xs font-medium text-muted-foreground">
+                                        <Label id={`sample-hours-${article.id}`} className="text-xs font-medium text-muted-foreground">
                                             Standar Acuan Jam Masuk (Perhitungan Sample)
-                                        </label>
+                                        </Label>
                                         <span className="text-[10px] text-muted-foreground">Bukan uang makan riil</span>
                                     </div>
-                                    <div className="grid grid-cols-4 gap-1.5">
+                                    <div role="group" aria-labelledby={`sample-hours-${article.id}`} className="grid grid-cols-4 gap-1.5">
                                         {SHIFT_OPTIONS.map((opt) => (
-                                            <button
+                                            <Button variant="plain" size="plain"
                                                 key={opt}
                                                 type="button"
                                                 onClick={() => form.setData('working_hours', opt)}
@@ -193,7 +197,7 @@ export function PriceBenchmarkSheet({ article, tailors, canAdoptRate, canManageS
                                                 <div className="text-[10px] font-normal opacity-85">
                                                     {formatIdr(SHIFT_RATES[opt])}
                                                 </div>
-                                            </button>
+                                            </Button>
                                         ))}
                                     </div>
                                 </div>
@@ -218,12 +222,12 @@ export function PriceBenchmarkSheet({ article, tailors, canAdoptRate, canManageS
                                 {/* Waktu Pengerjaan */}
                                 <div className="flex flex-col gap-1.5">
                                     <div className="flex items-center justify-between">
-                                        <label htmlFor="sample-duration" className="text-xs font-medium text-muted-foreground">
+                                        <Label htmlFor="sample-duration" className="text-xs font-medium text-muted-foreground">
                                             Waktu Pengerjaan (Menit)
-                                        </label>
+                                        </Label>
                                         {/* Stopwatch helper */}
                                         {!isTiming ? (
-                                            <button
+                                            <Button variant="plain" size="plain"
                                                 type="button"
                                                 onClick={() => {
                                                     setSecondsElapsed(0);
@@ -233,16 +237,16 @@ export function PriceBenchmarkSheet({ article, tailors, canAdoptRate, canManageS
                                             >
                                                 <Play className="size-3 fill-current" />
                                                 Pakai Stopwatch
-                                            </button>
+                                            </Button>
                                         ) : (
-                                            <button
+                                            <Button variant="plain" size="plain"
                                                 type="button"
                                                 onClick={handleStopTimer}
                                                 className="flex items-center gap-1 text-xs text-rose-600 hover:underline font-semibold animate-pulse"
                                             >
                                                 <Square className="size-3 fill-current" />
                                                 Berhenti ({Math.floor(secondsElapsed / 60)}m {secondsElapsed % 60}s)
-                                            </button>
+                                            </Button>
                                         )}
                                     </div>
 

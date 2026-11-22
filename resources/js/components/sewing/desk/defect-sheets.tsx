@@ -1,3 +1,6 @@
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import { FormField } from '@/components/form-field';
 import { QtyStepper } from '@/components/sewing/qty-stepper';
 import { ToneBadge } from '@/components/sewing/tone-badge';
@@ -82,7 +85,7 @@ export function ReportDefectSheet({
                     {/* 1. JENIS CACAT */}
                     <FormField label="Jenis Masalah / Cacat">
                         <div className="grid grid-cols-2 gap-2">
-                            <button
+                            <Button variant="plain" size="plain"
                                 type="button"
                                 onClick={() => setData('type', 'material')}
                                 className={cn(
@@ -99,9 +102,9 @@ export function ReportDefectSheet({
                                 <span className="mt-1 rounded bg-emerald-500/15 px-1.5 py-0.2 text-[10px] font-bold text-emerald-700">
                                     Ada upah perbaikan
                                 </span>
-                            </button>
+                            </Button>
 
-                            <button
+                            <Button variant="plain" size="plain"
                                 type="button"
                                 onClick={() => setData('type', 'sewing')}
                                 className={cn(
@@ -118,7 +121,7 @@ export function ReportDefectSheet({
                                 <span className="mt-1 rounded bg-muted px-1.5 py-0.2 text-[10px] font-bold text-muted-foreground">
                                     Tanggung jawab penjahit
                                 </span>
-                            </button>
+                            </Button>
                         </div>
                     </FormField>
 
@@ -142,24 +145,31 @@ export function ReportDefectSheet({
                     {data.type === 'material' && (
                         <>
                             <FormField label="Bagian yang Rusak / Butuh Diganti" error={errors.revision_part_id}>
-                                <select
+                                <NativeSelect
                                     value={data.revision_part_id}
                                     onChange={(e) => setData('revision_part_id', e.target.value)}
                                     className="w-full rounded-xl border border-input bg-card px-3 py-2 text-sm shadow-2xs focus:border-primary focus:outline-none"
                                 >
-                                    <option value="">-- Pilih Bagian --</option>
+                                    <NativeSelectOption value="">-- Pilih Bagian --</NativeSelectOption>
                                     {revisionParts.map((part) => (
-                                        <option key={part.id} value={part.id}>
+                                        <NativeSelectOption key={part.id} value={part.id}>
                                             {part.name} ({part.material_type})
-                                        </option>
+                                        </NativeSelectOption>
                                     ))}
-                                </select>
+                                </NativeSelect>
                             </FormField>
 
                             {/* PILIHAN KUNCI: KEMBALIKAN KE GUDANG ATAU DISIMPAN PENJAHIT */}
                             <FormField label="Status Penanganan Fisik Barang Cacat:">
-                                <div className="flex flex-col gap-2">
-                                    <label
+                                <RadioGroup
+                                    name="return_to_warehouse"
+                                    aria-label="Status penanganan fisik barang cacat"
+                                    value={data.return_to_warehouse ? 'warehouse' : 'tailor'}
+                                    onValueChange={(value) => setData('return_to_warehouse', value === 'warehouse')}
+                                    className="flex flex-col gap-2"
+                                >
+                                    <Label
+                                        htmlFor={`defect-warehouse-${item.id}`}
                                         className={cn(
                                             'flex items-start gap-3 rounded-xl border-2 p-3 cursor-pointer transition-all',
                                             data.return_to_warehouse
@@ -167,11 +177,9 @@ export function ReportDefectSheet({
                                                 : 'border-border/60 hover:bg-muted/30',
                                         )}
                                     >
-                                        <input
-                                            type="radio"
-                                            name="return_to_warehouse"
-                                            checked={data.return_to_warehouse}
-                                            onChange={() => setData('return_to_warehouse', true)}
+                                        <RadioGroupItem
+                                            id={`defect-warehouse-${item.id}`}
+                                            value="warehouse"
                                             className="mt-1 size-4 text-emerald-600"
                                         />
                                         <div className="flex-1">
@@ -180,9 +188,10 @@ export function ReportDefectSheet({
                                                 Kembalikan ke Loket / Gudang
                                             </p>
                                         </div>
-                                    </label>
+                                    </Label>
 
-                                    <label
+                                    <Label
+                                        htmlFor={`defect-tailor-${item.id}`}
                                         className={cn(
                                             'flex items-start gap-3 rounded-xl border-2 p-3 cursor-pointer transition-all',
                                             !data.return_to_warehouse
@@ -190,11 +199,9 @@ export function ReportDefectSheet({
                                                 : 'border-border/60 hover:bg-muted/30',
                                         )}
                                     >
-                                        <input
-                                            type="radio"
-                                            name="return_to_warehouse"
-                                            checked={!data.return_to_warehouse}
-                                            onChange={() => setData('return_to_warehouse', false)}
+                                        <RadioGroupItem
+                                            id={`defect-tailor-${item.id}`}
+                                            value="tailor"
                                             className="mt-1 size-4 text-amber-600"
                                         />
                                         <div className="flex-1">
@@ -203,8 +210,8 @@ export function ReportDefectSheet({
                                                 Masih Disimpan oleh Penjahit
                                             </p>
                                         </div>
-                                    </label>
-                                </div>
+                                    </Label>
+                                </RadioGroup>
                             </FormField>
                         </>
                     )}
@@ -315,20 +322,21 @@ export function ReassignRevisionSheet({
 
                     {/* Select from other active tailors */}
                     <div className="flex flex-col gap-2">
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                        <Label htmlFor={`revision-tailor-${revision.id}`} className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                             Atau Pilih Penjahit Lain:
-                        </label>
-                        <select
+                        </Label>
+                        <NativeSelect
+                            id={`revision-tailor-${revision.id}`}
                             value={targetTailorId}
                             onChange={(e) => setTargetTailorId(Number(e.target.value))}
                             className="w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm shadow-2xs focus:border-primary focus:outline-none"
                         >
                             {tailors.map((t) => (
-                                <option key={t.id} value={t.id}>
+                                <NativeSelectOption key={t.id} value={t.id}>
                                     {t.name} {t.code ? `(${t.code})` : ''} {t.id === revision.tailor_id ? '— [Saat Ini]' : ''}
-                                </option>
+                                </NativeSelectOption>
                             ))}
-                        </select>
+                        </NativeSelect>
 
                         <Button
                             type="button"

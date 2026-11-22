@@ -1,7 +1,9 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { useFieldAccessibility } from "@/lib/field-context"
 
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+  const field = useFieldAccessibility(props)
   return (
     <input
       type={type}
@@ -13,6 +15,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
         className
       )}
       {...props}
+      {...field}
     />
   )
 }

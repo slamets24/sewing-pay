@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import { QtyStepper } from '@/components/sewing/qty-stepper';
 import { ToneBadge } from '@/components/sewing/tone-badge';
 import { Button } from '@/components/ui/button';
@@ -15,57 +16,59 @@ export function HoldingCard({ row, actions = false }: { row: BoardRow; actions?:
     const [batchBusy, setBatchBusy] = useState(false);
 
     return (
-        <article className="flex flex-col overflow-hidden rounded-xl border bg-card shadow-2xs">
-            <header className="flex items-center gap-2 border-b bg-muted/50 px-3 py-2.5">
-                <div className="min-w-0 flex-1">
-                    <p className="flex items-center gap-2 truncate font-bold">
-                        <span className="truncate">{row.tailor.name}</span>
-                        {row.tailor.type === 'makloon' && <ToneBadge tone="qc">Makloon</ToneBadge>}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                        Memegang <span className="font-bold text-stage-sewing">{row.remaining_qty} pcs</span> · {row.items.length} barang
-                    </p>
-                </div>
+        <Card asChild>
+            <article className="flex flex-col overflow-hidden rounded-xl border bg-card shadow-2xs">
+                <header className="flex items-center gap-2 border-b bg-muted/50 px-3 py-2.5">
+                    <div className="min-w-0 flex-1">
+                        <p className="flex items-center gap-2 truncate font-bold">
+                            <span className="truncate">{row.tailor.name}</span>
+                            {row.tailor.type === 'makloon' && <ToneBadge tone="qc">Makloon</ToneBadge>}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                            Memegang <span className="font-bold text-stage-sewing">{row.remaining_qty} pcs</span> · {row.items.length} barang
+                        </p>
+                    </div>
 
-                {actions && row.items.length > 1 && row.remaining_qty > 0 && (
-                    <Button
-                        size="sm"
-                        disabled={batchBusy}
-                        onClick={() =>
-                            floorActions.send('post', route('deliveries.batch-tailor', row.tailor.id), {}, { onStart: () => setBatchBusy(true), onFinish: () => setBatchBusy(false) })
-                        }
-                    >
-                        <PackageCheck />
-                        Setor semua
-                    </Button>
-                )}
-                {actions && (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="size-9" aria-label={`Menu ${row.tailor.name}`}>
-                                <Ellipsis />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={() => router.visit(route('desk.index', { tailor: row.tailor.id }))}>
-                                <Zap />
-                                Buka di Loket
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => router.visit(route('pickups.create', { tailor: row.tailor.id }))}>
-                                <HandPlatter />
-                                Ambil lagi
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                )}
-            </header>
+                    {actions && row.items.length > 1 && row.remaining_qty > 0 && (
+                        <Button
+                            size="sm"
+                            disabled={batchBusy}
+                            onClick={() =>
+                                floorActions.send('post', route('deliveries.batch-tailor', row.tailor.id), {}, { onStart: () => setBatchBusy(true), onFinish: () => setBatchBusy(false) })
+                            }
+                        >
+                            <PackageCheck />
+                            Setor semua
+                        </Button>
+                    )}
+                    {actions && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="size-9" aria-label={`Menu ${row.tailor.name}`}>
+                                    <Ellipsis />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onSelect={() => router.visit(route('desk.index', { tailor: row.tailor.id }))}>
+                                    <Zap />
+                                    Buka di Loket
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => router.visit(route('pickups.create', { tailor: row.tailor.id }))}>
+                                    <HandPlatter />
+                                    Ambil lagi
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+                </header>
 
-            <ul className="flex flex-col divide-y">
-                {row.items.map((item) => (
-                    <HoldingLine key={item.id} item={item} actions={actions} />
-                ))}
-            </ul>
-        </article>
+                <ul className="flex flex-col divide-y">
+                    {row.items.map((item) => (
+                        <HoldingLine key={item.id} item={item} actions={actions} />
+                    ))}
+                </ul>
+            </article>
+        </Card>
     );
 }
 

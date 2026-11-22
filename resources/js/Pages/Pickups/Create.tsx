@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/empty-state';
 import { FormField } from '@/components/form-field';
 import { QtyStepper } from '@/components/sewing/qty-stepper';
@@ -99,7 +100,7 @@ export default function PickupCreate({ tailors, availableItems, presetTailorId }
                                         const selected = cart.tailor?.id === tailor.id;
 
                                         return (
-                                            <button
+                                            <Button variant="plain" size="plain"
                                                 key={tailor.id}
                                                 type="button"
                                                 onClick={() => setCart(cart.withTailor(selected ? null : tailor))}
@@ -117,7 +118,7 @@ export default function PickupCreate({ tailors, availableItems, presetTailorId }
                                                     {tailor.code}
                                                     {tailor.type === 'makloon' && <ToneBadge tone="qc">Makloon</ToneBadge>}
                                                 </span>
-                                            </button>
+                                            </Button>
                                         );
                                     })}
                                 </div>
@@ -197,31 +198,33 @@ function ItemRow({ item, qty, onQty }: { item: WorkOrderItemRecord; qty: number;
     const selected = qty > 0;
 
     return (
-        <div className={cn('flex flex-wrap items-center gap-3 rounded-lg border-2 bg-card p-3', selected && 'border-primary bg-primary/10')}>
-            <div className="min-w-0 flex-1">
-                <p className="text-lg font-bold">{item.article_name}</p>
-                <p className="text-base">{variantLabel(item.color, item.size)}</p>
-                <p className="text-sm text-muted-foreground">
-                    Di gudang: <span className="font-bold text-stage-ready">{item.available_qty} pcs</span>
-                </p>
-            </div>
-            {selected ? (
-                <div className="flex items-center gap-2">
-                    <QtyStepper value={qty} min={0} max={item.available_qty} onChange={onQty} label={`Jumlah ${item.article_name}`} />
-                    {qty < item.available_qty && (
-                        <Button variant="outline" onClick={() => onQty(item.available_qty)}>
-                            Semua
+        <Card asChild>
+            <div className={cn('flex flex-wrap items-center gap-3 rounded-lg border-2 bg-card p-3', selected && 'border-primary bg-primary/10')}>
+                <div className="min-w-0 flex-1">
+                    <p className="text-lg font-bold">{item.article_name}</p>
+                    <p className="text-base">{variantLabel(item.color, item.size)}</p>
+                    <p className="text-sm text-muted-foreground">
+                        Di gudang: <span className="font-bold text-stage-ready">{item.available_qty} pcs</span>
+                    </p>
+                </div>
+                {selected ? (
+                    <div className="flex items-center gap-2">
+                        <QtyStepper value={qty} min={0} max={item.available_qty} onChange={onQty} label={`Jumlah ${item.article_name}`} />
+                        {qty < item.available_qty && (
+                            <Button variant="outline" onClick={() => onQty(item.available_qty)}>
+                                Semua
+                            </Button>
+                        )}
+                    </div>
+                ) : (
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => onQty(1)}>
+                            Ambil 1
                         </Button>
-                    )}
-                </div>
-            ) : (
-                <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => onQty(1)}>
-                        Ambil 1
-                    </Button>
-                    {item.available_qty > 1 && <Button onClick={() => onQty(item.available_qty)}>Semua ({item.available_qty})</Button>}
-                </div>
-            )}
-        </div>
+                        {item.available_qty > 1 && <Button onClick={() => onQty(item.available_qty)}>Semua ({item.available_qty})</Button>}
+                    </div>
+                )}
+            </div>
+        </Card>
     );
 }

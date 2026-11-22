@@ -1,19 +1,18 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
-  return (
+function Table({ className, scrollContainer = true, ...props }: React.ComponentProps<"table"> & { scrollContainer?: boolean }) {
+  const table = (
+    <table data-slot="table" className={cn("w-full caption-bottom text-sm", className)} {...props} />
+  )
+  return scrollContainer ? (
     <div
       data-slot="table-container"
-      className="relative w-full overflow-x-auto"
+      className="relative w-full overflow-x-auto print:overflow-visible"
     >
-      <table
-        data-slot="table"
-        className={cn("w-full caption-bottom text-sm", className)}
-        {...props}
-      />
+      {table}
     </div>
-  )
+  ) : table
 }
 
 function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {

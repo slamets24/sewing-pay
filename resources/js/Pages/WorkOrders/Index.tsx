@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/empty-state';
 import { QtyBar } from '@/components/sewing/qty-bar';
 import { PageIntro } from '@/components/sewing/section';
@@ -90,37 +91,39 @@ export default function WorkOrderIndex({ filters, workOrders, packingConfigured 
                 }
             />
 
-            <div className="mb-6 flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:p-5 shadow-xs">
-                {/* HP: satu baris tiga tombol sama lebar; laptop: tombol biasa. */}
-                <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap" role="group" aria-label="Saring status">
-                    {STATUS_FILTERS.map((option) => (
-                        <Button
-                            key={option.value}
-                            variant={filters.status === option.value ? 'default' : 'outline'}
-                            onClick={() => visit({ status: option.value })}
-                            aria-pressed={filters.status === option.value}
-                            className="rounded-xl px-2 font-semibold shadow-2xs transition-all active:scale-95 sm:px-4"
-                        >
-                            {option.label}
-                        </Button>
-                    ))}
-                </div>
-                <form onSubmit={submitSearch} className="flex gap-2">
-                    <div className="relative flex-1">
-                        <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4.5 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            value={search}
-                            onChange={(event) => setSearch(event.target.value)}
-                            placeholder="Cari nomor WO atau nama artikel…"
-                            className="h-11 rounded-xl pl-10 pr-4 text-base shadow-2xs"
-                        />
+            <Card asChild>
+                <div className="mb-6 flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:p-5 shadow-xs">
+                    {/* HP: satu baris tiga tombol sama lebar; laptop: tombol biasa. */}
+                    <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap" role="group" aria-label="Saring status">
+                        {STATUS_FILTERS.map((option) => (
+                            <Button
+                                key={option.value}
+                                variant={filters.status === option.value ? 'default' : 'outline'}
+                                onClick={() => visit({ status: option.value })}
+                                aria-pressed={filters.status === option.value}
+                                className="rounded-xl px-2 font-semibold shadow-2xs transition-all active:scale-95 sm:px-4"
+                            >
+                                {option.label}
+                            </Button>
+                        ))}
                     </div>
-                    <Button type="submit" variant="secondary" className="h-11 rounded-xl px-5 font-semibold shadow-2xs active:scale-95">
-                        Cari
-                    </Button>
-                </form>
-                <QtyBar breakdown={totals} showLegend />
-            </div>
+                    <form onSubmit={submitSearch} className="flex gap-2">
+                        <div className="relative flex-1">
+                            <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4.5 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                                value={search}
+                                onChange={(event) => setSearch(event.target.value)}
+                                placeholder="Cari nomor WO atau nama artikel…"
+                                className="h-11 rounded-xl pl-10 pr-4 text-base shadow-2xs"
+                            />
+                        </div>
+                        <Button type="submit" variant="secondary" className="h-11 rounded-xl px-5 font-semibold shadow-2xs active:scale-95">
+                            Cari
+                        </Button>
+                    </form>
+                    <QtyBar breakdown={totals} showLegend />
+                </div>
+            </Card>
 
             {workOrders.length === 0 ? (
                 <EmptyState className="bg-card py-10 text-base">

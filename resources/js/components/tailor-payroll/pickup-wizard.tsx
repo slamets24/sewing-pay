@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/empty-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -94,7 +95,7 @@ export function PickupWizard({ tailors, articles, idPrefix, board, preset, stick
             >
                 <div className="grid grid-cols-2 gap-2">
                     {tailors.map((item) => (
-                        <button
+                        <Button variant="plain" size="plain"
                             key={item.id}
                             type="button"
                             className="flex min-w-0 flex-col items-start gap-0.5 rounded-lg border bg-background p-3 text-left transition-colors outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
@@ -102,7 +103,7 @@ export function PickupWizard({ tailors, articles, idPrefix, board, preset, stick
                         >
                             <span className="w-full truncate text-sm font-medium">{item.name}</span>
                             <span className="w-full truncate text-xs text-muted-foreground">{board?.workloadOf(item.id)?.summary ?? item.code}</span>
-                        </button>
+                        </Button>
                     ))}
                 </div>
             </WizardStep>
@@ -124,7 +125,7 @@ export function PickupWizard({ tailors, articles, idPrefix, board, preset, stick
                         />
                     )}
                     {visibleArticles.map((article) => (
-                        <button
+                        <Button variant="plain" size="plain"
                             key={article.id}
                             type="button"
                             className="flex items-center justify-between gap-3 rounded-lg border bg-background p-3 text-left transition-colors outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
@@ -139,7 +140,7 @@ export function PickupWizard({ tailors, articles, idPrefix, board, preset, stick
                             <Badge variant="secondary" className="shrink-0">
                                 {article.available_qty} tersedia
                             </Badge>
-                        </button>
+                        </Button>
                     ))}
                     {!visibleArticles.length && <p className="py-2 text-center text-sm text-muted-foreground">Tidak ada hancaan yang cocok.</p>}
                 </div>
@@ -192,28 +193,30 @@ type WizardStepProps = {
 
 function WizardStep({ number, title, state, summary, onEdit, children }: WizardStepProps) {
     return (
-        <section className={cn('rounded-xl border bg-card', state === 'locked' && 'opacity-60')} aria-current={state === 'active' ? 'step' : undefined}>
-            <header className="flex items-center gap-3 px-3 py-2.5">
-                <span
-                    className={cn(
-                        'flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
-                        state === 'done' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground',
-                        state === 'active' && 'bg-foreground text-background',
+        <Card asChild>
+            <section className={cn('rounded-xl border bg-card', state === 'locked' && 'opacity-60')} aria-current={state === 'active' ? 'step' : undefined}>
+                <header className="flex items-center gap-3 px-3 py-2.5">
+                    <span
+                        className={cn(
+                            'flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
+                            state === 'done' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground',
+                            state === 'active' && 'bg-foreground text-background',
+                        )}
+                    >
+                        {state === 'done' ? <Check className="size-3.5" /> : number}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                        <h3 className={cn('text-sm', state === 'done' ? 'text-muted-foreground' : 'font-semibold')}>{title}</h3>
+                        {state === 'done' && summary && <p className="truncate text-sm font-medium">{summary}</p>}
+                    </div>
+                    {state === 'done' && onEdit && (
+                        <Button type="button" size="sm" variant="ghost" onClick={onEdit}>
+                            Ganti
+                        </Button>
                     )}
-                >
-                    {state === 'done' ? <Check className="size-3.5" /> : number}
-                </span>
-                <div className="min-w-0 flex-1">
-                    <h3 className={cn('text-sm', state === 'done' ? 'text-muted-foreground' : 'font-semibold')}>{title}</h3>
-                    {state === 'done' && summary && <p className="truncate text-sm font-medium">{summary}</p>}
-                </div>
-                {state === 'done' && onEdit && (
-                    <Button type="button" size="sm" variant="ghost" onClick={onEdit}>
-                        Ganti
-                    </Button>
-                )}
-            </header>
-            {state === 'active' && <div className="border-t p-3">{children}</div>}
-        </section>
+                </header>
+                {state === 'active' && <div className="border-t p-3">{children}</div>}
+            </section>
+        </Card>
     );
 }

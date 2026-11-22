@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/empty-state';
 import { FormField } from '@/components/form-field';
 import { ActiveChoice, ChoiceButtons } from '@/components/sewing/master/choice-buttons';
@@ -75,20 +76,22 @@ export default function Tailors({ tailors, nextCode, nextMakloonCode }: TailorsP
 
             <Section title="Daftar penjahit & makloon" icon={Users} description={<TailorCounts directory={directory} />}>
                 <div className="mb-4 flex flex-wrap items-center gap-2">
-                    <div className="flex gap-1 rounded-xl border bg-card p-1" role="group" aria-label="Saring jenis">
-                        {TYPE_FILTERS.map((option) => (
-                            <Button
-                                key={option.value}
-                                size="sm"
-                                variant={typeFilter === option.value ? 'default' : 'ghost'}
-                                onClick={() => setTypeFilter(option.value)}
-                                className="rounded-lg font-semibold"
-                            >
-                                {option.label}
-                                <span className="tabular opacity-70">{option.value === 'all' ? tailors.length : tailors.filter((t) => t.type === option.value).length}</span>
-                            </Button>
-                        ))}
-                    </div>
+                    <Card asChild>
+                        <div className="flex gap-1 rounded-xl border bg-card p-1" role="group" aria-label="Saring jenis">
+                            {TYPE_FILTERS.map((option) => (
+                                <Button
+                                    key={option.value}
+                                    size="sm"
+                                    variant={typeFilter === option.value ? 'default' : 'ghost'}
+                                    onClick={() => setTypeFilter(option.value)}
+                                    className="rounded-lg font-semibold"
+                                >
+                                    {option.label}
+                                    <span className="tabular opacity-70">{option.value === 'all' ? tailors.length : tailors.filter((t) => t.type === option.value).length}</span>
+                                </Button>
+                            ))}
+                        </div>
+                    </Card>
                     <SearchBox value={query} onChange={setQuery} placeholder="Cari nama atau kode…" label="Cari penjahit" className="min-w-56 flex-1 md:max-w-md" />
                 </div>
 
@@ -141,44 +144,46 @@ function TailorList({ tailors, onEdit }: { tailors: TailorRecord[]; onEdit: (tai
 
 function TailorRow({ tailor, onEdit }: { tailor: TailorRecord; onEdit: () => void }) {
     return (
-        <li
-            className={cn(
-                ROW_GRID,
-                'flex flex-col gap-3 rounded-lg border p-4 lg:rounded-none lg:border-0 lg:px-4 lg:py-3',
-                tailor.is_active ? 'bg-card' : 'border-dashed bg-muted/70',
-            )}
-        >
-            <div className="min-w-0">
-                <p className={cn('text-lg leading-tight font-bold wrap-anywhere', !tailor.is_active && 'text-muted-foreground')}>{tailor.name}</p>
-                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                    <span className="font-semibold tabular">{tailor.code ?? 'Tanpa kode'}</span>
-                    {tailor.hr_employee_number && (
-                        <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono font-medium text-foreground">
-                            NIK: {tailor.hr_employee_number}
-                        </span>
+        <Card asChild>
+            <li
+                className={cn(
+                    ROW_GRID,
+                    'flex flex-col gap-3 rounded-lg border p-4 lg:rounded-none lg:border-0 lg:px-4 lg:py-3',
+                    tailor.is_active ? 'bg-card' : 'border-dashed bg-muted/70',
+                )}
+            >
+                <div className="min-w-0">
+                    <p className={cn('text-lg leading-tight font-bold wrap-anywhere', !tailor.is_active && 'text-muted-foreground')}>{tailor.name}</p>
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                        <span className="font-semibold tabular">{tailor.code ?? 'Tanpa kode'}</span>
+                        {tailor.hr_employee_number && (
+                            <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono font-medium text-foreground">
+                                NIK: {tailor.hr_employee_number}
+                            </span>
+                        )}
+                    </div>
+                    {tailor.tenure_label && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                            Masa kerja: <strong className="text-foreground">{tailor.tenure_label}</strong>
+                        </p>
                     )}
                 </div>
-                {tailor.tenure_label && (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                        Masa kerja: <strong className="text-foreground">{tailor.tenure_label}</strong>
-                    </p>
-                )}
-            </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-                <ToneBadge tone={TailorDirectory.typeTone(tailor.type)}>{tailor.type_label}</ToneBadge>
-                {!tailor.is_active && <ToneBadge tone="neutral">Nonaktif</ToneBadge>}
-            </div>
+                <div className="flex flex-wrap items-center gap-2">
+                    <ToneBadge tone={TailorDirectory.typeTone(tailor.type)}>{tailor.type_label}</ToneBadge>
+                    {!tailor.is_active && <ToneBadge tone="neutral">Nonaktif</ToneBadge>}
+                </div>
 
-            <div className="flex min-w-0 flex-col gap-3 lg:gap-1">
-                <InfoCell icon={Phone} label="WhatsApp" value={tailor.whatsapp_number} empty="WA belum diisi" />
-            </div>
+                <div className="flex min-w-0 flex-col gap-3 lg:gap-1">
+                    <InfoCell icon={Phone} label="WhatsApp" value={tailor.whatsapp_number} empty="WA belum diisi" />
+                </div>
 
-            <Button variant="outline" onClick={onEdit} className="w-full" aria-label={`Ubah data ${tailor.name}`}>
-                <Pencil />
-                Ubah
-            </Button>
-        </li>
+                <Button variant="outline" onClick={onEdit} className="w-full" aria-label={`Ubah data ${tailor.name}`}>
+                    <Pencil />
+                    Ubah
+                </Button>
+            </li>
+        </Card>
     );
 }
 

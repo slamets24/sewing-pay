@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/empty-state';
 import { formatIdr } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -21,200 +22,204 @@ export function Leaderboards({ topArticles: allArticles, topTailors: allTailors 
     return (
         <div className="grid gap-6 lg:grid-cols-2">
             {/* COLUMN 1: TOP ARTIKEL PALING BANYAK DIKERJAKAN */}
-            <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-xs">
-                <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                    <div>
-                        <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
-                            <Shirt className="size-4.5 text-primary" />
-                            Artikel Terbanyak Dikerjakan
-                        </h3>
-                        <p className="text-xs text-muted-foreground">
-                            Peringkat model pakaian berdasarkan volume pengerjaan
-                        </p>
+            <Card asChild>
+                <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-xs">
+                    <div className="flex items-center justify-between border-b border-border/60 pb-3">
+                        <div>
+                            <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
+                                <Shirt className="size-4.5 text-primary" />
+                                Artikel Terbanyak Dikerjakan
+                            </h3>
+                            <p className="text-xs text-muted-foreground">
+                                Peringkat model pakaian berdasarkan volume pengerjaan
+                            </p>
+                        </div>
+                        <span className="text-xs font-bold text-muted-foreground">
+                            {allArticles.length} model
+                        </span>
                     </div>
-                    <span className="text-xs font-bold text-muted-foreground">
-                        {allArticles.length} model
-                    </span>
-                </div>
 
-                {topArticles.length === 0 ? (
-                    <EmptyState>Belum ada artikel disetor dalam periode ini.</EmptyState>
-                ) : (
-                    <div className="flex flex-col gap-3.5">
-                        {topArticles.slice(0, 7).map((article, idx) => (
-                            <div
-                                key={article.id}
-                                className="flex flex-col gap-2 rounded-xl border border-border/60 bg-muted/15 p-3.5 transition-all hover:bg-muted/30"
-                            >
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="flex items-center gap-2.5 min-w-0">
-                                        <span
-                                            className={cn(
-                                                'flex size-6 shrink-0 items-center justify-center rounded-lg text-xs font-black',
-                                                idx === 0
-                                                    ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 font-extrabold'
-                                                    : idx === 1
-                                                      ? 'bg-slate-300/40 text-slate-700 dark:text-slate-300'
-                                                      : idx === 2
-                                                        ? 'bg-amber-800/20 text-amber-800 dark:text-amber-400'
-                                                        : 'bg-muted text-muted-foreground',
-                                            )}
-                                        >
-                                            #{idx + 1}
-                                        </span>
-                                        <div className="min-w-0">
-                                            <p className="font-display font-bold text-foreground text-sm truncate">
-                                                {article.name}
-                                            </p>
+                    {topArticles.length === 0 ? (
+                        <EmptyState>Belum ada artikel disetor dalam periode ini.</EmptyState>
+                    ) : (
+                        <div className="flex flex-col gap-3.5">
+                            {topArticles.slice(0, 7).map((article, idx) => (
+                                <div
+                                    key={article.id}
+                                    className="flex flex-col gap-2 rounded-xl border border-border/60 bg-muted/15 p-3.5 transition-all hover:bg-muted/30"
+                                >
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <span
+                                                className={cn(
+                                                    'flex size-6 shrink-0 items-center justify-center rounded-lg text-xs font-black',
+                                                    idx === 0
+                                                        ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 font-extrabold'
+                                                        : idx === 1
+                                                          ? 'bg-slate-300/40 text-slate-700 dark:text-slate-300'
+                                                          : idx === 2
+                                                            ? 'bg-amber-800/20 text-amber-800 dark:text-amber-400'
+                                                            : 'bg-muted text-muted-foreground',
+                                                )}
+                                            >
+                                                #{idx + 1}
+                                            </span>
+                                            <div className="min-w-0">
+                                                <p className="font-display font-bold text-foreground text-sm truncate">
+                                                    {article.name}
+                                                </p>
+                                                <p className="text-[11px] text-muted-foreground">
+                                                    {article.brand_name || 'Brand Sendiri'} {article.category_name ? `· ${article.category_name}` : ''}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="text-right shrink-0">
+                                            <span className="font-display font-black text-emerald-600 text-base">
+                                                {article.total_qty} pcs
+                                            </span>
                                             <p className="text-[11px] text-muted-foreground">
-                                                {article.brand_name || 'Brand Sendiri'} {article.category_name ? `· ${article.category_name}` : ''}
+                                                {formatIdr(article.total_earnings)}
                                             </p>
                                         </div>
                                     </div>
 
-                                    <div className="text-right shrink-0">
-                                        <span className="font-display font-black text-emerald-600 text-base">
-                                            {article.total_qty} pcs
+                                    {/* Progress Bar of Total Production */}
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-2 flex-1 rounded-full bg-muted overflow-hidden">
+                                            <div
+                                                style={{ width: `${article.percentage}%` }}
+                                                className="h-full rounded-full bg-primary"
+                                            />
+                                        </div>
+                                        <span className="text-[11px] font-bold text-muted-foreground w-12 text-right">
+                                            {article.percentage}%
                                         </span>
-                                        <p className="text-[11px] text-muted-foreground">
-                                            {formatIdr(article.total_earnings)}
-                                        </p>
                                     </div>
-                                </div>
 
-                                {/* Progress Bar of Total Production */}
-                                <div className="flex items-center gap-2">
-                                    <div className="h-2 flex-1 rounded-full bg-muted overflow-hidden">
-                                        <div
-                                            style={{ width: `${article.percentage}%` }}
-                                            className="h-full rounded-full bg-primary"
-                                        />
-                                    </div>
-                                    <span className="text-[11px] font-bold text-muted-foreground w-12 text-right">
-                                        {article.percentage}%
-                                    </span>
+                                    {/* Variant Badges */}
+                                    {article.variants.length > 0 && (
+                                        <div className="flex flex-wrap gap-1.5 pt-1 border-t border-border/40">
+                                            {article.variants.map((v) => (
+                                                <span
+                                                    key={v.label}
+                                                    className="rounded-md bg-card border border-border/70 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground"
+                                                >
+                                                    {v.label}: <strong className="text-foreground">{v.qty}</strong>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
-
-                                {/* Variant Badges */}
-                                {article.variants.length > 0 && (
-                                    <div className="flex flex-wrap gap-1.5 pt-1 border-t border-border/40">
-                                        {article.variants.map((v) => (
-                                            <span
-                                                key={v.label}
-                                                className="rounded-md bg-card border border-border/70 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground"
-                                            >
-                                                {v.label}: <strong className="text-foreground">{v.qty}</strong>
-                                            </span>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                )}
-                {allArticles.length > TOP_COUNT && (
-                    <Button variant="ghost" size="sm" className="self-center" onClick={() => setShowAllArticles(!showAllArticles)}>
-                        {showAllArticles ? 'Tampilkan 5 teratas' : `Lihat semua (${allArticles.length} artikel)`}
-                    </Button>
-                )}
-            </div>
+                            ))}
+                        </div>
+                    )}
+                    {allArticles.length > TOP_COUNT && (
+                        <Button variant="ghost" size="sm" className="self-center" onClick={() => setShowAllArticles(!showAllArticles)}>
+                            {showAllArticles ? 'Tampilkan 5 teratas' : `Lihat semua (${allArticles.length} artikel)`}
+                        </Button>
+                    )}
+                </div>
+            </Card>
 
             {/* COLUMN 2: TOP PENJAHIT PALING PRODUKTIF (LEADERBOARD) */}
-            <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-xs">
-                <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                    <div>
-                        <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
-                            <Award className="size-4.5 text-amber-600" />
-                            Penjahit Paling Produktif
-                        </h3>
-                        <p className="text-xs text-muted-foreground">
-                            Peringkat penjahit dengan output setoran tertinggi
-                        </p>
+            <Card asChild>
+                <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-xs">
+                    <div className="flex items-center justify-between border-b border-border/60 pb-3">
+                        <div>
+                            <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
+                                <Award className="size-4.5 text-amber-600" />
+                                Penjahit Paling Produktif
+                            </h3>
+                            <p className="text-xs text-muted-foreground">
+                                Peringkat penjahit dengan output setoran tertinggi
+                            </p>
+                        </div>
+                        <span className="text-xs font-bold text-muted-foreground">
+                            {allTailors.length} penjahit
+                        </span>
                     </div>
-                    <span className="text-xs font-bold text-muted-foreground">
-                        {allTailors.length} penjahit
-                    </span>
-                </div>
 
-                {topTailors.length === 0 ? (
-                    <EmptyState>Belum ada penjahit yang menyetor dalam periode ini.</EmptyState>
-                ) : (
-                    <div className="flex flex-col gap-3.5">
-                        {topTailors.slice(0, 7).map((tailor, idx) => (
-                            <div
-                                key={tailor.id}
-                                className="flex flex-col gap-2 rounded-xl border border-border/60 bg-muted/15 p-3.5 transition-all hover:bg-muted/30"
-                            >
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="flex items-center gap-2.5 min-w-0">
-                                        <span
-                                            className={cn(
-                                                'flex size-6 shrink-0 items-center justify-center rounded-lg text-xs font-black',
-                                                idx === 0
-                                                    ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 font-extrabold'
-                                                    : idx === 1
-                                                      ? 'bg-slate-300/40 text-slate-700 dark:text-slate-300'
-                                                      : idx === 2
-                                                        ? 'bg-amber-800/20 text-amber-800 dark:text-amber-400'
-                                                        : 'bg-muted text-muted-foreground',
-                                            )}
-                                        >
-                                            #{idx + 1}
-                                        </span>
-                                        <div className="min-w-0">
-                                            <p className="font-display font-bold text-foreground text-sm truncate flex items-center gap-1.5">
-                                                {tailor.name}
-                                                {tailor.code && (
-                                                    <span className="text-[10px] font-mono text-muted-foreground">
-                                                        ({tailor.code})
-                                                    </span>
+                    {topTailors.length === 0 ? (
+                        <EmptyState>Belum ada penjahit yang menyetor dalam periode ini.</EmptyState>
+                    ) : (
+                        <div className="flex flex-col gap-3.5">
+                            {topTailors.slice(0, 7).map((tailor, idx) => (
+                                <div
+                                    key={tailor.id}
+                                    className="flex flex-col gap-2 rounded-xl border border-border/60 bg-muted/15 p-3.5 transition-all hover:bg-muted/30"
+                                >
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <span
+                                                className={cn(
+                                                    'flex size-6 shrink-0 items-center justify-center rounded-lg text-xs font-black',
+                                                    idx === 0
+                                                        ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 font-extrabold'
+                                                        : idx === 1
+                                                          ? 'bg-slate-300/40 text-slate-700 dark:text-slate-300'
+                                                          : idx === 2
+                                                            ? 'bg-amber-800/20 text-amber-800 dark:text-amber-400'
+                                                            : 'bg-muted text-muted-foreground',
                                                 )}
-                                            </p>
+                                            >
+                                                #{idx + 1}
+                                            </span>
+                                            <div className="min-w-0">
+                                                <p className="font-display font-bold text-foreground text-sm truncate flex items-center gap-1.5">
+                                                    {tailor.name}
+                                                    {tailor.code && (
+                                                        <span className="text-[10px] font-mono text-muted-foreground">
+                                                            ({tailor.code})
+                                                        </span>
+                                                    )}
+                                                </p>
+                                                <p className="text-[11px] text-muted-foreground">
+                                                    {tailor.type === 'makloon' ? 'Makloon' : 'Penjahit Borongan'} · {tailor.active_days} hari aktif (rata-rata {tailor.daily_avg} pcs/hari)
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="text-right shrink-0">
+                                            <span className="font-display font-black text-emerald-600 text-base">
+                                                {tailor.total_qty} pcs
+                                            </span>
                                             <p className="text-[11px] text-muted-foreground">
-                                                {tailor.type === 'makloon' ? 'Makloon' : 'Penjahit Borongan'} · {tailor.active_days} hari aktif (rata-rata {tailor.daily_avg} pcs/hari)
+                                                {formatIdr(tailor.total_earnings)}
                                             </p>
                                         </div>
                                     </div>
 
-                                    <div className="text-right shrink-0">
-                                        <span className="font-display font-black text-emerald-600 text-base">
-                                            {tailor.total_qty} pcs
+                                    {/* Progress Bar Contribution */}
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-2 flex-1 rounded-full bg-muted overflow-hidden">
+                                            <div
+                                                style={{ width: `${tailor.percentage}%` }}
+                                                className="h-full rounded-full bg-amber-500"
+                                            />
+                                        </div>
+                                        <span className="text-[11px] font-bold text-muted-foreground w-12 text-right">
+                                            {tailor.percentage}%
                                         </span>
-                                        <p className="text-[11px] text-muted-foreground">
-                                            {formatIdr(tailor.total_earnings)}
+                                    </div>
+
+                                    {/* Top article for this tailor */}
+                                    {tailor.top_article && (
+                                        <p className="text-[11px] text-muted-foreground pt-1 border-t border-border/40">
+                                            Fokus artikel utama: <strong className="text-foreground">{tailor.top_article}</strong>
                                         </p>
-                                    </div>
+                                    )}
                                 </div>
-
-                                {/* Progress Bar Contribution */}
-                                <div className="flex items-center gap-2">
-                                    <div className="h-2 flex-1 rounded-full bg-muted overflow-hidden">
-                                        <div
-                                            style={{ width: `${tailor.percentage}%` }}
-                                            className="h-full rounded-full bg-amber-500"
-                                        />
-                                    </div>
-                                    <span className="text-[11px] font-bold text-muted-foreground w-12 text-right">
-                                        {tailor.percentage}%
-                                    </span>
-                                </div>
-
-                                {/* Top article for this tailor */}
-                                {tailor.top_article && (
-                                    <p className="text-[11px] text-muted-foreground pt-1 border-t border-border/40">
-                                        Fokus artikel utama: <strong className="text-foreground">{tailor.top_article}</strong>
-                                    </p>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                )}
-                {allTailors.length > TOP_COUNT && (
-                    <Button variant="ghost" size="sm" className="self-center" onClick={() => setShowAllTailors(!showAllTailors)}>
-                        {showAllTailors ? 'Tampilkan 5 teratas' : `Lihat semua (${allTailors.length} penjahit)`}
-                    </Button>
-                )}
-            </div>
+                            ))}
+                        </div>
+                    )}
+                    {allTailors.length > TOP_COUNT && (
+                        <Button variant="ghost" size="sm" className="self-center" onClick={() => setShowAllTailors(!showAllTailors)}>
+                            {showAllTailors ? 'Tampilkan 5 teratas' : `Lihat semua (${allTailors.length} penjahit)`}
+                        </Button>
+                    )}
+                </div>
+            </Card>
         </div>
     );
 }

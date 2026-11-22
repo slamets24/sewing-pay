@@ -85,7 +85,7 @@ export function ArticlePicker({ articles, value, onChange, suggestedName, classN
                     <ul className="flex flex-col gap-2">
                         {filtered.map((article) => (
                             <li key={article.id}>
-                                <button
+                                <Button variant="plain" size="plain"
                                     type="button"
                                     onClick={() => choose(article.id)}
                                     className={cn(
@@ -100,7 +100,7 @@ export function ArticlePicker({ articles, value, onChange, suggestedName, classN
                                         </span>
                                     </span>
                                     {article.id === value && <Check className="size-5 text-stage-done" />}
-                                </button>
+                                </Button>
                             </li>
                         ))}
                         {filtered.length === 0 && <li className="rounded-md border border-dashed p-4 text-center text-muted-foreground">Tidak ada artikel yang cocok.</li>}

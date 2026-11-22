@@ -1,3 +1,7 @@
+import { Card } from '@/components/ui/card';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { EmptyState } from '@/components/empty-state';
 import { FormField } from '@/components/form-field';
 import { Section } from '@/components/sewing/section';
@@ -125,7 +129,7 @@ export default function MakloonPaymentCreate({ tailors, selectedTailorId, unpaid
                         {tailors.map((tailor) => {
                             const isCurrent = tailor.id === selectedTailorId;
                             return (
-                                <button
+                                <Button variant="plain" size="plain"
                                     key={tailor.id}
                                     type="button"
                                     onClick={() => handleTailorChange(tailor.id)}
@@ -141,7 +145,7 @@ export default function MakloonPaymentCreate({ tailors, selectedTailorId, unpaid
                                         {isCurrent && <Check className="size-4 text-primary" />}
                                     </div>
                                     <span className="text-xs text-muted-foreground font-mono">{tailor.code}</span>
-                                </button>
+                                </Button>
                             );
                         })}
                     </div>
@@ -188,68 +192,70 @@ export default function MakloonPaymentCreate({ tailors, selectedTailorId, unpaid
                                 </span>
                             </div>
 
-                            <div className="overflow-x-auto rounded-xl border bg-card shadow-2xs">
-                                <table className="w-full text-left text-sm">
-                                    <thead className="border-b bg-muted/40 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                        <tr>
-                                            <th className="w-10 px-3 py-3 text-center">Pilih</th>
-                                            <th className="px-3 py-3">Tgl Setor</th>
-                                            <th className="px-3 py-3">WO & Artikel</th>
-                                            <th className="px-3 py-3">Varian</th>
-                                            <th className="px-3 py-3 text-right">Qty</th>
-                                            <th className="px-3 py-3 text-right">Tarif</th>
-                                            <th className="px-3 py-3 text-right">Subtotal</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y">
-                                        {unpaidDeliveries.map((row) => {
-                                            const isChecked = selectedIds.includes(row.id);
-                                            return (
-                                                <tr
-                                                    key={row.id}
-                                                    onClick={() => toggleDelivery(row.id)}
-                                                    className={cn(
-                                                        'cursor-pointer transition-colors',
-                                                        isChecked ? 'bg-primary/5 hover:bg-primary/10' : 'hover:bg-muted/20'
-                                                    )}
-                                                >
-                                                    <td className="px-3 py-3 text-center" onClick={(e) => e.stopPropagation()}>
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={isChecked}
-                                                            onChange={() => toggleDelivery(row.id)}
-                                                            className="size-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
-                                                        />
-                                                    </td>
-                                                    <td className="px-3 py-3 whitespace-nowrap text-xs text-muted-foreground">
-                                                        {row.date_formatted}
-                                                    </td>
-                                                    <td className="px-3 py-3">
-                                                        <div className="font-semibold text-foreground">
-                                                            {row.article_name}
-                                                        </div>
-                                                        <div className="text-xs text-muted-foreground font-mono">
-                                                            {row.wo_number}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-3 py-3 text-xs text-muted-foreground">
-                                                        {row.variant || '-'}
-                                                    </td>
-                                                    <td className="px-3 py-3 text-right font-semibold tabular">
-                                                        {row.qty} pcs
-                                                    </td>
-                                                    <td className="px-3 py-3 text-right font-medium text-muted-foreground tabular text-xs">
-                                                        {formatIdr(row.rate)}
-                                                    </td>
-                                                    <td className="px-3 py-3 text-right font-bold text-foreground tabular">
-                                                        {formatIdr(row.subtotal)}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
+                            <Card asChild>
+                                <div className="overflow-x-auto rounded-xl border bg-card shadow-2xs">
+                                    <Table scrollContainer={false} className="w-full text-left text-sm">
+                                        <TableHeader className="border-b bg-muted/40 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                            <TableRow>
+                                                <TableHead className="h-auto whitespace-normal w-10 px-3 py-3 text-center">Pilih</TableHead>
+                                                <TableHead className="h-auto whitespace-normal px-3 py-3">Tgl Setor</TableHead>
+                                                <TableHead className="h-auto whitespace-normal px-3 py-3">WO & Artikel</TableHead>
+                                                <TableHead className="h-auto whitespace-normal px-3 py-3">Varian</TableHead>
+                                                <TableHead className="h-auto whitespace-normal px-3 py-3 text-right">Qty</TableHead>
+                                                <TableHead className="h-auto whitespace-normal px-3 py-3 text-right">Tarif</TableHead>
+                                                <TableHead className="h-auto whitespace-normal px-3 py-3 text-right">Subtotal</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody className="divide-y">
+                                            {unpaidDeliveries.map((row) => {
+                                                const isChecked = selectedIds.includes(row.id);
+                                                return (
+                                                    <TableRow
+                                                        key={row.id}
+                                                        onClick={() => toggleDelivery(row.id)}
+                                                        className={cn(
+                                                            'cursor-pointer transition-colors',
+                                                            isChecked ? 'bg-primary/5 hover:bg-primary/10' : 'hover:bg-muted/20'
+                                                        )}
+                                                    >
+                                                        <TableCell className="whitespace-normal px-3 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                                                            <Checkbox
+                                                                checked={isChecked}
+                                                                onCheckedChange={() => toggleDelivery(row.id)}
+                                                                aria-label={`Pilih setoran ${row.article_name}`}
+                                                                className="size-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="px-3 py-3 whitespace-nowrap text-xs text-muted-foreground">
+                                                            {row.date_formatted}
+                                                        </TableCell>
+                                                        <TableCell className="whitespace-normal px-3 py-3">
+                                                            <div className="font-semibold text-foreground">
+                                                                {row.article_name}
+                                                            </div>
+                                                            <div className="text-xs text-muted-foreground font-mono">
+                                                                {row.wo_number}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="whitespace-normal px-3 py-3 text-xs text-muted-foreground">
+                                                            {row.variant || '-'}
+                                                        </TableCell>
+                                                        <TableCell className="whitespace-normal px-3 py-3 text-right font-semibold tabular">
+                                                            {row.qty} pcs
+                                                        </TableCell>
+                                                        <TableCell className="whitespace-normal px-3 py-3 text-right font-medium text-muted-foreground tabular text-xs">
+                                                            {formatIdr(row.rate)}
+                                                        </TableCell>
+                                                        <TableCell className="whitespace-normal px-3 py-3 text-right font-bold text-foreground tabular">
+                                                            {formatIdr(row.subtotal)}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </Card>
                         </div>
                     )}
                 </Section>
@@ -269,16 +275,16 @@ export default function MakloonPaymentCreate({ tailors, selectedTailorId, unpaid
                             </FormField>
 
                             <FormField label="Metode Pembayaran" htmlFor="payment-method">
-                                <select
+                                <NativeSelect
                                     id="payment-method"
                                     value={form.data.payment_method}
                                     onChange={(e) => form.setData('payment_method', e.target.value)}
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                 >
-                                    <option value="transfer">Transfer Bank</option>
-                                    <option value="cash">Tunai (Cash)</option>
-                                    <option value="lainnya">Lainnya</option>
-                                </select>
+                                    <NativeSelectOption value="transfer">Transfer Bank</NativeSelectOption>
+                                    <NativeSelectOption value="cash">Tunai (Cash)</NativeSelectOption>
+                                    <NativeSelectOption value="lainnya">Lainnya</NativeSelectOption>
+                                </NativeSelect>
                             </FormField>
 
                             <div>

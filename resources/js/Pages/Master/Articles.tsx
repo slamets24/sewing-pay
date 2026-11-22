@@ -1,3 +1,5 @@
+import { Card } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import { ConfirmButton } from '@/components/confirm-button';
 import { EmptyState } from '@/components/empty-state';
 import { FormField, InputError } from '@/components/form-field';
@@ -153,28 +155,30 @@ function PackingSyncPanel({ configured, lastSyncedAt, canSync }: { configured: b
         floorActions.send('post', route('articles.sync'), {}, { onStart: () => setSyncing(true), onFinish: () => setSyncing(false) });
 
     return (
-        <div className="flex flex-col gap-3 rounded-lg border border-t-4 border-t-stage-ready bg-card p-4 shadow-xs sm:flex-row sm:items-center">
-            <span className="hidden size-10 shrink-0 items-center justify-center rounded-md bg-stage-ready text-white sm:flex" aria-hidden>
-                <CloudDownload className="size-5" />
-            </span>
-            <div className="min-w-0 flex-1">
-                <p className="text-base font-semibold">Artikel dari packingv2</p>
-                <p className="text-sm text-muted-foreground">Terakhir ditarik: {lastSyncedAt ? formatDateTime(lastSyncedAt) : 'belum pernah'}</p>
-                {canSync && !configured && (
-                    <p className="mt-1 flex items-start gap-2 text-sm font-semibold text-foreground">
-                        <TriangleAlert className="mt-0.5 size-4 shrink-0 text-stage-revision" aria-hidden />
-                        Isi PACKINGV2_API_URL dan PACKINGV2_API_KEY di server dulu.
-                    </p>
+        <Card asChild>
+            <div className="flex flex-col gap-3 rounded-lg border border-t-4 border-t-stage-ready bg-card p-4 shadow-xs sm:flex-row sm:items-center">
+                <span className="hidden size-10 shrink-0 items-center justify-center rounded-md bg-stage-ready text-white sm:flex" aria-hidden>
+                    <CloudDownload className="size-5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                    <p className="text-base font-semibold">Artikel dari packingv2</p>
+                    <p className="text-sm text-muted-foreground">Terakhir ditarik: {lastSyncedAt ? formatDateTime(lastSyncedAt) : 'belum pernah'}</p>
+                    {canSync && !configured && (
+                        <p className="mt-1 flex items-start gap-2 text-sm font-semibold text-foreground">
+                            <TriangleAlert className="mt-0.5 size-4 shrink-0 text-stage-revision" aria-hidden />
+                            Isi PACKINGV2_API_URL dan PACKINGV2_API_KEY di server dulu.
+                        </p>
+                    )}
+                    {!canSync && <p className="text-sm text-muted-foreground">Role Anda tidak punya akses menarik artikel baru.</p>}
+                </div>
+                {canSync && (
+                    <Button onClick={sync} disabled={!configured || syncing} className="w-full sm:w-auto">
+                        {syncing ? <LoaderCircle className="animate-spin" /> : <CloudDownload />}
+                        {syncing ? 'Menarik…' : 'Tarik dari packingv2'}
+                    </Button>
                 )}
-                {!canSync && <p className="text-sm text-muted-foreground">Role Anda tidak punya akses menarik artikel baru.</p>}
             </div>
-            {canSync && (
-                <Button onClick={sync} disabled={!configured || syncing} className="w-full sm:w-auto">
-                    {syncing ? <LoaderCircle className="animate-spin" /> : <CloudDownload />}
-                    {syncing ? 'Menarik…' : 'Tarik dari packingv2'}
-                </Button>
-            )}
-        </div>
+        </Card>
     );
 }
 
@@ -187,56 +191,58 @@ function ArticleCard({ article, canEdit, canSync, canSamples, packingConfigured,
     const canProvision = canSync && packingConfigured && article.variants_count > 0 && article.barcode_count < article.variants_count;
 
     return (
-        <li
-            className={cn(
-                'flex min-w-0 flex-col gap-3 rounded-lg border p-4',
-                article.is_active ? 'bg-card' : 'border-dashed bg-muted/70',
-                needsRate && 'border-l-4 border-l-stage-revision',
-            )}
-        >
-            <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                    <p className={cn('text-lg leading-tight font-bold wrap-anywhere', !article.is_active && 'text-muted-foreground')}>{article.display_name}</p>
-                    <p className="text-sm text-muted-foreground">{joinMeta(article.brand_name, article.category_name) || 'Tanpa brand'}</p>
+        <Card asChild>
+            <li
+                className={cn(
+                    'flex min-w-0 flex-col gap-3 rounded-lg border p-4',
+                    article.is_active ? 'bg-card' : 'border-dashed bg-muted/70',
+                    needsRate && 'border-l-4 border-l-stage-revision',
+                )}
+            >
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                        <p className={cn('text-lg leading-tight font-bold wrap-anywhere', !article.is_active && 'text-muted-foreground')}>{article.display_name}</p>
+                        <p className="text-sm text-muted-foreground">{joinMeta(article.brand_name, article.category_name) || 'Tanpa brand'}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                        <ToneBadge tone={SOURCE_TONE[article.source]}>{article.source_label}</ToneBadge>
+                        {article.fabric_type && <ToneBadge tone="neutral">{article.fabric_type === 'polos' ? 'Polos' : 'Print'}</ToneBadge>}
+                        {(article.processes?.length ?? 0) > 0 && <ToneBadge tone="neutral">{article.processes!.join(' → ')}</ToneBadge>}
+                        {!article.is_active && <ToneBadge tone="neutral">Nonaktif</ToneBadge>}
+                    </div>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                    <ToneBadge tone={SOURCE_TONE[article.source]}>{article.source_label}</ToneBadge>
-                    {article.fabric_type && <ToneBadge tone="neutral">{article.fabric_type === 'polos' ? 'Polos' : 'Print'}</ToneBadge>}
-                    {(article.processes?.length ?? 0) > 0 && <ToneBadge tone="neutral">{article.processes!.join(' → ')}</ToneBadge>}
-                    {!article.is_active && <ToneBadge tone="neutral">Nonaktif</ToneBadge>}
+
+                <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-muted-foreground">
+                    <Barcode className="size-4 shrink-0" aria-hidden />
+                    {ArticleForm.variantSummary(article)}
+                    {canProvision && <ProvisionBarcodeButton article={article} />}
                 </div>
-            </div>
 
-            <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-muted-foreground">
-                <Barcode className="size-4 shrink-0" aria-hidden />
-                {ArticleForm.variantSummary(article)}
-                {canProvision && <ProvisionBarcodeButton article={article} />}
-            </div>
+                {canEdit ? (
+                    <RateEditor key={`${article.id}-${article.sewing_rate}-${article.makloon_sewing_rate}`} article={article} />
+                ) : (
+                    <RateSummary article={article} />
+                )}
+                <BenchmarkLine article={article} canEdit={canEdit || canSamples} onOpen={onBenchmark} />
 
-            {canEdit ? (
-                <RateEditor key={`${article.id}-${article.sewing_rate}-${article.makloon_sewing_rate}`} article={article} />
-            ) : (
-                <RateSummary article={article} />
-            )}
-            <BenchmarkLine article={article} canEdit={canEdit || canSamples} onOpen={onBenchmark} />
+                {article.notes && (
+                    <p className="flex items-start gap-2 text-base wrap-anywhere">
+                        <StickyNote className="mt-1 size-4 shrink-0 text-muted-foreground" aria-hidden />
+                        {article.notes}
+                    </p>
+                )}
 
-            {article.notes && (
-                <p className="flex items-start gap-2 text-base wrap-anywhere">
-                    <StickyNote className="mt-1 size-4 shrink-0 text-muted-foreground" aria-hidden />
-                    {article.notes}
-                </p>
-            )}
-
-            {canEdit && (
-                <div className="mt-auto flex flex-wrap gap-2">
-                    <Button variant="outline" size="sm" onClick={onEdit} className="flex-1">
-                        <Pencil />
-                        {ArticleForm.canRename(article) ? 'Ubah nama & catatan' : 'Ubah catatan'}
-                    </Button>
-                    <ActiveToggle article={article} />
-                </div>
-            )}
-        </li>
+                {canEdit && (
+                    <div className="mt-auto flex flex-wrap gap-2">
+                        <Button variant="outline" size="sm" onClick={onEdit} className="flex-1">
+                            <Pencil />
+                            {ArticleForm.canRename(article) ? 'Ubah nama & catatan' : 'Ubah catatan'}
+                        </Button>
+                        <ActiveToggle article={article} />
+                    </div>
+                )}
+            </li>
+        </Card>
     );
 }
 
@@ -317,9 +323,9 @@ function RateEditor({ article }: { article: ArticleRecord }) {
         <form onSubmit={submit} className="flex flex-col gap-1.5">
             <div className="grid grid-cols-[1fr_1fr_auto] items-end gap-2">
                 <div>
-                    <label htmlFor={`rate-${article.id}`} className="mb-1 block text-xs font-semibold text-muted-foreground">
+                    <Label htmlFor={`rate-${article.id}`} className="mb-1 block text-xs font-semibold text-muted-foreground">
                         Tarif internal
-                    </label>
+                    </Label>
                     <MoneyField
                         id={`rate-${article.id}`}
                         value={form.data.sewing_rate}
@@ -330,9 +336,9 @@ function RateEditor({ article }: { article: ArticleRecord }) {
                     />
                 </div>
                 <div>
-                    <label htmlFor={`makloon-rate-${article.id}`} className="mb-1 block text-xs font-semibold text-muted-foreground">
+                    <Label htmlFor={`makloon-rate-${article.id}`} className="mb-1 block text-xs font-semibold text-muted-foreground">
                         Maklun <span className="font-normal">(0 = sama)</span>
-                    </label>
+                    </Label>
                     <MoneyField
                         id={`makloon-rate-${article.id}`}
                         value={form.data.makloon_sewing_rate}

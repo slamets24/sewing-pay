@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/empty-state';
 import { FormField } from '@/components/form-field';
 import { ActiveChoice } from '@/components/sewing/master/choice-buttons';
@@ -67,25 +68,27 @@ function PartCard({ part, onEdit }: { part: RevisionPartRecord; onEdit: () => vo
     const active = part.is_active !== false;
 
     return (
-        <li className={cn('flex min-w-0 flex-col gap-3 rounded-lg border p-4', active ? 'bg-card' : 'border-dashed bg-muted/70')}>
-            <div className="flex flex-wrap items-start justify-between gap-2">
-                <p className={cn('min-w-0 flex-1 text-lg leading-tight font-bold wrap-anywhere', !active && 'text-muted-foreground')}>{part.name}</p>
-                <div className="flex flex-wrap gap-1.5">
-                    <ToneBadge tone={MaterialTypes.tone(part.material_type)}>{part.material_type}</ToneBadge>
-                    {!active && <ToneBadge tone="neutral">Nonaktif</ToneBadge>}
+        <Card asChild>
+            <li className={cn('flex min-w-0 flex-col gap-3 rounded-lg border p-4', active ? 'bg-card' : 'border-dashed bg-muted/70')}>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                    <p className={cn('min-w-0 flex-1 text-lg leading-tight font-bold wrap-anywhere', !active && 'text-muted-foreground')}>{part.name}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                        <ToneBadge tone={MaterialTypes.tone(part.material_type)}>{part.material_type}</ToneBadge>
+                        {!active && <ToneBadge tone="neutral">Nonaktif</ToneBadge>}
+                    </div>
                 </div>
-            </div>
 
-            <p className="flex items-baseline gap-2">
-                <span className="font-display text-3xl leading-tight font-bold tabular">{formatIdr(part.price)}</span>
-                <span className="text-sm text-muted-foreground">per pcs</span>
-            </p>
+                <p className="flex items-baseline gap-2">
+                    <span className="font-display text-3xl leading-tight font-bold tabular">{formatIdr(part.price)}</span>
+                    <span className="text-sm text-muted-foreground">per pcs</span>
+                </p>
 
-            <Button variant="outline" onClick={onEdit} className="mt-auto" aria-label={`Ubah ${part.name}`}>
-                <Pencil />
-                Ubah
-            </Button>
-        </li>
+                <Button variant="outline" onClick={onEdit} className="mt-auto" aria-label={`Ubah ${part.name}`}>
+                    <Pencil />
+                    Ubah
+                </Button>
+            </li>
+        </Card>
     );
 }
 

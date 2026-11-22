@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/empty-state';
 import { RevisionCard } from '@/components/sewing/quality/revision-card';
 import { RevisionReportSheet } from '@/components/sewing/quality/revision-report-sheet';
@@ -74,16 +75,18 @@ export default function RevisionsIndex({ filters, revisions, sewingItems, shippe
 
 function FilterPanel({ filter, onChange }: { filter: RevisionFilter; onChange: (filter: RevisionFilter) => void }) {
     return (
-        <div className="flex flex-col gap-4 rounded-lg border bg-card p-4 shadow-xs lg:flex-1 lg:flex-row lg:flex-wrap lg:gap-x-8">
-            <div className="flex flex-col gap-2">
-                <span className="text-sm font-semibold text-muted-foreground uppercase">Status</span>
-                <SegmentedChoice options={RevisionFilter.statusOptions} value={filter.status} onChange={(status) => onChange(filter.withStatus(status))} label="Saring menurut status" />
+        <Card asChild>
+            <div className="flex flex-col gap-4 rounded-lg border bg-card p-4 shadow-xs lg:flex-1 lg:flex-row lg:flex-wrap lg:gap-x-8">
+                <div className="flex flex-col gap-2">
+                    <span className="text-sm font-semibold text-muted-foreground uppercase">Status</span>
+                    <SegmentedChoice options={RevisionFilter.statusOptions} value={filter.status} onChange={(status) => onChange(filter.withStatus(status))} label="Saring menurut status" />
+                </div>
+                <div className="flex flex-col gap-2">
+                    <span className="text-sm font-semibold text-muted-foreground uppercase">Jenis</span>
+                    <SegmentedChoice options={RevisionFilter.typeOptions} value={filter.typeChoice} onChange={(choice) => onChange(filter.withTypeChoice(choice))} label="Saring menurut jenis" />
+                </div>
             </div>
-            <div className="flex flex-col gap-2">
-                <span className="text-sm font-semibold text-muted-foreground uppercase">Jenis</span>
-                <SegmentedChoice options={RevisionFilter.typeOptions} value={filter.typeChoice} onChange={(choice) => onChange(filter.withTypeChoice(choice))} label="Saring menurut jenis" />
-            </div>
-        </div>
+        </Card>
     );
 }
 

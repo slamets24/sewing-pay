@@ -1,3 +1,4 @@
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { ChoiceChip } from '@/components/choice-chip';
 import { FormField, InputError } from '@/components/form-field';
 import { OptionSelect } from '@/components/option-select';
@@ -122,31 +123,31 @@ export function HancaanMatrixForm({ workTypes, suggestions, idPrefix }: HancaanM
             <div className="flex flex-col gap-2">
                 <Label>Qty per varian</Label>
                 <div ref={gridRef} className="overflow-x-auto rounded-lg border">
-                    <table className="w-full border-collapse text-sm">
+                    <Table scrollContainer={false} className="w-full border-collapse text-sm">
                         {!matrix.isSingleCell && (
-                            <thead>
-                                <tr className="bg-muted/50">
-                                    <th className="px-2 py-1.5 text-left font-medium text-muted-foreground">{matrix.colors.length ? 'Warna' : ''}</th>
+                            <TableHeader>
+                                <TableRow className="bg-muted/50">
+                                    <TableHead className="h-auto whitespace-normal px-2 py-1.5 text-left font-medium text-muted-foreground">{matrix.colors.length ? 'Warna' : ''}</TableHead>
                                     {matrix.columns.map((size) => (
-                                        <th key={size ?? 'all'} className="px-1 py-1.5 text-center font-medium">
+                                        <TableHead key={size ?? 'all'} className="h-auto whitespace-normal px-1 py-1.5 text-center font-medium">
                                             {size ?? 'Qty'}
-                                        </th>
+                                        </TableHead>
                                     ))}
-                                </tr>
-                            </thead>
+                                </TableRow>
+                            </TableHeader>
                         )}
-                        <tbody>
+                        <TableBody>
                             {matrix.rows.map((color, rowIndex) => (
-                                <tr key={color ?? 'all'} className="border-t first:border-t-0">
-                                    <th scope="row" className="max-w-24 truncate px-2 py-1.5 text-left font-medium">
+                                <TableRow key={color ?? 'all'} className="border-t first:border-t-0">
+                                    <TableHead scope="row" className="h-auto whitespace-normal max-w-24 truncate px-2 py-1.5 text-left font-medium">
                                         {color ?? (matrix.isSingleCell ? 'Qty' : '—')}
-                                    </th>
+                                    </TableHead>
                                     {matrix.columns.map((size, columnIndex) => {
                                         const index = rowIndex * matrix.columns.length + columnIndex;
                                         const cellLabel = ['Qty', color, size].filter(Boolean).join(' ');
 
                                         return (
-                                            <td key={size ?? 'all'} className="px-1 py-1">
+                                            <TableCell key={size ?? 'all'} className="whitespace-normal px-1 py-1">
                                                 <Input
                                                     data-cell={index}
                                                     aria-label={cellLabel}
@@ -159,13 +160,13 @@ export function HancaanMatrixForm({ workTypes, suggestions, idPrefix }: HancaanM
                                                     onKeyDown={(event) => focusNextCell(event, index)}
                                                     className="mx-auto h-9 w-16 min-w-14 px-1 text-center tabular-nums"
                                                 />
-                                            </td>
+                                            </TableCell>
                                         );
                                     })}
-                                </tr>
+                                </TableRow>
                             ))}
-                        </tbody>
-                    </table>
+                        </TableBody>
+                    </Table>
                 </div>
                 <InputError message={variantError} />
             </div>

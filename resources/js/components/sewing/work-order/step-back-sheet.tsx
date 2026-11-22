@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import { ConfirmButton } from '@/components/confirm-button';
 import { QtyStepper } from '@/components/sewing/qty-stepper';
 import { Button } from '@/components/ui/button';
@@ -42,30 +43,32 @@ export function StepBackSheet({ item, trigger }: { item: WorkOrderItemRecord; tr
                         >
                             <ul className="flex flex-col gap-2">
                                 {pickups.map((pickup) => (
-                                    <li
-                                        key={pickup.id}
-                                        className="flex items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2 text-sm"
-                                    >
-                                        <span className="min-w-0 truncate">
-                                            <span className="font-semibold">{pickup.tailor_name}</span> · {pickup.qty} pcs
-                                        </span>
-                                        <ConfirmButton
-                                            size="sm"
-                                            variant="outline"
-                                            confirmLabel="Ya, kembalikan"
-                                            onConfirm={() =>
-                                                floorActions.send(
-                                                    'post',
-                                                    route('pickup-items.cancel', pickup.id),
-                                                    {},
-                                                    { onSuccess: () => setOpen(false) },
-                                                )
-                                            }
+                                    <Card asChild key={pickup.id}>
+                                        <li
+
+                                            className="flex items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2 text-sm"
                                         >
-                                            <Undo2 />
-                                            Ke gudang
-                                        </ConfirmButton>
-                                    </li>
+                                            <span className="min-w-0 truncate">
+                                                <span className="font-semibold">{pickup.tailor_name}</span> · {pickup.qty} pcs
+                                            </span>
+                                            <ConfirmButton
+                                                size="sm"
+                                                variant="outline"
+                                                confirmLabel="Ya, kembalikan"
+                                                onConfirm={() =>
+                                                    floorActions.send(
+                                                        'post',
+                                                        route('pickup-items.cancel', pickup.id),
+                                                        {},
+                                                        { onSuccess: () => setOpen(false) },
+                                                    )
+                                                }
+                                            >
+                                                <Undo2 />
+                                                Ke gudang
+                                            </ConfirmButton>
+                                        </li>
+                                    </Card>
                                 ))}
                             </ul>
                         </StepCard>

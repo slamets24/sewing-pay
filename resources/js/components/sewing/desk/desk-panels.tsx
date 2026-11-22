@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import { ConfirmButton } from '@/components/confirm-button';
 import { Button } from '@/components/ui/button';
 import { variantLabel } from '@/lib/format';
@@ -96,7 +97,7 @@ function Metric({
 /** Tombol lipat sederhana untuk bagian yang jarang dibuka. */
 function FoldToggle({ open, onToggle, icon, children }: { open: boolean; onToggle: () => void; icon: ReactNode; children: ReactNode }) {
     return (
-        <button
+        <Button variant="plain" size="plain"
             type="button"
             onClick={onToggle}
             aria-expanded={open}
@@ -107,7 +108,7 @@ function FoldToggle({ open, onToggle, icon, children }: { open: boolean; onToggl
                 <span className="truncate">{children}</span>
             </span>
             <ChevronDown className={cn('size-4 shrink-0 transition-transform', open && 'rotate-180')} />
-        </button>
+        </Button>
     );
 }
 
@@ -125,38 +126,40 @@ export function OtherTailorRevisions({
     if (otherTailorRevisions.length === 0) return null;
 
     return (
-        <div className="rounded-xl border border-border/70 bg-card px-3 py-1.5 shadow-xs">
-            <FoldToggle open={open} onToggle={() => setOpen((v) => !v)} icon={<ArrowLeftRight className="size-3.5 text-primary" />}>
-                Revisi penjahit lain yang bisa dikerjakan ({otherTailorRevisions.length})
-            </FoldToggle>
-            {open && (
-                <div className="grid gap-2 pt-1 pb-2 sm:grid-cols-2">
-                    {otherTailorRevisions.map((rev) => (
-                        <div
-                            key={rev.id}
-                            className="flex items-center justify-between gap-2 rounded-xl bg-muted/20 p-3 text-xs border border-border/60"
-                        >
-                            <div className="min-w-0 flex-1">
-                                <p className="font-bold text-foreground truncate">
-                                    {rev.article_name} ({variantLabel(rev.color, rev.size)})
-                                </p>
-                                <p className="text-[11px] text-muted-foreground mt-0.5">
-                                    {rev.qty} pcs · WO {rev.work_order_number} · Asal: <strong>{rev.tailor_name}</strong>
-                                </p>
-                            </div>
-                            <Button
-                                size="sm"
-                                variant="secondary"
-                                onClick={() => reassignRevision(rev, selectedTailor.id)}
-                                className="h-8 rounded-lg text-xs font-bold shrink-0 hover:bg-primary hover:text-primary-foreground shadow-2xs active:scale-95"
+        <Card asChild>
+            <div className="rounded-xl border border-border/70 bg-card px-3 py-1.5 shadow-xs">
+                <FoldToggle open={open} onToggle={() => setOpen((v) => !v)} icon={<ArrowLeftRight className="size-3.5 text-primary" />}>
+                    Revisi penjahit lain yang bisa dikerjakan ({otherTailorRevisions.length})
+                </FoldToggle>
+                {open && (
+                    <div className="grid gap-2 pt-1 pb-2 sm:grid-cols-2">
+                        {otherTailorRevisions.map((rev) => (
+                            <div
+                                key={rev.id}
+                                className="flex items-center justify-between gap-2 rounded-xl bg-muted/20 p-3 text-xs border border-border/60"
                             >
-                                Kerjakan ({selectedTailor.name})
-                            </Button>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="font-bold text-foreground truncate">
+                                        {rev.article_name} ({variantLabel(rev.color, rev.size)})
+                                    </p>
+                                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                                        {rev.qty} pcs · WO {rev.work_order_number} · Asal: <strong>{rev.tailor_name}</strong>
+                                    </p>
+                                </div>
+                                <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    onClick={() => reassignRevision(rev, selectedTailor.id)}
+                                    className="h-8 rounded-lg text-xs font-bold shrink-0 hover:bg-primary hover:text-primary-foreground shadow-2xs active:scale-95"
+                                >
+                                    Kerjakan ({selectedTailor.name})
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </Card>
     );
 }
 
@@ -195,32 +198,34 @@ export function DeskRecentDeliveries({
                                 </div>
                                 <div className="flex flex-col gap-2">
                                     {deliveries.map((delivery) => (
-                                        <div
-                                            key={delivery.id}
-                                            className="flex items-center justify-between gap-2 rounded-xl border border-border/60 bg-card p-2.5 shadow-2xs hover:border-border transition-all"
-                                        >
-                                            <div className="min-w-0 flex-1">
-                                                <p className="font-bold text-foreground text-xs truncate">
-                                                    {delivery.article_name}{' '}
-                                                    <span className="font-normal text-muted-foreground">
-                                                        ({variantLabel(delivery.color, delivery.size)})
-                                                    </span>
-                                                </p>
-                                                <p className="text-[10px] text-muted-foreground mt-0.5">{delivery.delivered_at}</p>
+                                        <Card asChild key={delivery.id}>
+                                            <div
+
+                                                className="flex items-center justify-between gap-2 rounded-xl border border-border/60 bg-card p-2.5 shadow-2xs hover:border-border transition-all"
+                                            >
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="font-bold text-foreground text-xs truncate">
+                                                        {delivery.article_name}{' '}
+                                                        <span className="font-normal text-muted-foreground">
+                                                            ({variantLabel(delivery.color, delivery.size)})
+                                                        </span>
+                                                    </p>
+                                                    <p className="text-[10px] text-muted-foreground mt-0.5">{delivery.delivered_at}</p>
+                                                </div>
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    <span className="font-display font-black tabular text-emerald-600 text-sm">+{delivery.qty} pcs</span>
+                                                    {delivery.can_undo && (
+                                                        <ConfirmButton
+                                                            confirmLabel="Batalkan"
+                                                            idleClassName="text-muted-foreground hover:text-destructive h-7 px-2 text-xs rounded-lg"
+                                                            onConfirm={() => floorActions.send('delete', route('deliveries.destroy', delivery.id))}
+                                                        >
+                                                            <Undo2 className="size-3" />
+                                                        </ConfirmButton>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-2 shrink-0">
-                                                <span className="font-display font-black tabular text-emerald-600 text-sm">+{delivery.qty} pcs</span>
-                                                {delivery.can_undo && (
-                                                    <ConfirmButton
-                                                        confirmLabel="Batalkan"
-                                                        idleClassName="text-muted-foreground hover:text-destructive h-7 px-2 text-xs rounded-lg"
-                                                        onConfirm={() => floorActions.send('delete', route('deliveries.destroy', delivery.id))}
-                                                    >
-                                                        <Undo2 className="size-3" />
-                                                    </ConfirmButton>
-                                                )}
-                                            </div>
-                                        </div>
+                                        </Card>
                                     ))}
                                 </div>
                             </div>

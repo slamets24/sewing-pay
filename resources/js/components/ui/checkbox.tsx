@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { useFieldAccessibility } from "@/lib/field-context"
 import { CheckIcon, MinusIcon } from "lucide-react"
 import { Checkbox as CheckboxPrimitive } from "radix-ui"
 
@@ -9,6 +10,7 @@ function Checkbox({
   className,
   ...props
 }: React.ComponentProps<typeof CheckboxPrimitive.Root>) {
+  const field = useFieldAccessibility(props, { inheritLabel: false })
   return (
     <CheckboxPrimitive.Root
       data-slot="checkbox"
@@ -17,6 +19,7 @@ function Checkbox({
         className
       )}
       {...props}
+      {...field}
     >
       <CheckboxPrimitive.Indicator
         data-slot="checkbox-indicator"

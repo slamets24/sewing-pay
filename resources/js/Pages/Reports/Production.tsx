@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import { PageIntro } from '@/components/sewing/section';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -104,69 +105,71 @@ export default function ProductionReport({
                 </PageIntro>
 
                 {/* FILTER CONTROLS BAR */}
-                <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
-                    {/* Preset Pills */}
-                    <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="mr-1 hidden items-center gap-1 text-xs font-bold tracking-wider text-muted-foreground uppercase sm:flex">
-                            <Filter className="size-3.5" />
-                            Periode:
-                        </span>
-                        {[
-                            { id: '7_days', label: '7 Hari' },
-                            { id: '14_days', label: '14 Hari' },
-                            { id: '30_days', label: '30 Hari' },
-                            { id: 'this_month', label: 'Bulan Ini' },
-                            { id: 'custom', label: 'Kustom' },
-                        ].map((btn) => (
-                            <button
-                                key={btn.id}
-                                type="button"
-                                onClick={() => applyPreset(btn.id)}
-                                className={cn(
-                                    'rounded-xl px-3 py-1.5 text-xs font-bold transition-all',
-                                    selectedPreset === btn.id
-                                        ? 'bg-primary text-primary-foreground shadow-xs'
-                                        : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground',
-                                )}
-                            >
-                                {btn.label}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Custom Range Picker (shown when custom is selected or on right side) */}
-                    {selectedPreset === 'custom' ? (
-                        <div className="flex flex-wrap items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-border">
-                            <Input
-                                type="date"
-                                value={customFrom}
-                                onChange={(e) => setCustomFrom(e.target.value)}
-                                className="h-8 w-36 rounded-lg text-xs"
-                            />
-                            <span className="text-xs text-muted-foreground">s/d</span>
-                            <Input
-                                type="date"
-                                value={customTo}
-                                onChange={(e) => setCustomTo(e.target.value)}
-                                className="h-8 w-36 rounded-lg text-xs"
-                            />
-                            <Button
-                                size="sm"
-                                onClick={applyCustomRange}
-                                className="h-8 rounded-lg text-xs font-bold px-3"
-                            >
-                                Terapkan
-                            </Button>
-                        </div>
-                    ) : (
-                        <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-                            <Calendar className="size-3.5 text-primary" />
-                            <span>
-                                {formatDate(stats.start_date)} — {formatDate(stats.end_date)}
+                <Card asChild>
+                    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+                        {/* Preset Pills */}
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="mr-1 hidden items-center gap-1 text-xs font-bold tracking-wider text-muted-foreground uppercase sm:flex">
+                                <Filter className="size-3.5" />
+                                Periode:
                             </span>
+                            {[
+                                { id: '7_days', label: '7 Hari' },
+                                { id: '14_days', label: '14 Hari' },
+                                { id: '30_days', label: '30 Hari' },
+                                { id: 'this_month', label: 'Bulan Ini' },
+                                { id: 'custom', label: 'Kustom' },
+                            ].map((btn) => (
+                                <Button variant="plain" size="plain"
+                                    key={btn.id}
+                                    type="button"
+                                    onClick={() => applyPreset(btn.id)}
+                                    className={cn(
+                                        'rounded-xl px-3 py-1.5 text-xs font-bold transition-all',
+                                        selectedPreset === btn.id
+                                            ? 'bg-primary text-primary-foreground shadow-xs'
+                                            : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground',
+                                    )}
+                                >
+                                    {btn.label}
+                                </Button>
+                            ))}
                         </div>
-                    )}
-                </div>
+
+                        {/* Custom Range Picker (shown when custom is selected or on right side) */}
+                        {selectedPreset === 'custom' ? (
+                            <div className="flex flex-wrap items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-border">
+                                <Input
+                                    type="date"
+                                    value={customFrom}
+                                    onChange={(e) => setCustomFrom(e.target.value)}
+                                    className="h-8 w-36 rounded-lg text-xs"
+                                />
+                                <span className="text-xs text-muted-foreground">s/d</span>
+                                <Input
+                                    type="date"
+                                    value={customTo}
+                                    onChange={(e) => setCustomTo(e.target.value)}
+                                    className="h-8 w-36 rounded-lg text-xs"
+                                />
+                                <Button
+                                    size="sm"
+                                    onClick={applyCustomRange}
+                                    className="h-8 rounded-lg text-xs font-bold px-3"
+                                >
+                                    Terapkan
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                                <Calendar className="size-3.5 text-primary" />
+                                <span>
+                                    {formatDate(stats.start_date)} — {formatDate(stats.end_date)}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                </Card>
 
                 {/* 5 KEY KPI STAT TILES */}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -238,21 +241,23 @@ export default function ProductionReport({
                     </div>
 
                     {/* Metric 5: Kualitas / Lolos QC */}
-                    <div className="flex flex-col justify-between rounded-2xl border border-border bg-card p-4 shadow-xs col-span-2 sm:col-span-1">
-                        <div className="flex items-center justify-between text-muted-foreground">
-                            <span className="text-xs font-bold uppercase tracking-wider">Kualitas Hasil</span>
-                            <CheckCircle2 className="size-4 text-emerald-600" />
+                    <Card asChild>
+                        <div className="flex flex-col justify-between rounded-2xl border border-border bg-card p-4 shadow-xs col-span-2 sm:col-span-1">
+                            <div className="flex items-center justify-between text-muted-foreground">
+                                <span className="text-xs font-bold uppercase tracking-wider">Kualitas Hasil</span>
+                                <CheckCircle2 className="size-4 text-emerald-600" />
+                            </div>
+                            <div className="mt-3">
+                                <span className="font-display text-3xl font-black text-foreground tabular">
+                                    {stats.quality_rate}%
+                                </span>
+                                <span className="ml-1 text-xs font-bold text-muted-foreground">lolos</span>
+                            </div>
+                            <p className="mt-1 text-[11px] text-muted-foreground">
+                                {stats.total_revisions_qty > 0 ? `${stats.total_revisions_qty} pcs tercatat revisi` : 'Nol komplain jahitan'}
+                            </p>
                         </div>
-                        <div className="mt-3">
-                            <span className="font-display text-3xl font-black text-foreground tabular">
-                                {stats.quality_rate}%
-                            </span>
-                            <span className="ml-1 text-xs font-bold text-muted-foreground">lolos</span>
-                        </div>
-                        <p className="mt-1 text-[11px] text-muted-foreground">
-                            {stats.total_revisions_qty > 0 ? `${stats.total_revisions_qty} pcs tercatat revisi` : 'Nol komplain jahitan'}
-                        </p>
-                    </div>
+                    </Card>
                 </div>
 
                 <TrendChart trend={trend} />

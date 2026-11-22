@@ -1,3 +1,4 @@
+import { Label } from '@/components/ui/label';
 import { ToneBadge } from '@/components/sewing/tone-badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -79,7 +80,7 @@ function PickRow({ delivery, grouping, checked, onToggle }: { delivery: Delivery
     const meta = [`WO ${delivery.work_order_number}`, grouping === 'work_order' ? DeliveryGroups.tailorLabel(delivery) : null, `Setor ${formatDateTime(delivery.delivered_at)}`];
 
     return (
-        <label htmlFor={id} className={cn('flex cursor-pointer items-start gap-3 px-3 py-3 transition-colors hover:bg-accent/70', checked && 'bg-primary/15 hover:bg-primary/20')}>
+        <Label htmlFor={id} className={cn('flex cursor-pointer items-start gap-3 px-3 py-3 transition-colors hover:bg-accent/70', checked && 'bg-primary/15 hover:bg-primary/20')}>
             <Checkbox id={id} checked={checked} onCheckedChange={onToggle} className="mt-0.5 size-7 border-2 [&_svg]:size-5" />
             <div className="min-w-0 flex-1">
                 <p className="text-lg leading-tight font-semibold">{delivery.article_name}</p>
@@ -95,6 +96,6 @@ function PickRow({ delivery, grouping, checked, onToggle }: { delivery: Delivery
                 <span className="block font-display text-3xl leading-none font-bold tabular">{delivery.qty}</span>
                 <span className="text-sm text-muted-foreground">pcs</span>
             </span>
-        </label>
+        </Label>
     );
 }

@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/empty-state';
 import { FormField } from '@/components/form-field';
 import { ChoiceButtons } from '@/components/sewing/master/choice-buttons';
@@ -62,35 +63,37 @@ export default function Users({ users, roles }: UsersProps) {
 function UserRow({ user, onAction }: { user: ManagedUserRecord; onAction: (kind: UserAction['kind']) => void }) {
     const canManage = user.can_manage;
     return (
-        <li className="flex flex-col gap-3 rounded-lg border bg-card p-4 lg:flex-row lg:items-center lg:gap-4 lg:rounded-none lg:border-0 lg:px-4 lg:py-3">
-            <div className="flex min-w-0 flex-1 flex-col gap-2">
-                <div className="min-w-0">
-                    <p className="text-lg leading-tight font-bold wrap-anywhere">{user.name}</p>
-                    <p className="text-base text-muted-foreground wrap-anywhere">{user.email}</p>
+        <Card asChild>
+            <li className="flex flex-col gap-3 rounded-lg border bg-card p-4 lg:flex-row lg:items-center lg:gap-4 lg:rounded-none lg:border-0 lg:px-4 lg:py-3">
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
+                    <div className="min-w-0">
+                        <p className="text-lg leading-tight font-bold wrap-anywhere">{user.name}</p>
+                        <p className="text-base text-muted-foreground wrap-anywhere">{user.email}</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <ToneBadge tone={RoleCatalog.tone(user.role)}>{user.role_label}</ToneBadge>
+                        {user.is_current_user && <ToneBadge tone="neutral">Akun Anda</ToneBadge>}
+                    </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                    <ToneBadge tone={RoleCatalog.tone(user.role)}>{user.role_label}</ToneBadge>
-                    {user.is_current_user && <ToneBadge tone="neutral">Akun Anda</ToneBadge>}
-                </div>
-            </div>
 
-            {!canManage ? (
-                <p className="text-sm text-muted-foreground lg:max-w-56 lg:text-right">Akun ini tidak dapat diubah dari sini.</p>
-            ) : (
-                <div className="grid grid-cols-1 gap-2 min-[400px]:grid-cols-2 lg:flex lg:shrink-0">
-                    {user.can_change_role && (
-                        <Button variant="outline" onClick={() => onAction('role')} aria-label={`Ubah peran ${user.name}`}>
-                            <UserCog />
-                            Ubah peran
+                {!canManage ? (
+                    <p className="text-sm text-muted-foreground lg:max-w-56 lg:text-right">Akun ini tidak dapat diubah dari sini.</p>
+                ) : (
+                    <div className="grid grid-cols-1 gap-2 min-[400px]:grid-cols-2 lg:flex lg:shrink-0">
+                        {user.can_change_role && (
+                            <Button variant="outline" onClick={() => onAction('role')} aria-label={`Ubah peran ${user.name}`}>
+                                <UserCog />
+                                Ubah peran
+                            </Button>
+                        )}
+                        <Button variant="outline" onClick={() => onAction('password')} aria-label={`Reset password ${user.name}`}>
+                            <KeyRound />
+                            Reset password
                         </Button>
-                    )}
-                    <Button variant="outline" onClick={() => onAction('password')} aria-label={`Reset password ${user.name}`}>
-                        <KeyRound />
-                        Reset password
-                    </Button>
-                </div>
-            )}
-        </li>
+                    </div>
+                )}
+            </li>
+        </Card>
     );
 }
 

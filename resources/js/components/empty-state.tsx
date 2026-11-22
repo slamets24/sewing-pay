@@ -1,10 +1,11 @@
 import { cn } from '@/lib/utils';
+import { Empty } from '@/components/ui/empty';
 import type { ReactNode } from 'react';
 
 export function EmptyState({ children, className }: { children: ReactNode; className?: string }) {
     return (
-        <div className={cn('flex flex-col items-center gap-3 rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground', className)}>
+        <Empty className={cn('flex-none gap-3 border p-6 text-sm text-muted-foreground md:p-6', className)}>
             {children}
-        </div>
+        </Empty>
     );
 }

@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 export type FilterChipOption<T extends string> = { value: T; label: string; count: number };
@@ -17,7 +18,7 @@ export function FilterChips<T extends string>({ label, value, options, onChange 
                 const selected = option.value === value;
 
                 return (
-                    <button
+                    <Button variant="plain" size="plain"
                         key={option.value}
                         type="button"
                         aria-pressed={selected}
@@ -31,7 +32,7 @@ export function FilterChips<T extends string>({ label, value, options, onChange 
                         <span className={cn('rounded-full px-2 text-sm tabular', selected ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground')}>
                             {option.count}
                         </span>
-                    </button>
+                    </Button>
                 );
             })}
         </div>

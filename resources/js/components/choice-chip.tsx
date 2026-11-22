@@ -1,3 +1,4 @@
+import { Toggle } from '@/components/ui/toggle';
 import { cn } from '@/lib/utils';
 import { Check } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -11,17 +12,17 @@ type ChoiceChipProps = {
 /** Pill-shaped toggle used for picking colours and sizes. */
 export function ChoiceChip({ selected, onToggle, children }: ChoiceChipProps) {
     return (
-        <button
+        <Toggle
             type="button"
-            aria-pressed={selected}
-            onClick={onToggle}
+            pressed={selected}
+            onPressedChange={onToggle}
             className={cn(
-                'inline-flex h-8 items-center gap-1 rounded-full border px-3 text-sm transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
+                'h-8 min-w-0 gap-1 rounded-full border px-3 text-sm font-normal transition-colors data-[state=on]:bg-primary data-[state=on]:text-primary-foreground',
                 selected ? 'border-primary bg-primary text-primary-foreground' : 'bg-background hover:bg-accent',
             )}
         >
             {selected && <Check className="size-3.5" />}
             {children}
-        </button>
+        </Toggle>
     );
 }

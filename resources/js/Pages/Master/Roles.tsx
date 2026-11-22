@@ -1,3 +1,5 @@
+import { Card } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import { ConfirmButton } from '@/components/confirm-button';
 import { EmptyState } from '@/components/empty-state';
 import { FormField, InputError } from '@/components/form-field';
@@ -146,66 +148,68 @@ function RoleCard({ role, selection, total, onEdit }: { role: RoleRecord; select
     const preview = role.abilities.slice(0, 6);
 
     return (
-        <li className={cn('flex min-w-0 flex-col gap-3 rounded-lg border p-4', role.can_login ? 'bg-card' : 'border-dashed bg-muted/70')}>
-            <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                    <p className="text-lg leading-tight font-bold wrap-anywhere">{role.name}</p>
-                    {role.description && <p className="text-sm text-muted-foreground wrap-anywhere">{role.description}</p>}
+        <Card asChild>
+            <li className={cn('flex min-w-0 flex-col gap-3 rounded-lg border p-4', role.can_login ? 'bg-card' : 'border-dashed bg-muted/70')}>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                        <p className="text-lg leading-tight font-bold wrap-anywhere">{role.name}</p>
+                        {role.description && <p className="text-sm text-muted-foreground wrap-anywhere">{role.description}</p>}
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                        <ToneBadge tone={role.is_system ? 'primary' : 'other'}>{role.is_system ? 'Bawaan' : 'Kustom'}</ToneBadge>
+                        {!role.can_login && <ToneBadge tone="neutral">Tidak bisa login</ToneBadge>}
+                    </div>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                    <ToneBadge tone={role.is_system ? 'primary' : 'other'}>{role.is_system ? 'Bawaan' : 'Kustom'}</ToneBadge>
-                    {!role.can_login && <ToneBadge tone="neutral">Tidak bisa login</ToneBadge>}
+
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-semibold text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                        <Users className="size-4" aria-hidden />
+                        {role.users_count} akun
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                        <ShieldCheck className="size-4" aria-hidden />
+                        {role.is_owner ? 'Semua akses' : role.can_login ? `${role.abilities.length} dari ${total} ability` : 'Tanpa akses aplikasi'}
+                    </span>
                 </div>
-            </div>
 
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-semibold text-muted-foreground">
-                <span className="flex items-center gap-1.5">
-                    <Users className="size-4" aria-hidden />
-                    {role.users_count} akun
-                </span>
-                <span className="flex items-center gap-1.5">
-                    <ShieldCheck className="size-4" aria-hidden />
-                    {role.is_owner ? 'Semua akses' : role.can_login ? `${role.abilities.length} dari ${total} ability` : 'Tanpa akses aplikasi'}
-                </span>
-            </div>
-
-            {!role.is_owner && role.can_login && (
-                <p className="text-sm wrap-anywhere">
-                    {preview.length === 0 ? (
-                        <span className="text-muted-foreground">Belum ada ability — akun dengan role ini belum bisa masuk.</span>
-                    ) : (
-                        <>
-                            {preview.map((ability) => selection.label(ability)).join(' · ')}
-                            {role.abilities.length > preview.length && <span className="text-muted-foreground"> · +{role.abilities.length - preview.length} lagi</span>}
-                        </>
-                    )}
-                </p>
-            )}
-
-            {role.unknown_abilities.length > 0 && (
-                <p className="text-sm text-stage-revision">Ability usang tersimpan: {role.unknown_abilities.join(', ')}</p>
-            )}
-
-            <div className="mt-auto flex flex-wrap gap-2">
-                {role.is_locked ? (
-                    <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                        <Lock className="size-4" aria-hidden />
-                        {role.is_owner ? 'Owner selalu punya semua akses.' : 'Dikunci sistem: role ini tidak bisa masuk aplikasi.'}
+                {!role.is_owner && role.can_login && (
+                    <p className="text-sm wrap-anywhere">
+                        {preview.length === 0 ? (
+                            <span className="text-muted-foreground">Belum ada ability — akun dengan role ini belum bisa masuk.</span>
+                        ) : (
+                            <>
+                                {preview.map((ability) => selection.label(ability)).join(' · ')}
+                                {role.abilities.length > preview.length && <span className="text-muted-foreground"> · +{role.abilities.length - preview.length} lagi</span>}
+                            </>
+                        )}
                     </p>
-                ) : (
-                    <Button variant="outline" size="sm" onClick={onEdit} className="flex-1">
-                        <Pencil />
-                        Atur ability
-                    </Button>
                 )}
-                {role.is_deletable && (
-                    <ConfirmButton size="sm" confirmLabel="Yakin hapus?" onConfirm={destroy} disabled={role.users_count > 0} title={role.users_count > 0 ? 'Masih dipakai akun' : undefined}>
-                        <Trash2 />
-                        Hapus
-                    </ConfirmButton>
+
+                {role.unknown_abilities.length > 0 && (
+                    <p className="text-sm text-stage-revision">Ability usang tersimpan: {role.unknown_abilities.join(', ')}</p>
                 )}
-            </div>
-        </li>
+
+                <div className="mt-auto flex flex-wrap gap-2">
+                    {role.is_locked ? (
+                        <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                            <Lock className="size-4" aria-hidden />
+                            {role.is_owner ? 'Owner selalu punya semua akses.' : 'Dikunci sistem: role ini tidak bisa masuk aplikasi.'}
+                        </p>
+                    ) : (
+                        <Button variant="outline" size="sm" onClick={onEdit} className="flex-1">
+                            <Pencil />
+                            Atur ability
+                        </Button>
+                    )}
+                    {role.is_deletable && (
+                        <ConfirmButton size="sm" confirmLabel="Yakin hapus?" onConfirm={destroy} disabled={role.users_count > 0} title={role.users_count > 0 ? 'Masih dipakai akun' : undefined}>
+                            <Trash2 />
+                            Hapus
+                        </ConfirmButton>
+                    )}
+                </div>
+            </li>
+        </Card>
     );
 }
 
@@ -305,11 +309,11 @@ function AbilityGroupFields({ group, selection, selected, onChange }: AbilityGro
     return (
         <fieldset className="overflow-hidden rounded-lg border">
             <legend className="sr-only">{group.label}</legend>
-            <label htmlFor={groupId} className="flex cursor-pointer items-center gap-3 border-b bg-muted/60 px-3 py-2">
+            <Label htmlFor={groupId} className="flex cursor-pointer items-center gap-3 border-b bg-muted/60 px-3 py-2">
                 <Checkbox id={groupId} checked={state} onCheckedChange={(checked) => onChange(selection.setGroup(selected, group, checked === true))} />
                 <span className="flex-1 text-sm font-bold tracking-wide uppercase">{group.label}</span>
                 <span className="text-xs text-muted-foreground">Pilih semua</span>
-            </label>
+            </Label>
 
             <ul className="divide-y">
                 {group.abilities.map((ability) => {
@@ -319,7 +323,7 @@ function AbilityGroupFields({ group, selection, selected, onChange }: AbilityGro
 
                     return (
                         <li key={ability.value}>
-                            <label htmlFor={id} className={cn('flex items-start gap-3 px-3 py-2.5', ability.owner_only ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-accent/60')}>
+                            <Label htmlFor={id} className={cn('flex items-start gap-3 px-3 py-2.5', ability.owner_only ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-accent/60')}>
                                 <Checkbox
                                     id={id}
                                     className="mt-0.5"
@@ -340,7 +344,7 @@ function AbilityGroupFields({ group, selection, selected, onChange }: AbilityGro
                                     )}
                                     <code className="text-[11px] text-muted-foreground/80">{ability.value}</code>
                                 </span>
-                            </label>
+                            </Label>
                         </li>
                     );
                 })}

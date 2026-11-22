@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/empty-state';
 import { DeliveryList } from '@/components/sewing/production/delivery-list';
 import { ToneBadge } from '@/components/sewing/tone-badge';
@@ -101,20 +102,22 @@ export default function Overview({ stats, board, dueSoon, recentDeliveries }: Ov
                         <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                             {board.map((row) => (
                                 <li key={row.tailor.id}>
-                                    <Link
-                                        href={route('desk.index', { tailor: row.tailor.id })}
-                                        className="flex items-center gap-3 rounded-lg border bg-card px-3 py-2.5 transition-colors hover:border-foreground/30"
-                                    >
-                                        <div className="min-w-0 flex-1">
-                                            <p className="truncate font-bold">{row.tailor.name}</p>
-                                            <p className="truncate text-sm text-muted-foreground">{[...new Set(row.items.map((item) => item.article_name))].join(', ')}</p>
-                                        </div>
-                                        {row.tailor.type === 'makloon' && <ToneBadge tone="qc">Makloon</ToneBadge>}
-                                        <span className="shrink-0 text-right">
-                                            <span className="block font-display text-xl leading-none font-bold text-stage-sewing tabular">{row.remaining_qty}</span>
-                                            <span className="text-xs text-muted-foreground">pcs</span>
-                                        </span>
-                                    </Link>
+                                    <Card asChild>
+                                        <Link
+                                            href={route('desk.index', { tailor: row.tailor.id })}
+                                            className="flex items-center gap-3 rounded-lg border bg-card px-3 py-2.5 transition-colors hover:border-foreground/30"
+                                        >
+                                            <div className="min-w-0 flex-1">
+                                                <p className="truncate font-bold">{row.tailor.name}</p>
+                                                <p className="truncate text-sm text-muted-foreground">{[...new Set(row.items.map((item) => item.article_name))].join(', ')}</p>
+                                            </div>
+                                            {row.tailor.type === 'makloon' && <ToneBadge tone="qc">Makloon</ToneBadge>}
+                                            <span className="shrink-0 text-right">
+                                                <span className="block font-display text-xl leading-none font-bold text-stage-sewing tabular">{row.remaining_qty}</span>
+                                                <span className="text-xs text-muted-foreground">pcs</span>
+                                            </span>
+                                        </Link>
+                                    </Card>
                                 </li>
                             ))}
                         </ul>
