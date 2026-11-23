@@ -4,6 +4,7 @@ import {
     CalendarCheck,
     ClipboardList,
     HandPlatter,
+    History,
     KeyRound,
     LayoutDashboard,
     PackageCheck,
@@ -77,6 +78,7 @@ const MASTER_ITEMS: NavItem[] = [
     item('Bagian Revisi', 'revision-parts.index', Scissors, 'revision-parts.manage', 'revision-parts.*'),
     item('Pengguna Sistem', 'users.index', UserCog, 'users.manage', 'users.*'),
     item('Role & Akses', 'roles.index', KeyRound, 'roles.manage', 'roles.*'),
+    item('Riwayat Aktivitas', 'activity-logs.index', History, 'activity-logs.view', 'activity-logs.*'),
 ];
 
 const GROUPS: NavGroup[] = [

@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { floorActions } from '@/services/floor-actions';
 import type { PayoutSlipRecord, PayoutSummary } from '@/types/sewing';
 import { Link } from '@inertiajs/react';
-import { ArrowLeft, CircleCheck, Clock, ListChecks, Receipt, RefreshCw, Shirt, Trash2, Users, Wallet } from 'lucide-react';
+import { ArrowLeft, CircleCheck, Clock, ListChecks, Receipt, RefreshCw, Send, ShieldCheck, Shirt, Trash2, Undo2, Users, Wallet } from 'lucide-react';
 import { useState } from 'react';
 
 type PayoutShowProps = {
@@ -22,7 +22,7 @@ type PayoutShowProps = {
     slips: PayoutSlipRecord[];
 };
 
-type DraftAction = 'regenerate' | 'pay-all' | 'destroy';
+type DraftAction = 'regenerate' | 'pay-all' | 'destroy' | 'submit-hr';
 
 export default function PayoutShow({ payout, slips }: PayoutShowProps) {
     const set = new PayoutSlipSet(slips);
@@ -67,6 +67,8 @@ export default function PayoutShow({ payout, slips }: PayoutShowProps) {
                     </p>
                 )}
 
+                {payout.is_draft && payout.needs_hr_approval && <HrApprovalNotice payout={payout} />}
+
                 {payout.is_draft ? (
                     <DraftActions payout={payout} set={set} />
                 ) : (
@@ -107,6 +109,9 @@ export default function PayoutShow({ payout, slips }: PayoutShowProps) {
 function DraftActions({ payout, set }: { payout: PayoutSummary; set: PayoutSlipSet }) {
     const [busy, setBusy] = useState<DraftAction | null>(null);
     const hasPaidSlips = set.paidCount > 0;
+    const lockedByHr = payout.is_locked_by_hr ?? false;
+    const canBePaid = payout.can_be_paid ?? true;
+    const canSubmitToHr = (payout.needs_hr_approval ?? false) && !lockedByHr && set.count > 0;
 
     const run = (action: DraftAction, method: 'post' | 'delete', url: string) =>
         floorActions.send(method, url, {}, { onStart: () => setBusy(action), onFinish: () => setBusy(null) });
@@ -115,13 +120,24 @@ function DraftActions({ payout, set }: { payout: PayoutSummary; set: PayoutSlipS
         <Section title="Tindakan draft" icon={ListChecks}>
             <div className="flex flex-col gap-3">
                 <div className="flex flex-wrap gap-2">
-                    <Button type="button" variant="outline" disabled={busy !== null || hasPaidSlips} onClick={() => run('regenerate', 'post', route('payouts.regenerate', payout.id))}>
+                    {canSubmitToHr && (
+                        <ConfirmButton
+                            variant="default"
+                            disabled={busy !== null}
+                            confirmLabel="Ya, kirim ke HR"
+                            onConfirm={() => run('submit-hr', 'post', route('payouts.submit-hr', payout.id))}
+                        >
+                            <Send />
+                            {payout.hr_status === 'returned' ? 'Kirim ulang ke HR' : 'Kirim ke HR untuk acc'}
+                        </ConfirmButton>
+                    )}
+                    <Button type="button" variant="outline" disabled={busy !== null || hasPaidSlips || lockedByHr} onClick={() => run('regenerate', 'post', route('payouts.regenerate', payout.id))}>
                         <RefreshCw className={cn(busy === 'regenerate' && 'animate-spin')} />
                         Hitung ulang
                     </Button>
                     <ConfirmButton
                         variant="default"
-                        disabled={busy !== null || set.count === 0 || set.allPaid}
+                        disabled={busy !== null || set.count === 0 || set.allPaid || !canBePaid}
                         confirmLabel={`Ya, bayar ${set.unpaidCount} slip`}
                         onConfirm={() => run('pay-all', 'post', route('payouts.paid', payout.id))}
                     >
@@ -131,7 +147,7 @@ function DraftActions({ payout, set }: { payout: PayoutSummary; set: PayoutSlipS
                     <ConfirmButton
                         variant="outline"
                         idleClassName="text-destructive"
-                        disabled={busy !== null || hasPaidSlips}
+                        disabled={busy !== null || hasPaidSlips || lockedByHr}
                         confirmLabel="Ya, hapus draft"
                         onConfirm={() => run('destroy', 'delete', route('payouts.destroy', payout.id))}
                     >
@@ -149,5 +165,57 @@ function DraftActions({ payout, set }: { payout: PayoutSummary; set: PayoutSlipS
                 )}
             </div>
         </Section>
+    );
+}
+
+/** Status acc HR untuk pencairan ini: belum dikirim, menunggu, disetujui (boleh dibayar), atau dikembalikan dengan catatan. */
+function HrApprovalNotice({ payout }: { payout: PayoutSummary }) {
+    const status = payout.hr_status ?? null;
+    const decidedBy = [payout.hr_decided_by, payout.hr_decided_at ? formatDateTime(payout.hr_decided_at) : null].filter(Boolean).join(' · ');
+
+    if (status === 'approved') {
+        return (
+            <Alert className="border-stage-done/40 bg-stage-done/10 text-base">
+                <ShieldCheck />
+                <AlertTitle className="line-clamp-none text-base font-bold">Disetujui HR, slip sudah boleh dibayar.</AlertTitle>
+                <AlertDescription className="text-base text-foreground">
+                    {decidedBy && <>Di-acc {decidedBy}. </>}
+                    {payout.hr_note}
+                </AlertDescription>
+            </Alert>
+        );
+    }
+
+    if (status === 'submitted') {
+        return (
+            <Alert className="text-base">
+                <Clock />
+                <AlertTitle className="line-clamp-none text-base font-bold">Menunggu acc HR.</AlertTitle>
+                <AlertDescription className="text-base text-foreground">
+                    Dikirim {payout.hr_submitted_at ? formatDateTime(payout.hr_submitted_at) : ''}. Bonus, kasbon dan potongan dikunci di OPSEW; HR bisa mengubahnya saat acc.
+                </AlertDescription>
+            </Alert>
+        );
+    }
+
+    if (status === 'returned') {
+        return (
+            <Alert variant="destructive" className="text-base">
+                <Undo2 />
+                <AlertTitle className="line-clamp-none text-base font-bold">Dikembalikan HR.</AlertTitle>
+                <AlertDescription className="text-base">
+                    {decidedBy && <>Oleh {decidedBy}. </>}
+                    {payout.hr_note ?? 'Perbaiki lalu kirim ulang ke HR.'}
+                </AlertDescription>
+            </Alert>
+        );
+    }
+
+    return (
+        <Alert className="text-base">
+            <Send />
+            <AlertTitle className="line-clamp-none text-base font-bold">Belum dikirim ke HR.</AlertTitle>
+            <AlertDescription className="text-base text-foreground">Periksa slip, lalu tekan "Kirim ke HR untuk acc". Slip baru bisa dibayar setelah HR acc.</AlertDescription>
+        </Alert>
     );
 }

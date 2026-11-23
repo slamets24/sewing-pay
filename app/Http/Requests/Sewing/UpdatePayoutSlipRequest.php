@@ -19,6 +19,8 @@ class UpdatePayoutSlipRequest extends FormRequest
         return [
             'bonus_amount' => ['required', 'integer', 'min:0', 'max:100000000'],
             'deduction_amount' => ['required', 'integer', 'min:0', 'max:100000000'],
+            'kasbon_warung_amount' => ['nullable', 'integer', 'min:0', 'max:100000000'],
+            'kasbon_mingguan_amount' => ['nullable', 'integer', 'min:0', 'max:100000000'],
             'notes' => ['nullable', 'string', 'max:500'],
         ];
     }

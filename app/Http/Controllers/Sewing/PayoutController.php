@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Sewing;
 use App\Actions\Sewing\CreatePayoutAction;
 use App\Actions\Sewing\GeneratePayoutAction;
 use App\Actions\Sewing\ManagePayoutSlipAction;
+use App\Actions\Sewing\SubmitPayoutToHrAction;
 use App\Enums\PayoutStatus;
 use App\Enums\RevisionStatus;
 use App\Enums\RevisionType;
@@ -82,14 +83,18 @@ class PayoutController extends Controller
         return $this->withHrWarnings(Redirect::back()->with('status', 'Draft pencairan dihitung ulang.'), $generate->warnings);
     }
 
+    public function submitToHr(Request $request, Payout $payout, SubmitPayoutToHrAction $submit): RedirectResponse
+    {
+        $submit->execute($payout, $request->user()?->name);
+
+        return Redirect::back()->with('status', "Pencairan {$payout->code} dikirim ke HR. Slip bisa dibayar setelah HR acc.");
+    }
+
     public function markAllPaid(Payout $payout, ManagePayoutSlipAction $slips): RedirectResponse
     {
-        $pendingKasbon = $slips->markAllPaid($payout);
-        $redirect = Redirect::back()->with('status', 'Semua slip ditandai dibayar.');
+        $slips->markAllPaid($payout);
 
-        return $pendingKasbon > 0
-            ? $redirect->with('error', "{$pendingKasbon} slip potongan kasbonnya belum tercatat di HR. Tekan \"Kirim kasbon ke HR\" di slip itu untuk melihat alasannya dan mencoba lagi.")
-            : $redirect;
+        return Redirect::back()->with('status', 'Semua slip ditandai dibayar.');
     }
 
     public function destroy(Payout $payout, ManagePayoutSlipAction $slips): RedirectResponse
@@ -103,11 +108,9 @@ class PayoutController extends Controller
     {
         $confirm = (string) $request->validate(['confirm_code' => ['required', 'string']])['confirm_code'];
 
-        $kasbonReported = $payout->slips()->whereNotNull('kasbon_reported_at')->exists();
         $slips->forceDelete($payout, $confirm, $request->user()?->id);
-        $kasbonNote = $kasbonReported ? ' Potongan kasbon yang sudah tercatat di HR tidak ikut dibatalkan, koreksi manual di HR.' : '';
 
-        return Redirect::route('payouts.index')->with('status', "Pencairan {$payout->code} dihapus total. Setoran di dalamnya kembali belum dibayar dan bisa dihitung di pencairan baru.{$kasbonNote}");
+        return Redirect::route('payouts.index')->with('status', "Pencairan {$payout->code} dihapus total. Setoran di dalamnya kembali belum dibayar dan bisa dihitung di pencairan baru.");
     }
 
     public function updateSlip(UpdatePayoutSlipRequest $request, PayoutSlip $slip, ManagePayoutSlipAction $slips): RedirectResponse
@@ -119,20 +122,9 @@ class PayoutController extends Controller
 
     public function markSlipPaid(PayoutSlip $slip, ManagePayoutSlipAction $slips): RedirectResponse
     {
-        $slip = $slips->markPaid($slip);
+        $slips->markPaid($slip);
 
-        return $slip->hasPendingKasbonReport()
-            ? Redirect::back()->with('status', 'Slip ditandai dibayar.')->with('error', 'Potongan kasbon belum tercatat di HR. Tekan "Kirim kasbon ke HR" untuk melihat alasannya dan mencoba lagi.')
-            : Redirect::back()->with('status', 'Slip ditandai dibayar.');
-    }
-
-    public function reportSlipKasbon(PayoutSlip $slip, ManagePayoutSlipAction $slips): RedirectResponse
-    {
-        $failure = $slips->reportKasbon($slip);
-
-        return $failure === null
-            ? Redirect::back()->with('status', 'Potongan kasbon sudah tercatat di HR.')
-            : Redirect::back()->with('error', 'Potongan kasbon belum bisa dicatat di HR: '.$failure);
+        return Redirect::back()->with('status', 'Slip ditandai dibayar.');
     }
 
     /**

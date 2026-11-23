@@ -13,8 +13,9 @@ import { SheetState } from '@/domain/master/sheet-state';
 import AppLayout from '@/layouts/app-layout';
 import type { UserRole } from '@/types';
 import type { ManagedUserRecord } from '@/types/sewing';
-import { useForm } from '@inertiajs/react';
-import { KeyRound, ShieldCheck, UserCog, UserPlus } from 'lucide-react';
+import { useCan } from '@/lib/abilities';
+import { Link, useForm } from '@inertiajs/react';
+import { History, KeyRound, ShieldCheck, UserCog, UserPlus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 type UsersProps = {
@@ -62,6 +63,7 @@ export default function Users({ users, roles }: UsersProps) {
 
 function UserRow({ user, onAction }: { user: ManagedUserRecord; onAction: (kind: UserAction['kind']) => void }) {
     const canManage = user.can_manage;
+    const canSeeHistory = useCan()('activity-logs.view');
     return (
         <Card asChild>
             <li className="flex flex-col gap-3 border bg-card p-4 lg:flex-row lg:items-center lg:gap-4 lg:rounded-none lg:border-0 lg:px-4 lg:py-3">
@@ -73,6 +75,12 @@ function UserRow({ user, onAction }: { user: ManagedUserRecord; onAction: (kind:
                     <div className="flex flex-wrap items-center gap-2">
                         <ToneBadge tone={RoleCatalog.tone(user.role)}>{user.role_label}</ToneBadge>
                         {user.is_current_user && <ToneBadge tone="neutral">Akun Anda</ToneBadge>}
+                        {canSeeHistory && (
+                            <Link href={route('activity-logs.index', { user: user.id })} className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+                                <History className="size-3.5" />
+                                Lihat aktivitas
+                            </Link>
+                        )}
                     </div>
                 </div>
 

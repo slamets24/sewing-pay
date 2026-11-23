@@ -7,21 +7,24 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Potongan kasbon dari hr-azzahra per slip: total, rincian per kasbon, dan kapan sudah dicatat di HR.
+     * Kasbon warung dan kasbon mingguan diinput admin per slip, dipisah dari potongan lain.
      */
     public function up(): void
     {
+        if (Schema::hasColumn('payout_slips', 'kasbon_warung_amount')) {
+            return;
+        }
+
         Schema::table('payout_slips', function (Blueprint $table): void {
-            $table->unsignedInteger('kasbon_amount')->default(0)->after('deduction_amount');
-            $table->json('kasbon_deductions')->nullable()->after('kasbon_amount');
-            $table->timestamp('kasbon_reported_at')->nullable()->after('kasbon_deductions');
+            $table->unsignedInteger('kasbon_warung_amount')->default(0)->after('deduction_amount');
+            $table->unsignedInteger('kasbon_mingguan_amount')->default(0)->after('kasbon_warung_amount');
         });
     }
 
     public function down(): void
     {
         Schema::table('payout_slips', function (Blueprint $table): void {
-            $table->dropColumn(['kasbon_amount', 'kasbon_deductions', 'kasbon_reported_at']);
+            $table->dropColumn(['kasbon_warung_amount', 'kasbon_mingguan_amount']);
         });
     }
 };

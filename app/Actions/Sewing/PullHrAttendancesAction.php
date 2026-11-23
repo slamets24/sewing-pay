@@ -5,7 +5,10 @@ namespace App\Actions\Sewing;
 use App\Enums\TailorType;
 use App\Models\Tailor;
 use App\Models\TailorAttendance;
+use App\Models\TargetDay;
 use App\Services\Sewing\HrAzzahraClient;
+use App\Services\Sewing\MealAllowancePolicy;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -29,7 +32,15 @@ class PullHrAttendancesAction
         'off' => 'off',
     ];
 
-    public function __construct(private readonly HrAzzahraClient $client) {}
+    /** @var Collection<string, TargetDay> */
+    private Collection $targetDays;
+
+    public function __construct(
+        private readonly HrAzzahraClient $client,
+        private readonly MealAllowancePolicy $mealPolicy,
+    ) {
+        $this->targetDays = collect();
+    }
 
     /**
      * @return array{created: int, updated: int, on_draft_slip: int, skipped_paid: int, unmatched: int}
@@ -46,7 +57,12 @@ class PullHrAttendancesAction
         $tailors = Tailor::query()
             ->where('type', TailorType::Internal->value)
             ->where(fn ($query) => $query->whereNotNull('hr_employee_id')->orWhereNotNull('hr_employee_number'))
-            ->get(['id', 'hr_employee_id', 'hr_employee_number']);
+            ->get(['id', 'hr_employee_id', 'hr_employee_number', 'joined_at']);
+        $this->targetDays = TargetDay::query()
+            ->whereDate('date', '>=', $dateFrom)
+            ->whereDate('date', '<=', $dateTo)
+            ->get()
+            ->keyBy(fn (TargetDay $day): string => $day->date->toDateString());
         $tailorsByHrId = $tailors->whereNotNull('hr_employee_id')->keyBy(fn (Tailor $tailor): int => (int) $tailor->hr_employee_id);
         $tailorsByNumber = $tailors->filter(fn (Tailor $tailor): bool => filled($tailor->hr_employee_number))->keyBy('hr_employee_number');
 
@@ -83,7 +99,14 @@ class PullHrAttendancesAction
             'clock_in' => $clockIn,
             'clock_out' => $clockOut,
             'working_hours' => $workingHours,
-            'meal_allowance' => TailorAttendance::calculateMealAllowance($workingHours, $status),
+            'meal_allowance' => $this->mealPolicy->amountFor(
+                $tailor,
+                (string) $record['date'],
+                $status,
+                $clockIn,
+                $clockOut,
+                $this->targetDays->get(substr((string) $record['date'], 0, 10)),
+            ),
             'status' => $status,
             'is_self_clocked' => false,
             'note' => filled($record['note'] ?? null) ? mb_substr((string) $record['note'], 0, 500) : 'Dari HR',

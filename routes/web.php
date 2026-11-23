@@ -1,11 +1,11 @@
 <?php
 
 use App\Enums\Ability;
+use App\Http\Controllers\Sewing\ActivityLogController;
 use App\Http\Controllers\Sewing\ArticleController;
 use App\Http\Controllers\Sewing\CuttingReceiptController;
 use App\Http\Controllers\Sewing\DeliveryController;
 use App\Http\Controllers\Sewing\HancaanReceiptController;
-use App\Http\Controllers\Sewing\VendorJobController;
 use App\Http\Controllers\Sewing\MakloonPaymentController;
 use App\Http\Controllers\Sewing\ManagedUserController;
 use App\Http\Controllers\Sewing\OverviewController;
@@ -21,6 +21,7 @@ use App\Http\Controllers\Sewing\RevisionPartController;
 use App\Http\Controllers\Sewing\RoleController;
 use App\Http\Controllers\Sewing\TailorAttendanceController;
 use App\Http\Controllers\Sewing\TailorController;
+use App\Http\Controllers\Sewing\VendorJobController;
 use App\Http\Controllers\Sewing\WorkOrderController;
 use App\Http\Controllers\Sewing\WorkOrderItemController;
 use Illuminate\Support\Facades\Route;
@@ -106,6 +107,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/absensi', [TailorAttendanceController::class, 'storeOrUpdate'])->name('attendances.store')->middleware('can:'.Ability::AttendancesManage->value);
     Route::post('/absensi/hadir-semua', [TailorAttendanceController::class, 'batchPresent'])->name('attendances.batch')->middleware('can:'.Ability::AttendancesManage->value);
     Route::post('/absensi/tarik-hr', [TailorAttendanceController::class, 'pullFromHr'])->name('attendances.pull-hr')->middleware('can:'.Ability::AttendancesManage->value);
+    Route::post('/absensi/hari-target', [TailorAttendanceController::class, 'saveTargetDay'])->name('attendances.target-day.save')->middleware('can:'.Ability::AttendancesManage->value);
+    Route::delete('/absensi/hari-target', [TailorAttendanceController::class, 'removeTargetDay'])->name('attendances.target-day.remove')->middleware('can:'.Ability::AttendancesManage->value);
+    Route::put('/absensi/aturan-uang-makan', [TailorAttendanceController::class, 'updateMealSettings'])->name('attendances.meal-settings')->middleware('can:'.Ability::PayoutsManage->value);
     Route::delete('/absensi/{attendance}', [TailorAttendanceController::class, 'destroy'])->name('attendances.destroy')->middleware('can:'.Ability::AttendancesManage->value);
 
     Route::get('/rekap-produksi', [ProductionReportController::class, 'index'])->name('production-reports.index')->middleware('can:'.Ability::ProductionReportsView->value);
@@ -138,18 +142,22 @@ Route::middleware('auth')->group(function () {
     Route::post('/gaji', [PayoutController::class, 'store'])->name('payouts.store')->middleware('can:'.Ability::PayoutsManage->value);
     Route::get('/gaji/{payout}', [PayoutController::class, 'show'])->name('payouts.show')->middleware('can:'.Ability::PayoutsView->value);
     Route::post('/gaji/{payout}/hitung-ulang', [PayoutController::class, 'regenerate'])->name('payouts.regenerate')->middleware('can:'.Ability::PayoutsManage->value);
+    Route::post('/gaji/{payout}/kirim-hr', [PayoutController::class, 'submitToHr'])->name('payouts.submit-hr')->middleware('can:'.Ability::PayoutsManage->value);
     Route::post('/gaji/{payout}/bayar-semua', [PayoutController::class, 'markAllPaid'])->name('payouts.paid')->middleware('can:'.Ability::PayoutsPay->value);
     Route::delete('/gaji/{payout}', [PayoutController::class, 'destroy'])->name('payouts.destroy')->middleware('can:'.Ability::PayoutsManage->value);
     Route::delete('/gaji/{payout}/hapus-total', [PayoutController::class, 'forceDestroy'])->name('payouts.force-destroy')->middleware('can:'.Ability::PayoutsForceDelete->value);
     Route::patch('/slip/{slip}', [PayoutController::class, 'updateSlip'])->name('payout-slips.update')->middleware('can:'.Ability::PayoutsManage->value);
     Route::post('/slip/{slip}/bayar', [PayoutController::class, 'markSlipPaid'])->name('payout-slips.paid')->middleware('can:'.Ability::PayoutsPay->value);
-    Route::post('/slip/{slip}/kirim-kasbon-hr', [PayoutController::class, 'reportSlipKasbon'])->name('payout-slips.report-kasbon')->middleware('can:'.Ability::PayoutsPay->value);
 
     Route::get('/pembayaran-maklun', [MakloonPaymentController::class, 'index'])->name('makloon-payments.index')->middleware('can:'.Ability::MakloonPaymentsManage->value);
     Route::get('/pembayaran-maklun/baru', [MakloonPaymentController::class, 'create'])->name('makloon-payments.create')->middleware('can:'.Ability::MakloonPaymentsManage->value);
     Route::post('/pembayaran-maklun', [MakloonPaymentController::class, 'store'])->name('makloon-payments.store')->middleware('can:'.Ability::MakloonPaymentsManage->value);
     Route::get('/pembayaran-maklun/{makloonPayment}', [MakloonPaymentController::class, 'show'])->name('makloon-payments.show')->middleware('can:'.Ability::MakloonPaymentsManage->value);
     Route::delete('/pembayaran-maklun/{makloonPayment}', [MakloonPaymentController::class, 'destroy'])->name('makloon-payments.destroy')->middleware('can:'.Ability::MakloonPaymentsManage->value);
+
+    Route::get('/riwayat', [ActivityLogController::class, 'index'])->name('activity-logs.index')->middleware('can:'.Ability::ActivityLogsView->value);
+    Route::get('/riwayat/hapus-pratinjau', [ActivityLogController::class, 'purgePreview'])->name('activity-logs.purge-preview')->middleware('can:'.Ability::ActivityLogsPurge->value);
+    Route::delete('/riwayat', [ActivityLogController::class, 'purge'])->name('activity-logs.purge')->middleware('can:'.Ability::ActivityLogsPurge->value);
 
     // Master role & ability — khusus Owner (roles.manage tidak bisa diberikan ke role lain).
     Route::get('/role', [RoleController::class, 'index'])->name('roles.index')->middleware('can:'.Ability::RolesManage->value);

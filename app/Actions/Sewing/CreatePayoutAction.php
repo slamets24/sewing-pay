@@ -12,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 class CreatePayoutAction
 {
     /**
-     * Catatan HR dari perhitungan terakhir (absensi/kasbon tidak terbaca).
+     * Catatan HR dari perhitungan terakhir (absensi tidak bisa ditarik).
      *
      * @return list<string>
      */
@@ -25,9 +25,9 @@ class CreatePayoutAction
 
     public function execute(string $cutoffDate, ?string $notes = null, ?int $createdBy = null): Payout
     {
-        $outstandingKasbons = $this->generate->prepareFromHr(Carbon::parse($cutoffDate));
+        $this->generate->pullHrAttendances(Carbon::parse($cutoffDate));
 
-        return DB::transaction(function () use ($cutoffDate, $notes, $createdBy, $outstandingKasbons) {
+        return DB::transaction(function () use ($cutoffDate, $notes, $createdBy) {
             if (Payout::query()->where('status', PayoutStatus::Draft->value)->lockForUpdate()->exists()) {
                 throw ValidationException::withMessages(['cutoff_date' => 'Masih ada draft pencairan. Selesaikan atau hapus dulu.']);
             }
@@ -42,7 +42,7 @@ class CreatePayoutAction
                 'created_by' => $createdBy,
             ]);
 
-            return $this->generate->execute($payout, $outstandingKasbons);
+            return $this->generate->execute($payout, pullHr: false);
         });
     }
 

@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureUserRole;
 use App\Http\Middleware\EnsureValidInternalApiKey;
 use App\Http\Middleware\EnsureValidPackingApiKey;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\RecordActivity;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -23,7 +24,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+            RecordActivity::class,
         ]);
+        $middleware->api(append: [RecordActivity::class]);
 
         $middleware->alias([
             'role' => EnsureUserRole::class,

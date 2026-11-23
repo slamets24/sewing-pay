@@ -32,7 +32,9 @@ export type Ability =
     | 'articles.sync'
     | 'revision-parts.manage'
     | 'users.manage'
-    | 'roles.manage';
+    | 'roles.manage'
+    | 'activity-logs.view'
+    | 'activity-logs.purge';
 
 /** `can('articles.update')` — true when the signed-in user's role holds the ability. */
 export function useCan(): (ability: Ability) => boolean {

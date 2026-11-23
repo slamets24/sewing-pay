@@ -3,17 +3,23 @@ import type { PayoutSlipRecord } from '@/types/sewing';
 export type SlipAdjustmentInput = {
     bonus_amount: string;
     deduction_amount: string;
+    kasbon_warung_amount: string;
+    kasbon_mingguan_amount: string;
     notes: string;
 };
 
 export type SlipAdjustmentPayload = {
     bonus_amount: number;
     deduction_amount: number;
+    kasbon_warung_amount: number;
+    kasbon_mingguan_amount: number;
     notes: string | null;
 };
 
+type SavedAmounts = Pick<PayoutSlipRecord, 'bonus_amount' | 'deduction_amount' | 'kasbon_warung_amount' | 'kasbon_mingguan_amount' | 'notes'>;
+
 /**
- * Live preview of a slip's bonus/potongan edit: diterima = kotor + bonus − potongan − potongan kasbon (dari HR, tidak diedit di sini).
+ * Live preview of a slip's bonus/potongan/kasbon edit: diterima = kotor + bonus − potongan − kasbon warung − kasbon mingguan.
  * Mirrors the server rules (whole rupiah, max 100 jt each, diterima never below zero) so mistakes show before saving.
  */
 export class SlipAdjustment {
@@ -23,18 +29,32 @@ export class SlipAdjustment {
         readonly gross: number,
         readonly bonus: number,
         readonly deduction: number,
-        readonly kasbon: number = 0,
+        readonly kasbonWarung: number = 0,
+        readonly kasbonMingguan: number = 0,
     ) {}
 
-    static fromInput(gross: number, input: Pick<SlipAdjustmentInput, 'bonus_amount' | 'deduction_amount'>, kasbon = 0): SlipAdjustment {
-        return new SlipAdjustment(gross, SlipAdjustment.parseAmount(input.bonus_amount), SlipAdjustment.parseAmount(input.deduction_amount), kasbon);
+    static fromInput(
+        gross: number,
+        input: Pick<SlipAdjustmentInput, 'bonus_amount' | 'deduction_amount'> & Partial<Pick<SlipAdjustmentInput, 'kasbon_warung_amount' | 'kasbon_mingguan_amount'>>,
+    ): SlipAdjustment {
+        return new SlipAdjustment(
+            gross,
+            SlipAdjustment.parseAmount(input.bonus_amount),
+            SlipAdjustment.parseAmount(input.deduction_amount),
+            SlipAdjustment.parseAmount(input.kasbon_warung_amount ?? ''),
+            SlipAdjustment.parseAmount(input.kasbon_mingguan_amount ?? ''),
+        );
     }
 
     /** Form values for a slip as saved on the server; zero shows as an empty field. */
-    static inputFor(slip: Pick<PayoutSlipRecord, 'bonus_amount' | 'deduction_amount' | 'notes'>): SlipAdjustmentInput {
+    static inputFor(slip: SavedAmounts): SlipAdjustmentInput {
+        const field = (amount: number | undefined) => ((amount ?? 0) > 0 ? String(amount) : '');
+
         return {
-            bonus_amount: slip.bonus_amount > 0 ? String(slip.bonus_amount) : '',
-            deduction_amount: slip.deduction_amount > 0 ? String(slip.deduction_amount) : '',
+            bonus_amount: field(slip.bonus_amount),
+            deduction_amount: field(slip.deduction_amount),
+            kasbon_warung_amount: field(slip.kasbon_warung_amount),
+            kasbon_mingguan_amount: field(slip.kasbon_mingguan_amount),
             notes: slip.notes ?? '',
         };
     }
@@ -56,8 +76,13 @@ export class SlipAdjustment {
         return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     }
 
+    /** Total yang dipotong: potongan lain + kasbon warung + kasbon mingguan. */
+    get totalDeduction(): number {
+        return this.deduction + this.kasbonWarung + this.kasbonMingguan;
+    }
+
     get net(): number {
-        return this.gross + this.bonus - this.deduction - this.kasbon;
+        return this.gross + this.bonus - this.totalDeduction;
     }
 
     get bonusError(): string | null {
@@ -65,12 +90,8 @@ export class SlipAdjustment {
     }
 
     get deductionError(): string | null {
-        if (this.deduction > SlipAdjustment.MAX_AMOUNT) return 'Potongan terlalu besar (maksimal Rp. 100 juta).';
-        if (this.net < 0) {
-            return this.kasbon > 0
-                ? 'Potongan ditambah potongan kasbon tidak boleh melebihi gaji kotor ditambah bonus.'
-                : 'Potongan tidak boleh melebihi gaji kotor ditambah bonus.';
-        }
+        if (Math.max(this.deduction, this.kasbonWarung, this.kasbonMingguan) > SlipAdjustment.MAX_AMOUNT) return 'Potongan terlalu besar (maksimal Rp. 100 juta).';
+        if (this.net < 0) return 'Potongan dan kasbon tidak boleh melebihi gaji kotor ditambah bonus.';
 
         return null;
     }
@@ -80,14 +101,22 @@ export class SlipAdjustment {
     }
 
     /** True when the typed amounts or notes differ from what is saved on the slip. */
-    differsFrom(slip: Pick<PayoutSlipRecord, 'bonus_amount' | 'deduction_amount' | 'notes'>, notes: string): boolean {
-        return this.bonus !== slip.bonus_amount || this.deduction !== slip.deduction_amount || notes.trim() !== (slip.notes ?? '').trim();
+    differsFrom(slip: SavedAmounts, notes: string): boolean {
+        return (
+            this.bonus !== slip.bonus_amount ||
+            this.deduction !== slip.deduction_amount ||
+            this.kasbonWarung !== (slip.kasbon_warung_amount ?? 0) ||
+            this.kasbonMingguan !== (slip.kasbon_mingguan_amount ?? 0) ||
+            notes.trim() !== (slip.notes ?? '').trim()
+        );
     }
 
     toPayload(notes: string): SlipAdjustmentPayload {
         return {
             bonus_amount: this.bonus,
             deduction_amount: this.deduction,
+            kasbon_warung_amount: this.kasbonWarung,
+            kasbon_mingguan_amount: this.kasbonMingguan,
             notes: notes.trim() || null,
         };
     }

@@ -51,6 +51,8 @@ enum Ability: string
     case RevisionPartsManage = 'revision-parts.manage';
     case UsersManage = 'users.manage';
     case RolesManage = 'roles.manage';
+    case ActivityLogsView = 'activity-logs.view';
+    case ActivityLogsPurge = 'activity-logs.purge';
 
     public function label(): string
     {
@@ -84,6 +86,8 @@ enum Ability: string
             self::RevisionPartsManage => 'Bagian revisi',
             self::UsersManage => 'Kelola akun pengguna',
             self::RolesManage => 'Kelola role & ability',
+            self::ActivityLogsView => 'Riwayat aktivitas',
+            self::ActivityLogsPurge => 'Hapus riwayat aktivitas',
         };
     }
 
@@ -119,6 +123,8 @@ enum Ability: string
             self::RevisionPartsManage => 'Tambah dan ubah daftar bagian revisi.',
             self::UsersManage => 'Buat akun, ubah peran, dan reset password akun lain.',
             self::RolesManage => 'Tambah role dan atur ability-nya. Khusus Owner.',
+            self::ActivityLogsView => 'Lihat siapa memasukkan, mengubah, dan menghapus data di semua menu.',
+            self::ActivityLogsPurge => 'Hapus riwayat lama sampai tanggal tertentu. Khusus Owner.',
         };
     }
 
@@ -132,22 +138,23 @@ enum Ability: string
             self::AttendancesManage, self::TailorsManage, self::TailorsSyncHr => 'Kepegawaian',
             self::PayoutsView, self::PayoutsManage, self::PayoutsPay, self::PayoutsForceDelete, self::MakloonPaymentsManage => 'Keuangan & Gaji',
             self::ArticlesView, self::ArticlesCreate, self::ArticlesUpdate, self::ArticlesSamples, self::ArticlesSync,
-            self::RevisionPartsManage, self::UsersManage, self::RolesManage => 'Master Data',
+            self::RevisionPartsManage, self::UsersManage, self::RolesManage, self::ActivityLogsView, self::ActivityLogsPurge => 'Master Data',
         };
     }
 
     /**
-     * Owner-only abilities can't be handed to another role: whoever holds them could grant themselves everything.
+     * Owner-only abilities can't be handed to another role: whoever holds them could grant themselves everything,
+     * or erase the trail of what they did.
      */
     public function isOwnerOnly(): bool
     {
-        return $this === self::RolesManage;
+        return in_array($this, [self::RolesManage, self::ActivityLogsPurge], true);
     }
 
     /** Destructive or money-moving actions, flagged in the role editor. */
     public function isSensitive(): bool
     {
-        return in_array($this, [self::WorkOrdersPurge, self::PayoutsPay, self::PayoutsForceDelete, self::MakloonPaymentsManage, self::UsersManage], true);
+        return in_array($this, [self::WorkOrdersPurge, self::PayoutsPay, self::PayoutsForceDelete, self::MakloonPaymentsManage, self::UsersManage, self::ActivityLogsView], true);
     }
 
     /**
@@ -252,6 +259,7 @@ enum Ability: string
             self::ArticlesView->value => 'articles.index',
             self::RevisionPartsManage->value => 'revision-parts.index',
             self::UsersManage->value => 'users.index',
+            self::ActivityLogsView->value => 'activity-logs.index',
         ];
     }
 }

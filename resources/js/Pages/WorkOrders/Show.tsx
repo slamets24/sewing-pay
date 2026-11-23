@@ -111,6 +111,14 @@ export default function WorkOrderShow({ workOrder, receipts, cuttingReceipts = [
                             }
                         />
                         <WaReportButton text={workOrderWaText(workOrder)} />
+                        {can('activity-logs.view') && (
+                            <Button asChild variant="outline">
+                                <Link href={route('activity-logs.index', { wo: workOrder.id })}>
+                                    <History />
+                                    Riwayat
+                                </Link>
+                            </Button>
+                        )}
                         {(workOrder.can_delete || purge) && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>

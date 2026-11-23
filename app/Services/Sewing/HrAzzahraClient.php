@@ -93,30 +93,21 @@ class HrAzzahraClient
     }
 
     /**
-     * Kasbon yang belum lunas untuk banyak penjahit sekaligus, dikelompokkan per nomor karyawan HR.
+     * Kirim draft pencairan gaji penjahit ke hr-azzahra untuk di-acc. Dikirim ulang = data di HR diganti (selama belum di-acc).
      *
-     * @param  list<string>  $employeeNumbers
-     * @return array<string, array{total_outstanding: int, loans: list<array{id: int, kasbon_number: string, requested_date: string|null, remaining_amount: int}>}>
+     * @param  array<string, mixed>  $payload
      */
-    public function outstandingKasbonsFor(array $employeeNumbers): array
+    public function submitPayout(array $payload): void
     {
-        $employeeNumbers = array_values(array_unique(array_filter(array_map('strval', $employeeNumbers))));
-
-        if ($employeeNumbers === []) {
-            return [];
-        }
-
         $this->ensureConfigured();
 
-        $response = $this->request()->get('/api/v1/internal/kasbons/active', [
-            'employee_numbers' => $employeeNumbers,
-        ]);
+        $response = $this->request()->post('/api/v1/internal/sewing-payouts', $payload);
 
         if ($response->failed()) {
-            throw new RuntimeException("hr-azzahra menolak permintaan kasbon (HTTP {$response->status()}).");
-        }
+            $reason = (string) ($response->json('message') ?: "HTTP {$response->status()}");
 
-        return (array) $response->json('data.employees', []);
+            throw new RuntimeException("hr-azzahra menolak kiriman gaji: {$reason}");
+        }
     }
 
     public function ensureConfigured(): void

@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Sewing;
 
 use App\Actions\Sewing\PullHrAttendancesAction;
+use App\Enums\Ability;
 use App\Enums\TailorType;
 use App\Http\Controllers\Controller;
 use App\Models\Tailor;
 use App\Models\TailorAttendance;
+use App\Models\TargetDay;
+use App\Services\Sewing\MealAllowancePolicy;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,9 +20,12 @@ use Inertia\Response;
 
 class TailorAttendanceController extends Controller
 {
+    public function __construct(private readonly MealAllowancePolicy $mealPolicy) {}
+
     public function index(Request $request): Response
     {
         $date = $this->safeDate($request->query('date'));
+        $targetDay = $this->mealPolicy->targetDayOn($date);
 
         $internalTailors = Tailor::query()
             ->where('is_active', true)
@@ -32,9 +38,10 @@ class TailorAttendanceController extends Controller
             ->get()
             ->keyBy('tailor_id');
 
-        $rows = $internalTailors->map(function (Tailor $tailor) use ($attendances, $date) {
+        $rows = $internalTailors->map(function (Tailor $tailor) use ($attendances, $date, $targetDay) {
             /** @var TailorAttendance|null $attendance */
             $attendance = $attendances->get($tailor->id);
+            $tier = $this->mealPolicy->tierFor($tailor, $date);
 
             return [
                 'id' => $attendance?->id,
@@ -45,7 +52,13 @@ class TailorAttendanceController extends Controller
                 'clock_in' => $attendance?->clock_in ? substr($attendance->clock_in, 0, 5) : null,
                 'clock_out' => $attendance?->clock_out ? substr($attendance->clock_out, 0, 5) : null,
                 'working_hours' => $attendance?->working_hours ?? 9,
-                'meal_allowance' => $attendance?->meal_allowance ?? TailorAttendance::calculateMealAllowance(9),
+                'meal_allowance' => $attendance?->meal_allowance
+                    ?? $this->mealPolicy->amountFor($tailor, $date, 'present', $targetDay?->startClock(), $targetDay?->endClock(), $targetDay),
+                'meal_rule' => [
+                    'amount' => $tier['amount'],
+                    'target_deduction' => $tier['target_deduction'],
+                    'tenure_label' => $tailor->joined_at ? $tailor->tenureLabel() : null,
+                ],
                 'status' => $attendance?->status ?? 'present',
                 'is_self_clocked' => $attendance?->is_self_clocked ?? false,
                 'is_recorded' => $attendance !== null,
@@ -69,10 +82,13 @@ class TailorAttendanceController extends Controller
                 'unrecorded_count' => $unrecordedCount,
                 'total_internal' => $internalTailors->count(),
             ],
-            'mealAllowanceRules' => config('sewing.meal_allowance', [
-                'under_10_hours' => 30_000,
-                'ten_hours_or_more' => 35_000,
-            ]),
+            'mealSettings' => $this->mealPolicy->settings(),
+            'targetDay' => $targetDay ? [
+                'start' => $targetDay->startClock(),
+                'end' => $targetDay->endClock(),
+                'note' => $targetDay->note,
+            ] : null,
+            'canManageMealSettings' => (bool) $request->user()?->can(Ability::PayoutsManage->value),
             'standardBenchmarkRates' => config('sewing.benchmark_standard_rates', [
                 9 => 241_400,
                 10 => 265_000,
@@ -105,7 +121,14 @@ class TailorAttendanceController extends Controller
         } elseif (isset($validated['meal_allowance']) && $validated['meal_allowance'] !== null) {
             $mealAllowance = (int) $validated['meal_allowance'];
         } else {
-            $mealAllowance = TailorAttendance::calculateMealAllowance($workingHours);
+            $mealAllowance = $this->mealPolicy->amountFor(
+                Tailor::query()->findOrFail($validated['tailor_id']),
+                $date,
+                'present',
+                ($validated['clock_in'] ?? null) ?: null,
+                ($validated['clock_out'] ?? null) ?: null,
+                $this->mealPolicy->targetDayOn($date),
+            );
         }
 
         $attendance = TailorAttendance::query()
@@ -163,7 +186,9 @@ class TailorAttendanceController extends Controller
 
         $date = Carbon::parse($validated['date'])->toDateString();
         $hours = $validated['working_hours'] ?? 9;
-        $allowance = TailorAttendance::calculateMealAllowance($hours);
+        $targetDay = $this->mealPolicy->targetDayOn($date);
+        $clockIn = $targetDay?->startClock() ?? '08:00';
+        $clockOut = $targetDay?->endClock() ?? ($hours === 9 ? '17:00' : ($hours === 10 ? '18:00' : ($hours === 11 ? '19:00' : '20:00')));
 
         $tailors = Tailor::query()->where('is_active', true)->where('type', 'internal')->get();
 
@@ -171,10 +196,10 @@ class TailorAttendanceController extends Controller
             TailorAttendance::query()->firstOrCreate(
                 ['tailor_id' => $tailor->id, 'date' => $date],
                 [
-                    'clock_in' => '08:00',
-                    'clock_out' => $hours === 9 ? '17:00' : ($hours === 10 ? '18:00' : ($hours === 11 ? '19:00' : '20:00')),
-                    'working_hours' => $hours,
-                    'meal_allowance' => $allowance,
+                    'clock_in' => $clockIn,
+                    'clock_out' => $clockOut,
+                    'working_hours' => $targetDay ? TailorAttendance::determineWorkingHours($clockIn, $clockOut) : $hours,
+                    'meal_allowance' => $this->mealPolicy->amountFor($tailor, $date, 'present', $clockIn, $clockOut, $targetDay),
                     'status' => 'present',
                     'is_self_clocked' => false,
                     'created_by' => $request->user()->id,
@@ -182,7 +207,7 @@ class TailorAttendanceController extends Controller
             );
         }
 
-        return back()->with('status', "Semua penjahit internal ditandai hadir {$hours} jam (Uang makan: Rp. ".number_format($allowance, 0, ',', '.').').');
+        return back()->with('status', "Semua penjahit internal ditandai hadir {$clockIn}–{$clockOut}. Uang makan mengikuti masa kerja masing-masing.");
     }
 
     /**
@@ -215,6 +240,92 @@ class TailorAttendanceController extends Controller
         ]);
 
         return back()->with('status', "Absensi HR ditarik: {$result['created']} baru, {$result['updated']} diperbarui".($notes !== [] ? ' · '.implode(' · ', $notes) : '').'.');
+    }
+
+    /**
+     * Simpan aturan uang makan (per masa kerja + potongan hari target), lalu hitung ulang absensi yang belum dibayar.
+     */
+    public function updateMealSettings(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'tiers' => ['required', 'array', 'min:1', 'max:10'],
+            'tiers.*.min_years' => ['required', 'numeric', 'min:0', 'max:50', 'distinct'],
+            'tiers.*.amount' => ['required', 'integer', 'min:0', 'max:1000000'],
+            'tiers.*.target_deduction' => ['required', 'integer', 'min:0', 'max:1000000'],
+            'target_start' => ['required', 'date_format:H:i'],
+            'target_end' => ['required', 'date_format:H:i', 'after:target_start'],
+        ], [
+            'tiers.*.min_years.distinct' => 'Batas masa kerja tidak boleh sama.',
+            'target_end.after' => 'Jam selesai hari target harus setelah jam mulai.',
+        ]);
+
+        $tiers = collect($validated['tiers'])
+            ->map(fn (array $tier): array => [
+                'min_years' => (float) $tier['min_years'],
+                'amount' => (int) $tier['amount'],
+                'target_deduction' => min((int) $tier['target_deduction'], (int) $tier['amount']),
+            ])
+            ->sortBy('min_years')
+            ->values();
+
+        if ($tiers->first()['min_years'] > 0) {
+            throw ValidationException::withMessages(['tiers' => 'Tingkat pertama harus mulai dari 0 tahun.']);
+        }
+
+        $this->mealPolicy->save([
+            'tiers' => $tiers->all(),
+            'target_start' => $validated['target_start'],
+            'target_end' => $validated['target_end'],
+        ], $request->user()->id);
+
+        $result = $this->mealPolicy->recalculateUnpaid();
+
+        return back()->with('status', $this->recalculatedMessage('Aturan uang makan disimpan', $result));
+    }
+
+    /**
+     * Tandai tanggal sebagai hari target (atau ubah jamnya), lalu hitung ulang uang makan tanggal itu.
+     */
+    public function saveTargetDay(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'date' => ['required', 'date'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
+            'note' => ['nullable', 'string', 'max:255'],
+        ], [
+            'end_time.after' => 'Jam selesai harus setelah jam mulai.',
+        ]);
+
+        $date = Carbon::parse($validated['date'])->toDateString();
+
+        TargetDay::query()->updateOrCreate(['date' => $date], [
+            'start_time' => $validated['start_time'],
+            'end_time' => $validated['end_time'],
+            'note' => $validated['note'] ?? null,
+            'created_by' => $request->user()->id,
+        ]);
+
+        return back()->with('status', $this->recalculatedMessage("Tanggal {$date} ditandai hari target {$validated['start_time']}–{$validated['end_time']}", $this->mealPolicy->recalculateUnpaid($date)));
+    }
+
+    public function removeTargetDay(Request $request): RedirectResponse
+    {
+        $date = Carbon::parse((string) $request->validate(['date' => ['required', 'date']])['date'])->toDateString();
+
+        TargetDay::query()->whereDate('date', $date)->delete();
+
+        return back()->with('status', $this->recalculatedMessage("Hari target {$date} dibatalkan", $this->mealPolicy->recalculateUnpaid($date)));
+    }
+
+    /**
+     * @param  array{updated: int, on_draft_slip: int}  $result
+     */
+    private function recalculatedMessage(string $prefix, array $result): string
+    {
+        $draftNote = $result['on_draft_slip'] > 0 ? " {$result['on_draft_slip']} di antaranya ada di draft gaji, tekan \"Hitung ulang\" di draft itu." : '';
+
+        return "{$prefix}. Uang makan {$result['updated']} absensi yang belum dibayar ikut disesuaikan.{$draftNote}";
     }
 
     public function destroy(TailorAttendance $attendance): RedirectResponse

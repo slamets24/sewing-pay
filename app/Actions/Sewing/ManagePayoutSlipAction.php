@@ -5,21 +5,15 @@ namespace App\Actions\Sewing;
 use App\Enums\PayoutStatus;
 use App\Models\Payout;
 use App\Models\PayoutSlip;
-use App\Services\Sewing\HrAzzahraClient;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Bonus/deduction edits and paying slips; the pay run closes when its last slip is paid.
- * Saat slip dibayar, potongan kasbonnya dicatat ke hr-azzahra (aman diulang, HR menolak catatan ganda).
- */
+/** Bonus, potongan, kasbon warung/mingguan edits and paying slips; the pay run closes when its last slip is paid. */
 class ManagePayoutSlipAction
 {
-    public function __construct(private readonly HrAzzahraClient $hr) {}
-
     /**
-     * @param  array{bonus_amount: int, deduction_amount: int, notes?: ?string}  $data
+     * @param  array{bonus_amount: int, deduction_amount: int, kasbon_warung_amount?: int, kasbon_mingguan_amount?: int, notes?: ?string}  $data
      */
     public function adjust(PayoutSlip $slip, array $data): PayoutSlip
     {
@@ -30,19 +24,23 @@ class ManagePayoutSlipAction
                 throw ValidationException::withMessages(['payout_slip' => 'Slip yang sudah dibayar tidak bisa diubah.']);
             }
 
-            $net = $slip->gross_amount + (int) $data['bonus_amount'] - (int) $data['deduction_amount'] - $slip->kasbon_amount;
+            if ($slip->payout()->first()?->isLockedByHr()) {
+                throw ValidationException::withMessages(['payout_slip' => 'Pencairan ini sedang/sudah di-acc HR. Perubahan bonus/kasbon/potongan dilakukan di HR.']);
+            }
+
+            $kasbonWarung = (int) ($data['kasbon_warung_amount'] ?? 0);
+            $kasbonMingguan = (int) ($data['kasbon_mingguan_amount'] ?? 0);
+            $net = $slip->gross_amount + (int) $data['bonus_amount'] - (int) $data['deduction_amount'] - $kasbonWarung - $kasbonMingguan;
 
             if ($net < 0) {
-                throw ValidationException::withMessages([
-                    'deduction_amount' => $slip->kasbon_amount > 0
-                        ? 'Potongan ditambah potongan kasbon tidak boleh melebihi gaji kotor ditambah bonus.'
-                        : 'Potongan tidak boleh melebihi gaji kotor ditambah bonus.',
-                ]);
+                throw ValidationException::withMessages(['deduction_amount' => 'Potongan dan kasbon tidak boleh melebihi gaji kotor ditambah bonus.']);
             }
 
             $slip->forceFill([
                 'bonus_amount' => (int) $data['bonus_amount'],
                 'deduction_amount' => (int) $data['deduction_amount'],
+                'kasbon_warung_amount' => $kasbonWarung,
+                'kasbon_mingguan_amount' => $kasbonMingguan,
                 'net_amount' => $net,
                 'notes' => $data['notes'] ?? null,
             ])->save();
@@ -53,22 +51,14 @@ class ManagePayoutSlipAction
         });
     }
 
-    /**
-     * Tandai slip dibayar, lalu catat potongan kasbonnya ke HR.
-     * Kalau HR gagal dihubungi, slip tetap dibayar dan potongannya bisa dikirim ulang (lihat reportKasbon).
-     */
     public function markPaid(PayoutSlip $slip): PayoutSlip
-    {
-        $slip = $this->markPaidInDatabase($slip);
-        $this->reportKasbon($slip);
-
-        return $slip->refresh();
-    }
-
-    private function markPaidInDatabase(PayoutSlip $slip): PayoutSlip
     {
         return DB::transaction(function () use ($slip) {
             $slip = PayoutSlip::query()->lockForUpdate()->findOrFail($slip->id);
+
+            if (! $slip->payout()->first()?->canBePaid()) {
+                throw ValidationException::withMessages(['payout_slip' => 'Slip baru bisa dibayar setelah pencairan di-acc HR.']);
+            }
 
             if (! $slip->isPaid()) {
                 $slip->forceFill(['status' => PayoutStatus::Paid, 'paid_at' => now()])->save();
@@ -84,63 +74,19 @@ class ManagePayoutSlipAction
         });
     }
 
-    /**
-     * @return int jumlah slip yang potongan kasbonnya belum tercatat di HR
-     */
-    public function markAllPaid(Payout $payout): int
+    public function markAllPaid(Payout $payout): void
     {
-        $paidSlips = DB::transaction(function () use ($payout) {
+        DB::transaction(function () use ($payout) {
             if ($payout->slips()->doesntExist()) {
                 throw ValidationException::withMessages(['payout' => 'Pencairan ini belum punya slip.']);
             }
 
-            return $payout->slips()
-                ->where('status', '!=', PayoutStatus::Paid->value)
-                ->get()
-                ->map(fn (PayoutSlip $slip) => $this->markPaidInDatabase($slip));
-        });
-
-        return $paidSlips
-            ->filter(fn (PayoutSlip $slip): bool => $this->reportKasbon($slip) !== null)
-            ->count();
-    }
-
-    /**
-     * Catat potongan kasbon slip yang sudah dibayar ke hr-azzahra. Nomor slip + id slip dipakai sebagai referensi,
-     * jadi kiriman ulang tidak memotong dua kali.
-     *
-     * @return string|null null kalau tidak ada yang perlu dikirim atau semua potongan sudah tercatat di HR, selain itu alasan gagalnya
-     */
-    public function reportKasbon(PayoutSlip $slip): ?string
-    {
-        if (! $slip->hasPendingKasbonReport()) {
-            return null;
-        }
-
-        $reference = "{$slip->invoice_number}/{$slip->id}";
-
-        try {
-            foreach ((array) $slip->kasbon_deductions as $deduction) {
-                $this->hr->deductKasbon(
-                    (int) $deduction['kasbon_id'],
-                    (int) $deduction['amount'],
-                    $reference,
-                    "Potong gaji jahit slip {$slip->invoice_number}",
-                );
+            if (! $payout->canBePaid()) {
+                throw ValidationException::withMessages(['payout' => 'Pencairan ini baru bisa dibayar setelah di-acc HR.']);
             }
-        } catch (\Throwable $exception) {
-            Log::warning('Potongan kasbon belum tercatat di hr-azzahra', [
-                'payout_slip_id' => $slip->id,
-                'invoice_number' => $slip->invoice_number,
-                'error' => $exception->getMessage(),
-            ]);
 
-            return $exception->getMessage();
-        }
-
-        $slip->forceFill(['kasbon_reported_at' => now()])->save();
-
-        return null;
+            $payout->slips()->where('status', '!=', PayoutStatus::Paid->value)->get()->each(fn (PayoutSlip $slip) => $this->markPaid($slip));
+        });
     }
 
     public function deleteDraft(Payout $payout): void
@@ -150,6 +96,10 @@ class ManagePayoutSlipAction
 
             if (! $payout->isDraft() || $payout->slips()->where('status', PayoutStatus::Paid->value)->exists()) {
                 throw ValidationException::withMessages(['payout' => 'Pencairan yang sudah ada slip dibayar tidak bisa dihapus.']);
+            }
+
+            if ($payout->isLockedByHr()) {
+                throw ValidationException::withMessages(['payout' => 'Pencairan ini sedang/sudah di-acc HR. Minta HR mengembalikannya dulu sebelum dihapus.']);
             }
 
             $payout->delete();
@@ -178,8 +128,6 @@ class ManagePayoutSlipAction
                 'total_amount' => $payout->total_amount,
                 'slips' => $payout->slips()->count(),
                 'paid_slips' => $paidSlips,
-                // Potongan kasbon yang sudah tercatat di HR tidak ikut dibatalkan; koreksi manual di hr-azzahra.
-                'kasbon_reported_slips' => $payout->slips()->whereNotNull('kasbon_reported_at')->pluck('invoice_number')->all(),
                 'user_id' => $userId,
             ]);
 

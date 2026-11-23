@@ -296,6 +296,16 @@ export type PayoutSummary = {
     generated_at: string | null;
     paid_at: string | null;
     notes: string | null;
+    /** OPSEW tersambung ke HR: draft harus di-acc HR sebelum dibayar. */
+    needs_hr_approval?: boolean;
+    hr_status?: 'submitted' | 'approved' | 'returned' | null;
+    hr_status_label?: string;
+    hr_submitted_at?: string | null;
+    hr_decided_at?: string | null;
+    hr_decided_by?: string | null;
+    hr_note?: string | null;
+    is_locked_by_hr?: boolean;
+    can_be_paid?: boolean;
     slips_count: number;
     paid_slips_count: number;
 };
@@ -313,13 +323,6 @@ export type PayoutSlipLineRecord = {
     occurred_at: string;
 };
 
-export type PayoutSlipKasbonDeduction = {
-    kasbon_id: number;
-    kasbon_number: string;
-    amount: number;
-    remaining_before: number;
-};
-
 export type PayoutSlipRecord = {
     id: number;
     invoice_number: string;
@@ -333,11 +336,12 @@ export type PayoutSlipRecord = {
     gross_amount: number;
     bonus_amount: number;
     deduction_amount: number;
-    /** Potongan kasbon dari hr-azzahra, terpisah dari potongan manual. */
-    kasbon_amount?: number;
-    kasbon_deductions?: PayoutSlipKasbonDeduction[];
-    /** Slip sudah dibayar tapi potongan kasbonnya belum tercatat di HR. */
-    kasbon_report_pending?: boolean;
+    kasbon_warung_amount?: number;
+    kasbon_mingguan_amount?: number;
+    /** Pencairan sedang/sudah di-acc HR: bonus/kasbon/potongan diubah di HR. */
+    is_locked?: boolean;
+    /** Boleh ditandai dibayar (HR sudah acc, atau OPSEW tidak memakai acc HR). */
+    can_pay?: boolean;
     net_amount: number;
     notes: string | null;
     paid_at: string | null;
