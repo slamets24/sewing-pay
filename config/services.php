@@ -43,6 +43,8 @@ return [
     'hr_azzahra' => [
         'url' => env('HR_AZZAHRA_API_URL', 'https://hr.azzahrapremiumofficial.com'),
         'key' => env('SWEING_PAY_INTERNAL_KEY'),
+        // ID divisi Penjahit di HR. Kosong = cari divisi yang namanya mengandung "Jahit".
+        'sewing_division_id' => env('HR_AZZAHRA_SEWING_DIVISION_ID'),
     ],
 
     'internal_api' => [

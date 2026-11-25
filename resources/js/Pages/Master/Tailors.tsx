@@ -15,7 +15,7 @@ import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import type { TailorRecord, TailorType } from '@/types/sewing';
 import { router, useForm } from '@inertiajs/react';
-import { Building2, Pencil, Phone, RefreshCw, UserPlus, Users, type LucideIcon } from 'lucide-react';
+import { Building2, Pencil, Phone, PlugZap, RefreshCw, UserPlus, Users, type LucideIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 type TailorsProps = {
@@ -61,6 +61,10 @@ export default function Tailors({ tailors, nextCode, nextMakloonCode }: TailorsP
                         >
                             <RefreshCw />
                             Tarik dari HR
+                        </Button>
+                        <Button variant="ghost" onClick={() => router.post(route('connections.test-hr'), {}, { preserveScroll: true })}>
+                            <PlugZap />
+                            Tes koneksi HR
                         </Button>
                         <Button variant="outline" onClick={() => openFor({ newOfType: 'makloon' })}>
                             <Building2 />

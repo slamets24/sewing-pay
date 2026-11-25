@@ -5,6 +5,7 @@ namespace App\Actions\Sewing;
 use App\Enums\PayoutStatus;
 use App\Models\Payout;
 use App\Models\PayoutSlip;
+use App\Services\Sewing\HrAzzahraClient;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -12,6 +13,8 @@ use Illuminate\Validation\ValidationException;
 /** Bonus, potongan, kasbon warung/mingguan edits and paying slips; the pay run closes when its last slip is paid. */
 class ManagePayoutSlipAction
 {
+    public function __construct(private readonly HrAzzahraClient $hr) {}
+
     /**
      * @param  array{bonus_amount: int, deduction_amount: int, kasbon_warung_amount?: int, kasbon_mingguan_amount?: int, notes?: ?string}  $data
      */
@@ -51,27 +54,15 @@ class ManagePayoutSlipAction
         });
     }
 
+    /**
+     * Tandai slip dibayar, lalu kabari HR (kalau pencairan ini lewat acc HR). Gagal mengabari HR tidak membatalkan pembayaran.
+     */
     public function markPaid(PayoutSlip $slip): PayoutSlip
     {
-        return DB::transaction(function () use ($slip) {
-            $slip = PayoutSlip::query()->lockForUpdate()->findOrFail($slip->id);
+        $slip = DB::transaction(fn (): PayoutSlip => $this->markPaidInDatabase($slip));
+        $this->reportPaidToHr($slip->payout_id);
 
-            if (! $slip->payout()->first()?->canBePaid()) {
-                throw ValidationException::withMessages(['payout_slip' => 'Slip baru bisa dibayar setelah pencairan di-acc HR.']);
-            }
-
-            if (! $slip->isPaid()) {
-                $slip->forceFill(['status' => PayoutStatus::Paid, 'paid_at' => now()])->save();
-            }
-
-            $payout = Payout::query()->lockForUpdate()->findOrFail($slip->payout_id);
-
-            if ($payout->slips()->where('status', '!=', PayoutStatus::Paid->value)->doesntExist()) {
-                $payout->forceFill(['status' => PayoutStatus::Paid, 'paid_at' => now()])->save();
-            }
-
-            return $slip;
-        });
+        return $slip;
     }
 
     public function markAllPaid(Payout $payout): void
@@ -85,8 +76,64 @@ class ManagePayoutSlipAction
                 throw ValidationException::withMessages(['payout' => 'Pencairan ini baru bisa dibayar setelah di-acc HR.']);
             }
 
-            $payout->slips()->where('status', '!=', PayoutStatus::Paid->value)->get()->each(fn (PayoutSlip $slip) => $this->markPaid($slip));
+            $payout->slips()->where('status', '!=', PayoutStatus::Paid->value)->get()->each(fn (PayoutSlip $slip) => $this->markPaidInDatabase($slip));
         });
+
+        $this->reportPaidToHr($payout->id);
+    }
+
+    private function markPaidInDatabase(PayoutSlip $slip): PayoutSlip
+    {
+        $slip = PayoutSlip::query()->lockForUpdate()->findOrFail($slip->id);
+
+        if (! $slip->payout()->first()?->canBePaid()) {
+            throw ValidationException::withMessages(['payout_slip' => 'Slip baru bisa dibayar setelah pencairan di-acc HR.']);
+        }
+
+        if (! $slip->isPaid()) {
+            $slip->forceFill(['status' => PayoutStatus::Paid, 'paid_at' => now()])->save();
+        }
+
+        $payout = Payout::query()->lockForUpdate()->findOrFail($slip->payout_id);
+
+        if ($payout->slips()->where('status', '!=', PayoutStatus::Paid->value)->doesntExist()) {
+            $payout->forceFill(['status' => PayoutStatus::Paid, 'paid_at' => now()])->save();
+        }
+
+        return $slip;
+    }
+
+    /**
+     * Kirim semua slip yang sudah dibayar di pencairan ini ke HR, supaya HR tahu kapan gaji benar-benar dibayar.
+     * Hanya untuk pencairan yang sudah di-acc HR; kalau HR tidak bisa dihubungi cukup dicatat di log
+     * (pembayaran slip berikutnya ikut mengirim ulang semuanya).
+     */
+    private function reportPaidToHr(int $payoutId): void
+    {
+        $payout = Payout::query()->find($payoutId);
+
+        if (! $payout || $payout->hr_status !== Payout::HR_APPROVED || ! $this->hr->isConfigured()) {
+            return;
+        }
+
+        $paidSlips = $payout->slips()
+            ->where('status', PayoutStatus::Paid->value)
+            ->get(['id', 'paid_at'])
+            ->map(fn (PayoutSlip $slip): array => [
+                'opsew_slip_id' => $slip->id,
+                'paid_at' => ($slip->paid_at ?? now())->toIso8601String(),
+            ])
+            ->values()
+            ->all();
+
+        try {
+            $this->hr->reportPayoutPaid($payout->id, $paidSlips);
+        } catch (\Throwable $exception) {
+            Log::warning('Status bayar gaji penjahit belum terkirim ke hr-azzahra', [
+                'payout_id' => $payout->id,
+                'error' => $exception->getMessage(),
+            ]);
+        }
     }
 
     public function deleteDraft(Payout $payout): void

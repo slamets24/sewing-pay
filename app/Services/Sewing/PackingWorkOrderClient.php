@@ -69,6 +69,23 @@ class PackingWorkOrderClient
         } while ($page <= $lastPage && $page <= self::MAX_PAGES);
     }
 
+    /**
+     * Tes koneksi: alamat packingv2 bisa dihubungi dan kunci API diterima.
+     */
+    public function ping(): ConnectionCheckResult
+    {
+        if (! $this->isConfigured()) {
+            return ConnectionCheckResult::notConfigured('PACKINGV2_API_URL / PACKINGV2_API_KEY');
+        }
+
+        return ConnectionCheckResult::from('Packing', fn () => Http::baseUrl($this->baseUrl())
+            ->withHeaders(['X-Api-Key' => (string) config('services.packingv2.key')])
+            ->acceptJson()
+            ->connectTimeout(5)
+            ->timeout(8)
+            ->get('/api/v1/ping'));
+    }
+
     private function baseUrl(): string
     {
         return rtrim((string) config('services.packingv2.url'), '/');

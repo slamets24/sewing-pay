@@ -11,8 +11,8 @@ import AppLayout from '@/layouts/app-layout';
 import { useCan } from '@/lib/abilities';
 import { cn } from '@/lib/utils';
 import type { WorkOrderSummary } from '@/types/sewing';
-import { Link, router } from '@inertiajs/react';
-import { Plus, RefreshCw, Search } from 'lucide-react';
+import { Link, router, usePoll } from '@inertiajs/react';
+import { PlugZap, Plus, RefreshCw, Search } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 
 type IndexProps = {
@@ -31,6 +31,9 @@ export default function WorkOrderIndex({ filters, workOrders, packingConfigured 
     const [search, setSearch] = useState(filters.search);
     const [pulling, setPulling] = useState(false);
     const canManage = useCan()('work-orders.manage');
+
+    // WO dari Packing (baru / diubah / dinonaktifkan) ikut muncul sendiri tiap 30 detik tanpa reload halaman.
+    usePoll(30000, { only: ['workOrders'] });
 
     const pullFromPacking = () =>
         router.post(
@@ -77,6 +80,12 @@ export default function WorkOrderIndex({ filters, workOrders, packingConfigured 
                             <Button size="lg" variant="outline" onClick={pullFromPacking} disabled={pulling}>
                                 <RefreshCw className={cn(pulling && 'animate-spin')} />
                                 {pulling ? 'Menarik WO…' : 'Tarik dari Packing'}
+                            </Button>
+                        )}
+                        {canManage && (
+                            <Button size="lg" variant="ghost" onClick={() => router.post(route('connections.test-packing'), {}, { preserveScroll: true })}>
+                                <PlugZap />
+                                Tes koneksi Packing
                             </Button>
                         )}
                         {canManage && (

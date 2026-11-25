@@ -19,6 +19,12 @@ class ApplyHrPayoutDecisionAction
     {
         return DB::transaction(function () use ($payout, $data): Payout {
             $payout = Payout::query()->lockForUpdate()->findOrFail($payout->id);
+            $targetStatus = $data['decision'] === 'approved' ? Payout::HR_APPROVED : Payout::HR_RETURNED;
+
+            // Kiriman ulang dari HR (misalnya jawaban pertama tidak sampai): keputusan yang sama dianggap sudah tercatat.
+            if ($payout->hr_status === $targetStatus) {
+                return $payout;
+            }
 
             if ($payout->hr_status !== Payout::HR_SUBMITTED) {
                 throw ValidationException::withMessages(['payout' => "Pencairan {$payout->code} tidak sedang menunggu acc HR."]);
@@ -51,7 +57,7 @@ class ApplyHrPayoutDecisionAction
             }
 
             $payout->forceFill([
-                'hr_status' => $data['decision'] === 'approved' ? Payout::HR_APPROVED : Payout::HR_RETURNED,
+                'hr_status' => $targetStatus,
                 'hr_decided_at' => now(),
                 'hr_decided_by' => $data['decided_by'] ?? null,
                 'hr_note' => $data['note'] ?? null,

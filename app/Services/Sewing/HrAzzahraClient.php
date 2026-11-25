@@ -8,6 +8,7 @@ use RuntimeException;
 
 /**
  * Client untuk berkomunikasi dengan API internal hr-azzahra (divisi Penjahit saja).
+ * Header X-Internal-Key = SWEING_PAY_INTERNAL_KEY, sama di kedua aplikasi.
  */
 class HrAzzahraClient
 {
@@ -27,14 +28,10 @@ class HrAzzahraClient
             return [];
         }
 
-        $response = Http::baseUrl($this->baseUrl())
-            ->withHeaders(['X-Internal-Key' => (string) config('services.hr_azzahra.key')])
-            ->acceptJson()
-            ->timeout(15)
-            ->get('/api/v1/internal/employees', [
-                'division' => 'Jahit',
-                'active_only' => 'true',
-            ]);
+        $response = $this->request()->get('/api/v1/internal/employees', [
+            ...$this->divisionFilter(),
+            'active_only' => 'true',
+        ]);
 
         if ($response->failed()) {
             throw new RuntimeException("hr-azzahra menolak permintaan karyawan (HTTP {$response->status()}).");
@@ -50,24 +47,7 @@ class HrAzzahraClient
      */
     public function dailyAttendances(string $date): array
     {
-        if (! $this->isConfigured()) {
-            return [];
-        }
-
-        $response = Http::baseUrl($this->baseUrl())
-            ->withHeaders(['X-Internal-Key' => (string) config('services.hr_azzahra.key')])
-            ->acceptJson()
-            ->timeout(15)
-            ->get('/api/v1/internal/attendances', [
-                'date' => $date,
-                'division' => 'Jahit',
-            ]);
-
-        if ($response->failed()) {
-            throw new RuntimeException("hr-azzahra menolak permintaan absensi (HTTP {$response->status()}).");
-        }
-
-        return $response->json('data', []);
+        return $this->isConfigured() ? $this->attendancesBetween($date, $date) : [];
     }
 
     /**
@@ -80,9 +60,9 @@ class HrAzzahraClient
         $this->ensureConfigured();
 
         $response = $this->request()->get('/api/v1/internal/attendances', [
+            ...$this->divisionFilter(),
             'date_from' => $dateFrom,
             'date_to' => $dateTo,
-            'division' => 'Jahit',
         ]);
 
         if ($response->failed()) {
@@ -104,10 +84,37 @@ class HrAzzahraClient
         $response = $this->request()->post('/api/v1/internal/sewing-payouts', $payload);
 
         if ($response->failed()) {
-            $reason = (string) ($response->json('message') ?: "HTTP {$response->status()}");
-
-            throw new RuntimeException("hr-azzahra menolak kiriman gaji: {$reason}");
+            throw new RuntimeException('hr-azzahra menolak kiriman gaji: '.$this->reason($response->json('message'), $response->status()));
         }
+    }
+
+    /**
+     * Kabari hr-azzahra slip mana saja yang sudah dibayar. Selalu mengirim semua slip yang sudah dibayar di pencairan itu,
+     * jadi kiriman yang sempat gagal ikut terkirim lagi di pembayaran berikutnya.
+     *
+     * @param  list<array{opsew_slip_id: int, paid_at: string}>  $paidSlips
+     */
+    public function reportPayoutPaid(int $payoutId, array $paidSlips): void
+    {
+        $this->ensureConfigured();
+
+        $response = $this->request()->post("/api/v1/internal/sewing-payouts/{$payoutId}/paid", ['slips' => $paidSlips]);
+
+        if ($response->failed()) {
+            throw new RuntimeException('hr-azzahra menolak status bayar: '.$this->reason($response->json('message'), $response->status()));
+        }
+    }
+
+    /**
+     * Tes koneksi: alamat bisa dihubungi dan kunci API diterima.
+     */
+    public function ping(): ConnectionCheckResult
+    {
+        if (! $this->isConfigured()) {
+            return ConnectionCheckResult::notConfigured('HR_AZZAHRA_API_URL / SWEING_PAY_INTERNAL_KEY');
+        }
+
+        return ConnectionCheckResult::from('HR', fn () => $this->request(8)->get('/api/v1/internal/ping'));
     }
 
     public function ensureConfigured(): void
@@ -118,70 +125,30 @@ class HrAzzahraClient
     }
 
     /**
-     * Mengecek sisa kasbon aktif karyawan penjahit.
+     * Divisi penjahit di HR: pakai ID divisi kalau HR_AZZAHRA_SEWING_DIVISION_ID diisi (aman kalau nama divisi diganti),
+     * kalau tidak, cari divisi yang namanya mengandung "Jahit".
      *
-     * @return array{total_outstanding: int, loans: list<array<string, mixed>>}
+     * @return array<string, int|string>
      */
-    public function activeKasbons(int|string $employeeIdentifier): array
+    private function divisionFilter(): array
     {
-        if (! $this->isConfigured()) {
-            return ['total_outstanding' => 0, 'loans' => []];
-        }
+        $divisionId = (int) config('services.hr_azzahra.sewing_division_id');
 
-        $params = is_numeric($employeeIdentifier)
-            ? ['employee_id' => (int) $employeeIdentifier]
-            : ['employee_number' => (string) $employeeIdentifier];
-
-        $response = Http::baseUrl($this->baseUrl())
-            ->withHeaders(['X-Internal-Key' => (string) config('services.hr_azzahra.key')])
-            ->acceptJson()
-            ->timeout(15)
-            ->get('/api/v1/internal/kasbons/active', $params);
-
-        if ($response->failed()) {
-            return ['total_outstanding' => 0, 'loans' => []];
-        }
-
-        return $response->json('data', ['total_outstanding' => 0, 'loans' => []]);
+        return $divisionId > 0 ? ['division_id' => $divisionId] : ['division' => 'Jahit'];
     }
 
-    /**
-     * Melaporkan pemotongan kasbon saat slip gaji dibayarkan (potong_gaji).
-     *
-     * @return array<string, mixed>
-     */
-    public function deductKasbon(int $kasbonId, int $amount, string $referenceNumber, ?string $notes = null): array
+    private function reason(mixed $message, int $status): string
     {
-        if (! $this->isConfigured()) {
-            return [];
-        }
-
-        $response = Http::baseUrl($this->baseUrl())
-            ->withHeaders(['X-Internal-Key' => (string) config('services.hr_azzahra.key')])
-            ->acceptJson()
-            ->timeout(15)
-            ->post('/api/v1/internal/kasbons/deduct', [
-                'kasbon_id' => $kasbonId,
-                'amount' => $amount,
-                'reference_number' => $referenceNumber,
-                'notes' => $notes ?? "Potong gaji slip {$referenceNumber}",
-            ]);
-
-        if ($response->failed()) {
-            $reason = (string) ($response->json('message') ?: "HTTP {$response->status()}");
-
-            throw new RuntimeException("Gagal mencatat potongan kasbon ke hr-azzahra: {$reason}");
-        }
-
-        return $response->json('data', []);
+        return is_string($message) && $message !== '' ? $message : "HTTP {$status}";
     }
 
-    private function request(): PendingRequest
+    private function request(int $timeoutSeconds = 15): PendingRequest
     {
         return Http::baseUrl($this->baseUrl())
             ->withHeaders(['X-Internal-Key' => (string) config('services.hr_azzahra.key')])
             ->acceptJson()
-            ->timeout(15);
+            ->connectTimeout(min(5, $timeoutSeconds))
+            ->timeout($timeoutSeconds);
     }
 
     private function baseUrl(): string

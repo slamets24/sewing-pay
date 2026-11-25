@@ -9,6 +9,7 @@ use App\Http\Controllers\Sewing\HancaanReceiptController;
 use App\Http\Controllers\Sewing\MakloonPaymentController;
 use App\Http\Controllers\Sewing\ManagedUserController;
 use App\Http\Controllers\Sewing\OverviewController;
+use App\Http\Controllers\Sewing\ConnectionTestController;
 use App\Http\Controllers\Sewing\PackingWorkOrderPullController;
 use App\Http\Controllers\Sewing\PayoutController;
 use App\Http\Controllers\Sewing\PickupController;
@@ -56,6 +57,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/wo', [WorkOrderController::class, 'index'])->name('work-orders.index')->middleware('can:'.Ability::WorkOrdersView->value);
     Route::get('/wo/baru', [WorkOrderController::class, 'create'])->name('work-orders.create')->middleware('can:'.Ability::WorkOrdersManage->value);
     Route::post('/wo/tarik-packing', PackingWorkOrderPullController::class)->name('work-orders.pull-packing')->middleware('can:'.Ability::WorkOrdersManage->value);
+    Route::post('/koneksi/tes-packing', [ConnectionTestController::class, 'packing'])->name('connections.test-packing')->middleware('can:'.Ability::WorkOrdersManage->value);
     Route::post('/wo', [WorkOrderController::class, 'store'])->name('work-orders.store')->middleware('can:'.Ability::WorkOrdersManage->value);
     Route::get('/wo/{workOrder}', [WorkOrderController::class, 'show'])->name('work-orders.show')->middleware('can:'.Ability::WorkOrdersView->value);
     Route::patch('/wo/{workOrder}', [WorkOrderController::class, 'update'])->name('work-orders.update')->middleware('can:'.Ability::WorkOrdersManage->value);
@@ -131,6 +133,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/penjahit', [TailorController::class, 'index'])->name('tailors.index')->middleware('can:'.Ability::TailorsManage->value);
     Route::post('/penjahit/sinkron-hr', [TailorController::class, 'syncHr'])->name('tailors.sync-hr')->middleware('can:'.Ability::TailorsSyncHr->value);
+    Route::post('/koneksi/tes-hr', [ConnectionTestController::class, 'hr'])->name('connections.test-hr')->middleware('can:'.Ability::TailorsSyncHr->value);
     Route::post('/penjahit', [TailorController::class, 'store'])->name('tailors.store')->middleware('can:'.Ability::TailorsManage->value);
     Route::patch('/penjahit/{tailor}', [TailorController::class, 'update'])->name('tailors.update')->middleware('can:'.Ability::TailorsManage->value);
 
